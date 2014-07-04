@@ -31,7 +31,15 @@ func StringToBytes(s string) ([]byte, error) {
   return b, nil
 }
 
-func BytesToString(b []byte) (string, error) {
+func BytesToString(b []byte) (ret string, err error) {
+  // panic handler, in case we try accessing bytes incorrectly.
+  defer func() {
+    if e := recover(); e != nil {
+      ret = ""
+      err = e.(error)
+    }
+  }()
+
   s := ""
 
   for ; len(b) > 0 ; {
