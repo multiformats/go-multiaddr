@@ -41,7 +41,7 @@ func TestBytesToString(t *testing.T) {
       t.Error("failed to convert", b)
     }
 
-    if s1 == s2 {
+    if s1 != s2 {
       t.Error("failed to convert", b, "to", s1, "got", s2)
     }
   }
@@ -51,7 +51,7 @@ func TestBytesToString(t *testing.T) {
 
 
 func TestProtocols(t *testing.T) {
-  m, err := NewString("/ip4/127.0.0.1/udp/1234")
+  m, err := NewMultiaddr("/ip4/127.0.0.1/udp/1234")
   if err != nil {
     t.Error("failed to construct", "/ip4/127.0.0.1/udp/1234")
   }
@@ -71,4 +71,41 @@ func TestProtocols(t *testing.T) {
     t.Error("failed to get udp protocol")
   }
 
+}
+
+func TestEncapsulate(t *testing.T) {
+  m, err := NewMultiaddr("/ip4/127.0.0.1/udp/1234")
+  if err != nil {
+    t.Error(err)
+  }
+
+  m2, err := NewMultiaddr("/udp/5678")
+  if err != nil {
+    t.Error(err)
+  }
+
+  b := m.Encapsulate(m2)
+  if s, _ := b.String(); s != "/ip4/127.0.0.1/udp/1234/udp/5678" {
+    t.Error("encapsulate /ip4/127.0.0.1/udp/1234/udp/5678 failed.", s)
+  }
+
+  m3, _ := NewMultiaddr("/udp/5678")
+  c, err := b.Decapsulate(m3)
+  if err != nil {
+    t.Error("decapsulate /udp failed.", err)
+  }
+
+  if s, _ := c.String(); s != "/ip4/127.0.0.1/udp/1234" {
+    t.Error("decapsulate /udp failed.", "/ip4/127.0.0.1/udp/1234", s)
+  }
+
+  m4, _ := NewMultiaddr("/ip4/127.0.0.1")
+  d, err := c.Decapsulate(m4)
+  if err != nil {
+    t.Error("decapsulate /ip4 failed.", err)
+  }
+
+  if s, _ := d.String(); s != "" {
+    t.Error("decapsulate /ip4 failed.", "/", s)
+  }
 }

@@ -50,7 +50,7 @@ func BytesToString(b []byte) (ret string, err error) {
     s = strings.Join([]string{s, "/", p.Name}, "")
     b = b[1:]
 
-    a := AddressBytesToString(p, b)
+    a := AddressBytesToString(p, b[:(p.Size / 8)])
     if len(a) > 0 {
       s = strings.Join([]string{s, "/", a}, "")
     }

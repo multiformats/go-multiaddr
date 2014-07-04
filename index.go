@@ -2,13 +2,14 @@ package multiaddr
 
 import (
   "fmt"
+  "strings"
 )
 
 type Multiaddr struct {
   Bytes []byte
 }
 
-func NewString(s string) (*Multiaddr, error) {
+func NewMultiaddr(s string) (*Multiaddr, error) {
   b, err := StringToBytes(s)
   if err != nil {
     return nil, err
@@ -41,4 +42,28 @@ func (m *Multiaddr) Protocols() (ret []*Protocol, err error) {
     b = b[1 + (p.Size / 8):]
   }
   return ps, nil
+}
+
+func (m *Multiaddr) Encapsulate(o *Multiaddr) *Multiaddr {
+  b := make([]byte, len(m.Bytes) + len(o.Bytes))
+  b = append(m.Bytes, o.Bytes...)
+  return &Multiaddr{Bytes: b}
+}
+
+func (m *Multiaddr) Decapsulate(o *Multiaddr) (*Multiaddr, error) {
+  s1, err := m.String()
+  if err != nil {
+    return nil, err
+  }
+
+  s2, err := o.String()
+  if err != nil {
+    return nil, err
+  }
+
+  i := strings.LastIndex(s1, s2)
+  if i < 0 {
+    return nil, fmt.Errorf("%s not contained in %s", s2, s1)
+  }
+  return NewMultiaddr(s1[:i])
 }
