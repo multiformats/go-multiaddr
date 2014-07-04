@@ -24,19 +24,11 @@ m = multiaddr.Multiaddr{ Bytes: m.Bytes }
 ### Protocols
 
 ```go
-// get the multiaddr protocol codes
-m.ProtoCodes()
-// []int{4, 6}
-
-// get the multiaddr protocol string codes
-m.ProtoNames()
-// []string{"ip4", "tcp"}
-
 // get the multiaddr protocol description objects
-addr.Protos()
-// []Protocol{
-//   Protocol{ Code: 4, Name: 'ip4', Size: 32},
-//   Protocol{ Code: 17, Name: 'udp', Size: 16},
+addr.Protocols()
+// []*Protocol{
+//   &Protocol{ Code: 4, Name: 'ip4', Size: 32},
+//   &Protocol{ Code: 17, Name: 'udp', Size: 16},
 // }
 ```
 

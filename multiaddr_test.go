@@ -49,3 +49,26 @@ func TestBytesToString(t *testing.T) {
   testString("/ip4/127.0.0.1/udp/1234", "047f0000011104d2")
 }
 
+
+func TestProtocols(t *testing.T) {
+  m, err := NewString("/ip4/127.0.0.1/udp/1234")
+  if err != nil {
+    t.Error("failed to construct", "/ip4/127.0.0.1/udp/1234")
+  }
+
+  ps, err := m.Protocols()
+  if err != nil {
+    t.Error("failed to get protocols", "/ip4/127.0.0.1/udp/1234")
+  }
+
+  if ps[0] != ProtocolWithName("ip4") {
+    t.Error(ps[0], ProtocolWithName("ip4"))
+    t.Error("failed to get ip4 protocol")
+  }
+
+  if ps[1] != ProtocolWithName("udp") {
+    t.Error(ps[1], ProtocolWithName("udp"))
+    t.Error("failed to get udp protocol")
+  }
+
+}

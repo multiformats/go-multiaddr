@@ -11,14 +11,14 @@ type Protocol struct {
 // 2. ensuring errors in the csv don't screw up code.
 // 3. changing a number has to happen in two places.
 
-var Protocols = []Protocol{
-  Protocol{4,  32,  "ip4"},
-  Protocol{6,  16,  "tcp"},
-  Protocol{17, 16,  "udp"},
-  Protocol{33, 16,  "dccp"},
-  Protocol{41, 128, "ip6"},
+var Protocols = []*Protocol{
+  &Protocol{4,  32,  "ip4"},
+  &Protocol{6,  16,  "tcp"},
+  &Protocol{17, 16,  "udp"},
+  &Protocol{33, 16,  "dccp"},
+  &Protocol{41, 128, "ip6"},
   // these require varint:
-  Protocol{132, 16, "sctp"},
+  &Protocol{132, 16, "sctp"},
   // {480, 0, "http"},
   // {443, 0, "https"},
 }
@@ -26,7 +26,7 @@ var Protocols = []Protocol{
 func ProtocolWithName(s string) *Protocol {
   for _, p := range(Protocols) {
     if p.Name == s {
-      return &p
+      return p
     }
   }
   return nil
@@ -35,7 +35,7 @@ func ProtocolWithName(s string) *Protocol {
 func ProtocolWithCode(c int) *Protocol {
   for _, p := range(Protocols) {
     if p.Code == c {
-      return &p
+      return p
     }
   }
   return nil
