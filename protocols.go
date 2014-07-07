@@ -11,14 +11,23 @@ type Protocol struct {
 // 2. ensuring errors in the csv don't screw up code.
 // 3. changing a number has to happen in two places.
 
+const (
+	P_IP4  = 4
+	P_TCP  = 6
+	P_UDP  = 17
+	P_DCCP = 33
+	P_IP6  = 41
+	P_SCTP = 132
+)
+
 var Protocols = []*Protocol{
-	&Protocol{4, 32, "ip4"},
-	&Protocol{6, 16, "tcp"},
-	&Protocol{17, 16, "udp"},
-	&Protocol{33, 16, "dccp"},
-	&Protocol{41, 128, "ip6"},
+	&Protocol{P_IP4, 32, "ip4"},
+	&Protocol{P_TCP, 16, "tcp"},
+	&Protocol{P_UDP, 16, "udp"},
+	&Protocol{P_DCCP, 16, "dccp"},
+	&Protocol{P_IP6, 128, "ip6"},
 	// these require varint:
-	&Protocol{132, 16, "sctp"},
+	&Protocol{P_SCTP, 16, "sctp"},
 	// {480, 0, "http"},
 	// {443, 0, "https"},
 }

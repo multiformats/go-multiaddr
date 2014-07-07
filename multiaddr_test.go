@@ -107,3 +107,23 @@ func TestEncapsulate(t *testing.T) {
 		t.Error("decapsulate /ip4 failed.", "/", s)
 	}
 }
+
+func TestDialArgs(t *testing.T) {
+	m, err := NewMultiaddr("/ip4/127.0.0.1/udp/1234")
+	if err != nil {
+		t.Fatal("failed to construct", "/ip4/127.0.0.1/udp/1234")
+	}
+
+	nw, host, err := m.DialArgs()
+	if err != nil {
+		t.Fatal("failed to get dial args", "/ip4/127.0.0.1/udp/1234", err)
+	}
+
+	if nw != "udp" {
+		t.Error("failed to get udp network Dial Arg")
+	}
+
+	if host != "127.0.0.1:1234" {
+		t.Error("failed to get host:port Dial Arg")
+	}
+}

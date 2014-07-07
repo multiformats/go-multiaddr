@@ -67,3 +67,36 @@ func (m *Multiaddr) Decapsulate(o *Multiaddr) (*Multiaddr, error) {
 	}
 	return NewMultiaddr(s1[:i])
 }
+
+func (m *Multiaddr) DialArgs() (string, string, error) {
+	if !m.IsThinWaist() {
+		return "", "", fmt.Errorf("%s is not a 'thin waist' address.", m)
+	}
+
+	str, err := m.String()
+	if err != nil {
+		return "", "", err
+	}
+
+	parts := strings.Split(str, "/")[1:]
+	network := parts[2]
+	host := strings.Join([]string{parts[1], parts[3]}, ":")
+	return network, host, nil
+}
+
+func (m *Multiaddr) IsThinWaist() bool {
+	p, err := m.Protocols()
+	if err != nil {
+		return false
+	}
+
+	if p[0].Code != P_IP4 && p[0].Code != P_IP6 {
+		return false
+	}
+
+	if p[1].Code != P_TCP && p[1].Code != P_UDP {
+		return false
+	}
+
+	return true
+}
