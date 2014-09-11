@@ -12,6 +12,10 @@ func StringToBytes(s string) ([]byte, error) {
 	b := []byte{}
 	sp := strings.Split(s, "/")
 
+	if sp[0] != "" {
+		return nil, fmt.Errorf("invalid multiaddr, must begin with /")
+	}
+
 	// consume first empty elem
 	sp = sp[1:]
 
