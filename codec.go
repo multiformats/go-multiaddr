@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-func StringToBytes(s string) ([]byte, error) {
+func stringToBytes(s string) ([]byte, error) {
 	b := []byte{}
 	sp := strings.Split(s, "/")
 
@@ -26,7 +26,7 @@ func StringToBytes(s string) ([]byte, error) {
 		}
 		b = append(b, byte(p.Code))
 
-		a := AddressStringToBytes(p, sp[1])
+		a := addressStringToBytes(p, sp[1])
 		b = append(b, a...)
 
 		sp = sp[2:]
@@ -34,7 +34,7 @@ func StringToBytes(s string) ([]byte, error) {
 	return b, nil
 }
 
-func BytesToString(b []byte) (ret string, err error) {
+func bytesToString(b []byte) (ret string, err error) {
 	// panic handler, in case we try accessing bytes incorrectly.
 	defer func() {
 		if e := recover(); e != nil {
@@ -53,7 +53,7 @@ func BytesToString(b []byte) (ret string, err error) {
 		s = strings.Join([]string{s, "/", p.Name}, "")
 		b = b[1:]
 
-		a := AddressBytesToString(p, b[:(p.Size/8)])
+		a := addressBytesToString(p, b[:(p.Size/8)])
 		if len(a) > 0 {
 			s = strings.Join([]string{s, "/", a}, "")
 		}
@@ -63,7 +63,7 @@ func BytesToString(b []byte) (ret string, err error) {
 	return s, nil
 }
 
-func AddressStringToBytes(p *Protocol, s string) []byte {
+func addressStringToBytes(p *Protocol, s string) []byte {
 	switch p.Code {
 
 	// ipv4,6
@@ -83,7 +83,7 @@ func AddressStringToBytes(p *Protocol, s string) []byte {
 	return []byte{}
 }
 
-func AddressBytesToString(p *Protocol, b []byte) string {
+func addressBytesToString(p *Protocol, b []byte) string {
 	switch p.Code {
 
 	// ipv4,6
