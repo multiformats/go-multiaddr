@@ -93,7 +93,14 @@ func (m *Multiaddr) DialArgs() (string, string, error) {
 
 	parts := strings.Split(str, "/")[1:]
 	network := parts[2]
-	host := strings.Join([]string{parts[1], parts[3]}, ":")
+
+	var host string
+	switch parts[0] {
+	case "ip4":
+		host = strings.Join([]string{parts[1], parts[3]}, ":")
+	case "ip6":
+		host = fmt.Sprintf("[%s]:%s", parts[1], parts[3])
+	}
 	return network, host, nil
 }
 
