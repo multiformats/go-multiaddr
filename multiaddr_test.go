@@ -117,7 +117,7 @@ func TestEncapsulate(t *testing.T) {
 	}
 
 	b := m.Encapsulate(m2)
-	if s, _ := b.String(); s != "/ip4/127.0.0.1/udp/1234/udp/5678" {
+	if s := b.String(); s != "/ip4/127.0.0.1/udp/1234/udp/5678" {
 		t.Error("encapsulate /ip4/127.0.0.1/udp/1234/udp/5678 failed.", s)
 	}
 
@@ -127,7 +127,7 @@ func TestEncapsulate(t *testing.T) {
 		t.Error("decapsulate /udp failed.", err)
 	}
 
-	if s, _ := c.String(); s != "/ip4/127.0.0.1/udp/1234" {
+	if s := c.String(); s != "/ip4/127.0.0.1/udp/1234" {
 		t.Error("decapsulate /udp failed.", "/ip4/127.0.0.1/udp/1234", s)
 	}
 
@@ -137,7 +137,7 @@ func TestEncapsulate(t *testing.T) {
 		t.Error("decapsulate /ip4 failed.", err)
 	}
 
-	if s, _ := d.String(); s != "" {
+	if s := d.String(); s != "" {
 		t.Error("decapsulate /ip4 failed.", "/", s)
 	}
 }

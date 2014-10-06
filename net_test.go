@@ -13,7 +13,7 @@ func testConvert(t *testing.T, s string, gen GenFunc) {
 		t.Fatal("failed to generate.")
 	}
 
-	if s2, _ := m.String(); err != nil || s2 != s {
+	if s2 := m.String(); err != nil || s2 != s {
 		t.Fatal("failed to convert: " + s + " != " + s2)
 	}
 }

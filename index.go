@@ -26,8 +26,12 @@ func (m *Multiaddr) Equal(m2 *Multiaddr) bool {
 }
 
 // String returns the string representation of a Multiaddr
-func (m *Multiaddr) String() (string, error) {
-	return bytesToString(m.Bytes)
+func (m *Multiaddr) String() string {
+	s, err := bytesToString(m.Bytes)
+	if err != nil {
+		panic("multiaddr failed to convert back to string. corrupted?")
+	}
+	return s
 }
 
 // Protocols returns the list of protocols this Multiaddr has.
@@ -63,16 +67,8 @@ func (m *Multiaddr) Encapsulate(o *Multiaddr) *Multiaddr {
 
 // Decapsulate unwraps Multiaddr up until the given Multiaddr is found.
 func (m *Multiaddr) Decapsulate(o *Multiaddr) (*Multiaddr, error) {
-	s1, err := m.String()
-	if err != nil {
-		return nil, err
-	}
-
-	s2, err := o.String()
-	if err != nil {
-		return nil, err
-	}
-
+	s1 := m.String()
+	s2 := o.String()
 	i := strings.LastIndex(s1, s2)
 	if i < 0 {
 		return nil, fmt.Errorf("%s not contained in %s", s2, s1)
@@ -86,11 +82,7 @@ func (m *Multiaddr) DialArgs() (string, string, error) {
 		return "", "", fmt.Errorf("%s is not a 'thin waist' address", m)
 	}
 
-	str, err := m.String()
-	if err != nil {
-		return "", "", err
-	}
-
+	str := m.String()
 	parts := strings.Split(str, "/")[1:]
 	network := parts[2]
 
