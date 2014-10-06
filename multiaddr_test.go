@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func newMultiaddr(t *testing.T, a string) *Multiaddr {
+func newMultiaddr(t *testing.T, a string) Multiaddr {
 	m, err := NewMultiaddr(a)
 	if err != nil {
 		t.Error(err)
@@ -88,11 +88,7 @@ func TestProtocols(t *testing.T) {
 		t.Error("failed to construct", "/ip4/127.0.0.1/udp/1234")
 	}
 
-	ps, err := m.Protocols()
-	if err != nil {
-		t.Error("failed to get protocols", "/ip4/127.0.0.1/udp/1234")
-	}
-
+	ps := m.Protocols()
 	if ps[0] != ProtocolWithName("ip4") {
 		t.Error(ps[0], ProtocolWithName("ip4"))
 		t.Error("failed to get ip4 protocol")
@@ -122,42 +118,14 @@ func TestEncapsulate(t *testing.T) {
 	}
 
 	m3, _ := NewMultiaddr("/udp/5678")
-	c, err := b.Decapsulate(m3)
-	if err != nil {
-		t.Error("decapsulate /udp failed.", err)
-	}
-
+	c := b.Decapsulate(m3)
 	if s := c.String(); s != "/ip4/127.0.0.1/udp/1234" {
 		t.Error("decapsulate /udp failed.", "/ip4/127.0.0.1/udp/1234", s)
 	}
 
 	m4, _ := NewMultiaddr("/ip4/127.0.0.1")
-	d, err := c.Decapsulate(m4)
-	if err != nil {
-		t.Error("decapsulate /ip4 failed.", err)
-	}
-
+	d := c.Decapsulate(m4)
 	if s := d.String(); s != "" {
 		t.Error("decapsulate /ip4 failed.", "/", s)
-	}
-}
-
-func TestDialArgs(t *testing.T) {
-	m, err := NewMultiaddr("/ip4/127.0.0.1/udp/1234")
-	if err != nil {
-		t.Fatal("failed to construct", "/ip4/127.0.0.1/udp/1234")
-	}
-
-	nw, host, err := m.DialArgs()
-	if err != nil {
-		t.Fatal("failed to get dial args", "/ip4/127.0.0.1/udp/1234", err)
-	}
-
-	if nw != "udp" {
-		t.Error("failed to get udp network Dial Arg")
-	}
-
-	if host != "127.0.0.1:1234" {
-		t.Error("failed to get host:port Dial Arg")
 	}
 }
