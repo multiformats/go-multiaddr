@@ -23,7 +23,7 @@ func stringToBytes(s string) ([]byte, error) {
 	// consume first empty elem
 	sp = sp[1:]
 
-	for len(sp) > 0 {
+	for len(sp) > 1 {
 		p := ProtocolWithName(sp[0])
 		if p == nil {
 			return nil, fmt.Errorf("no protocol with name %s", sp[0])
