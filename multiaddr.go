@@ -124,3 +124,21 @@ func (m *multiaddr) Split() []Multiaddr {
 	}
 	return addrs
 }
+
+// Cast re-casts a byte slice as a multiaddr. will panic if it fails to parse.
+func Cast(b []byte) Multiaddr {
+	_, err := bytesToString(b)
+	if err != nil {
+		panic(fmt.Errorf("multiaddr failed to parse: %s", err))
+	}
+	return &multiaddr{bytes: b}
+}
+
+// StringCast like Cast, but parses a string. Will also panic if it fails to parse.
+func StringCast(s string) Multiaddr {
+	m, err := NewMultiaddr(s)
+	if err != nil {
+		panic(fmt.Errorf("multiaddr failed to parse: %s", err))
+	}
+	return m
+}

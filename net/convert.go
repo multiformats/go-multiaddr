@@ -8,6 +8,14 @@ import (
 	ma "github.com/jbenet/go-multiaddr"
 )
 
+var (
+	// IP4Loopback is the ip4 loopback multiaddr
+	IP4Loopback = ma.StringCast("/ip4/127.0.0.1")
+
+	// IP6Loopback is the ip6 loopback multiaddr
+	IP6Loopback = ma.StringCast("/ip6/::1")
+)
+
 var errIncorrectNetAddr = fmt.Errorf("incorrect network addr conversion")
 
 // FromNetAddr converts a net.Addr type to a Multiaddr.
@@ -149,4 +157,10 @@ func IsThinWaist(m ma.Multiaddr) bool {
 	default:
 		return false
 	}
+}
+
+// IsIPLoopback returns whether a Multiaddr is a "Loopback" IP address
+// This means either /ip4/127.0.0.1 or /ip6/::1
+func IsIPLoopback(m ma.Multiaddr) bool {
+	return m.Equal(IP4Loopback) || m.Equal(IP6Loopback)
 }
