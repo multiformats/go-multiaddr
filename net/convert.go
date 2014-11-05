@@ -1,6 +1,7 @@
 package manet
 
 import (
+	"bytes"
 	"fmt"
 	"net"
 	"strings"
@@ -14,6 +15,9 @@ var (
 
 	// IP6Loopback is the ip6 loopback multiaddr
 	IP6Loopback = ma.StringCast("/ip6/::1")
+
+	// IP6LinkLocalLoopback is the ip6 link-local loopback multiaddr
+	IP6LinkLocalLoopback = ma.StringCast("/ip6/fe80::1")
 )
 
 var errIncorrectNetAddr = fmt.Errorf("incorrect network addr conversion")
@@ -169,5 +173,17 @@ func IsThinWaist(m ma.Multiaddr) bool {
 // IsIPLoopback returns whether a Multiaddr is a "Loopback" IP address
 // This means either /ip4/127.0.0.1 or /ip6/::1
 func IsIPLoopback(m ma.Multiaddr) bool {
-	return m.Equal(IP4Loopback) || m.Equal(IP6Loopback)
+	b := m.Bytes()
+
+	// /ip4/127 prefix (_entire_ /8 is loopback...)
+	if bytes.HasPrefix(b, []byte{4, 127}) {
+		return true
+	}
+
+	// /ip6/::1
+	if IP6Loopback.Equal(m) || IP6LinkLocalLoopback.Equal(m) {
+		return true
+	}
+
+	return false
 }
