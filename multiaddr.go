@@ -10,8 +10,10 @@ import (
 	manet "github.com/jbenet/go-multiaddr/net"
 )
 
+// flags
 var formats = []string{"string", "bytes", "hex", "slice"}
 var format string
+var hideLoopback bool
 
 func init() {
 	flag.Usage = func() {
@@ -22,27 +24,46 @@ func init() {
 	usage := fmt.Sprintf("output format, one of: %v", formats)
 	flag.StringVar(&format, "format", "string", usage)
 	flag.StringVar(&format, "f", "string", usage+" (shorthand)")
+	flag.BoolVar(&hideLoopback, "hide-loopback", false, "do not display loopback addresses")
 }
 
 func main() {
 	flag.Parse()
 	args := flag.Args()
 	if len(args) == 0 {
-		maddrs, err := manet.InterfaceMultiaddrs()
-		if err != nil {
-			die(err)
-		}
-
-		output(maddrs...)
-		return
+		output(localAddresses()...)
+	} else {
+		output(address(args[0]))
 	}
+}
 
-	m, err := ma.NewMultiaddr(args[0])
+func localAddresses() []ma.Multiaddr {
+	maddrs, err := manet.InterfaceMultiaddrs()
 	if err != nil {
 		die(err)
 	}
 
-	output(m)
+	if !hideLoopback {
+		return maddrs
+	}
+
+	var maddrs2 []ma.Multiaddr
+	for _, a := range maddrs {
+		if !manet.IsIPLoopback(a) {
+			maddrs2 = append(maddrs2, a)
+		}
+	}
+
+	return maddrs2
+}
+
+func address(addr string) ma.Multiaddr {
+	m, err := ma.NewMultiaddr(addr)
+	if err != nil {
+		die(err)
+	}
+
+	return m
 }
 
 func output(ms ...ma.Multiaddr) {
