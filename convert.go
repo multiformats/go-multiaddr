@@ -1,4 +1,4 @@
-package net
+package manet
 
 import (
 	"fmt"
@@ -65,6 +65,13 @@ func FromNetAddr(a net.Addr) (ma.Multiaddr, error) {
 
 	case "ip", "ip4", "ip6":
 		ac, ok := a.(*net.IPAddr)
+		if !ok {
+			return nil, errIncorrectNetAddr
+		}
+		return FromIP(ac.IP)
+
+	case "ip+net":
+		ac, ok := a.(*net.IPNet)
 		if !ok {
 			return nil, errIncorrectNetAddr
 		}
