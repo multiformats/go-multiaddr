@@ -91,7 +91,7 @@ func TestBytesToString(t *testing.T) {
 	testString("/ip4/127.0.0.1/udp/1234", "047f0000011104d2")
 }
 
-func TestBytesSplit(t *testing.T) {
+func TestBytesSplitAndJoin(t *testing.T) {
 
 	testString := func(s string, res []string) {
 		m, err := NewMultiaddr(s)
@@ -99,7 +99,7 @@ func TestBytesSplit(t *testing.T) {
 			t.Error("failed to convert", s)
 		}
 
-		split := m.Split()
+		split := Split(m)
 		if len(split) != len(res) {
 			t.Error("not enough split components", split)
 			return
@@ -109,6 +109,11 @@ func TestBytesSplit(t *testing.T) {
 			if a.String() != res[i] {
 				t.Errorf("split component failed: %s != %s", a, res[i])
 			}
+		}
+
+		joined := Join(split...)
+		if !m.Equal(joined) {
+			t.Errorf("joined components failed: %s != %s", m, joined)
 		}
 
 		// modifying underlying bytes is fine.
@@ -122,7 +127,6 @@ func TestBytesSplit(t *testing.T) {
 				t.Errorf("split component failed: %s != %s", a, res[i])
 			}
 		}
-
 	}
 
 	testString("/ip4/1.2.3.4/udp/1234", []string{"/ip4/1.2.3.4", "/udp/1234"})

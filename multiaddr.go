@@ -108,37 +108,3 @@ func (m *multiaddr) Decapsulate(o Multiaddr) Multiaddr {
 	}
 	return ma
 }
-
-// Split returns the sub-address portions of this multiaddr.
-func (m *multiaddr) Split() []Multiaddr {
-	split, err := bytesSplit(m.bytes)
-	if err != nil {
-		panic(fmt.Errorf("invalid multiaddr %s", m.String()))
-	}
-
-	addrs := make([]Multiaddr, len(split))
-	for i, addr := range split {
-		c := make([]byte, len(addr))
-		copy(c, addr)
-		addrs[i] = &multiaddr{bytes: c}
-	}
-	return addrs
-}
-
-// Cast re-casts a byte slice as a multiaddr. will panic if it fails to parse.
-func Cast(b []byte) Multiaddr {
-	_, err := bytesToString(b)
-	if err != nil {
-		panic(fmt.Errorf("multiaddr failed to parse: %s", err))
-	}
-	return &multiaddr{bytes: b}
-}
-
-// StringCast like Cast, but parses a string. Will also panic if it fails to parse.
-func StringCast(s string) Multiaddr {
-	m, err := NewMultiaddr(s)
-	if err != nil {
-		panic(fmt.Errorf("multiaddr failed to parse: %s", err))
-	}
-	return m
-}
