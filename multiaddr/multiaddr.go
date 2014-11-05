@@ -7,17 +7,15 @@ import (
 	"os"
 
 	ma "github.com/jbenet/go-multiaddr"
+	manet "github.com/jbenet/go-multiaddr/net"
 )
 
-var usage = `multiaddr conversion
-usage: multiaddr [fmt] <>`
-
-var formats = []string{"string", "bytes", "hex", "raw"}
+var formats = []string{"string", "bytes", "hex", "slice"}
 var format string
 
 func init() {
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "usage: %s <multiaddr>\n\nFlags:\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "usage: %s [<multiaddr>]\n\nFlags:\n", os.Args[0])
 		flag.PrintDefaults()
 	}
 
@@ -29,8 +27,14 @@ func init() {
 func main() {
 	flag.Parse()
 	args := flag.Args()
-	if len(args) != 1 {
-		die("error: can only take one argument")
+	if len(args) == 0 {
+		maddrs, err := manet.InterfaceMultiaddrs()
+		if err != nil {
+			die(err)
+		}
+
+		output(maddrs...)
+		return
 	}
 
 	m, err := ma.NewMultiaddr(args[0])
@@ -38,16 +42,22 @@ func main() {
 		die(err)
 	}
 
-	fmt.Println(outfmt(m))
+	output(m)
+}
+
+func output(ms ...ma.Multiaddr) {
+	for _, m := range ms {
+		fmt.Println(outfmt(m))
+	}
 }
 
 func outfmt(m ma.Multiaddr) string {
 	switch format {
 	case "string":
 		return m.String()
-	case "bytes":
+	case "slice":
 		return fmt.Sprintf("%v", m.Bytes())
-	case "raw":
+	case "bytes":
 		return string(m.Bytes())
 	case "hex":
 		return "0x" + hex.EncodeToString(m.Bytes())
