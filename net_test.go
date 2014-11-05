@@ -208,11 +208,19 @@ func TestLoopback(t *testing.T) {
 		t.Error("IP6Loopback incorrect:", IP6Loopback)
 	}
 
+	if IP6LinkLocalLoopback.String() != "/ip6/fe80::1" {
+		t.Error("IP6LinkLocalLoopback incorrect:", IP6Loopback)
+	}
+
 	if !IsIPLoopback(IP4Loopback) {
-		t.Error("IsIPLoopback failed (IP4)")
+		t.Error("IsIPLoopback failed (IP4Loopback)")
 	}
 
 	if !IsIPLoopback(IP6Loopback) {
-		t.Error("IsIPLoopback failed (IP6)")
+		t.Error("IsIPLoopback failed (IP6Loopback)")
+	}
+
+	if !IsIPLoopback(IP6LinkLocalLoopback) {
+		t.Error("IsIPLoopback failed (IP6LinkLocalLoopback)")
 	}
 }
