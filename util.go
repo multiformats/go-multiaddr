@@ -1,9 +1,6 @@
 package multiaddr
 
-import (
-	"bytes"
-	"fmt"
-)
+import "fmt"
 
 // Split returns the sub-address portions of a multiaddr.
 func Split(m Multiaddr) []Multiaddr {
@@ -21,11 +18,23 @@ func Split(m Multiaddr) []Multiaddr {
 
 // Join returns a combination of addresses.
 func Join(ms ...Multiaddr) Multiaddr {
-	var b bytes.Buffer
-	for _, m := range ms {
-		b.Write(m.Bytes())
+
+	length := 0
+	bs := make([][]byte, len(ms))
+	for i, m := range ms {
+		bs[i] = m.Bytes()
+		length += len(bs[i])
 	}
-	return &multiaddr{bytes: b.Bytes()}
+
+	bidx := 0
+	b := make([]byte, length)
+	for _, mb := range bs {
+		for i := range mb {
+			b[bidx] = mb[i]
+			bidx++
+		}
+	}
+	return &multiaddr{bytes: b}
 }
 
 // Cast re-casts a byte slice as a multiaddr. will panic if it fails to parse.
