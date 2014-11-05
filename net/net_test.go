@@ -199,7 +199,7 @@ func TestListenAndDial(t *testing.T) {
 	wg.Wait()
 }
 
-func TestLoopback(t *testing.T) {
+func TestIPLoopback(t *testing.T) {
 	if IP4Loopback.String() != "/ip4/127.0.0.1" {
 		t.Error("IP4Loopback incorrect:", IP4Loopback)
 	}
@@ -222,5 +222,23 @@ func TestLoopback(t *testing.T) {
 
 	if !IsIPLoopback(IP6LinkLocalLoopback) {
 		t.Error("IsIPLoopback failed (IP6LinkLocalLoopback)")
+	}
+}
+
+func TestIPUnspecified(t *testing.T) {
+	if IP4Unspecified.String() != "/ip4/0.0.0.0" {
+		t.Error("IP4Unspecified incorrect:", IP4Unspecified)
+	}
+
+	if IP6Unspecified.String() != "/ip6/::" {
+		t.Error("IP6Unspecified incorrect:", IP6Unspecified)
+	}
+
+	if !IsIPUnspecified(IP4Unspecified) {
+		t.Error("IsIPUnspecified failed (IP4Unspecified)")
+	}
+
+	if !IsIPUnspecified(IP6Unspecified) {
+		t.Error("IsIPUnspecified failed (IP6Unspecified)")
 	}
 }
