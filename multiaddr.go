@@ -108,3 +108,19 @@ func (m *multiaddr) Decapsulate(o Multiaddr) Multiaddr {
 	}
 	return ma
 }
+
+// Split returns the sub-address portions of this multiaddr.
+func (m *multiaddr) Split() []Multiaddr {
+	split, err := bytesSplit(m.bytes)
+	if err != nil {
+		panic(fmt.Errorf("invalid multiaddr %s", m.String()))
+	}
+
+	addrs := make([]Multiaddr, len(split))
+	for i, addr := range split {
+		c := make([]byte, len(addr))
+		copy(c, addr)
+		addrs[i] = &multiaddr{bytes: c}
+	}
+	return addrs
+}

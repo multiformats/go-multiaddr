@@ -39,4 +39,10 @@ type Multiaddr interface {
 	//      /ip4/1.2.3.4/tcp/80 decapsulate /ip4/1.2.3.4 = /tcp/80
 	//
 	Decapsulate(Multiaddr) Multiaddr
+
+	// Split returns the sub-address portions of this multiaddr.
+	//
+	//   m, _ := NewMultiaddr("/ip4/1.2.3.4/tcp/1234")
+	//   m.Split() -> [/ip4/1.2.3.4, /tcp/1234]
+	Split() []Multiaddr
 }
