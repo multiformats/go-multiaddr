@@ -7,5 +7,5 @@ as conversion to/from net.Addr.
 
 Docs:
 
-- `multiaddr/net`: https://godoc.org/github.com/jbenet/go-multiaddr/net
+- `multiaddr/net`: https://godoc.org/github.com/jbenet/go-multiaddr-net
 - `multiaddr`: https://godoc.org/github.com/jbenet/go-multiaddr
