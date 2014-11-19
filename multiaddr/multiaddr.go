@@ -7,7 +7,7 @@ import (
 	"os"
 
 	ma "github.com/jbenet/go-multiaddr"
-	manet "github.com/jbenet/go-multiaddr/net"
+	manet "github.com/jbenet/go-multiaddr-net"
 )
 
 // flags
