@@ -154,6 +154,7 @@ func DialArgs(m ma.Multiaddr) (string, string, error) {
 	if parts[2] == "udp" && len(parts) > 4 && parts[4] == "utp" {
 		network = parts[4]
 	}
+
 	var host string
 	switch parts[0] {
 	case "ip4":
