@@ -32,6 +32,9 @@ func stringToBytes(s string) ([]byte, error) {
 		sp = sp[1:]
 
 		if p.Size > 0 {
+			if len(sp) == 0 {
+				return nil, fmt.Errorf("%s protocol requires an argument", p.Name)
+			}
 			a := addressStringToBytes(p, sp[0])
 			b = append(b, a...)
 			sp = sp[1:]

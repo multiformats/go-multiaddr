@@ -15,21 +15,21 @@ func newMultiaddr(t *testing.T, a string) Multiaddr {
 }
 
 func TestNew(t *testing.T) {
-    // if we dont expect an error, use newMultiaddr
-    // if we do, NewMultiaddr
+	// if we dont expect an error, use newMultiaddr
+	// if we do, NewMultiaddr
 	newMultiaddr(t, "/ip4/127.0.0.1/udp/1234/tcp/123/")
 	newMultiaddr(t, "/ip4/127.0.0.1/udp/1234/")
 	newMultiaddr(t, "/ip4/127.0.0.1/")
-	if _, err := NewMultiaddr("/ip4/127.0.0.1/udp/1234/tcp/"); err == nil{
-        t.Error("Expected an error!")
-    }
-	if _, err := NewMultiaddr("/ip4/127.0.0.1/udp/"); err == nil{
-        t.Error("Expected an error!")
-    }
-	if _, err := NewMultiaddr("/ip4/"); err == nil{
-        t.Error("Expected an error!")
-    }
-    // should this return an error?
+	if _, err := NewMultiaddr("/ip4/127.0.0.1/udp/1234/tcp/"); err == nil {
+		t.Error("Expected an error!")
+	}
+	if _, err := NewMultiaddr("/ip4/127.0.0.1/udp/"); err == nil {
+		t.Error("Expected an error!")
+	}
+	if _, err := NewMultiaddr("/ip4/"); err == nil {
+		t.Error("Expected an error!")
+	}
+	// should this return an error?
 	NewMultiaddr("")
 }
 
