@@ -2,6 +2,8 @@ package multiaddr
 
 import (
 	"encoding/binary"
+	"fmt"
+	"strings"
 )
 
 // Protocol is a Multiaddr protocol description structure.
@@ -60,6 +62,25 @@ func ProtocolWithCode(c int) Protocol {
 		}
 	}
 	return Protocol{}
+}
+
+// ProtocolsWithString returns a slice of protocols matching given string.
+func ProtocolsWithString(s string) ([]Protocol, error) {
+	s = strings.Trim(s, "/")
+	sp := strings.Split(s, "/")
+	if len(sp) == 0 {
+		return nil, nil
+	}
+
+	t := make([]Protocol, len(sp))
+	for i, name := range sp {
+		p := ProtocolWithName(name)
+		if p.Code == 0 {
+			return nil, fmt.Errorf("no protocol with name: %s", name)
+		}
+		t[i] = p
+	}
+	return t, nil
 }
 
 // CodeToVarint converts an integer to a varint-encoded []byte

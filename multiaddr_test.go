@@ -216,6 +216,46 @@ func TestProtocols(t *testing.T) {
 
 }
 
+func TestProtocolsWithString(t *testing.T) {
+	pwn := ProtocolWithName
+	good := map[string][]Protocol{
+		"/ip4":                    []Protocol{pwn("ip4")},
+		"/ip4/tcp":                []Protocol{pwn("ip4"), pwn("tcp")},
+		"ip4/tcp/udp/ip6":         []Protocol{pwn("ip4"), pwn("tcp"), pwn("udp"), pwn("ip6")},
+		"////////ip4/tcp":         []Protocol{pwn("ip4"), pwn("tcp")},
+		"ip4/udp/////////":        []Protocol{pwn("ip4"), pwn("udp")},
+		"////////ip4/tcp////////": []Protocol{pwn("ip4"), pwn("tcp")},
+	}
+
+	for s, ps1 := range good {
+		ps2, err := ProtocolsWithString(s)
+		if err != nil {
+			t.Error("ProtocolsWithString(%s) should have succeeded", s)
+		}
+
+		for i, ps1p := range ps1 {
+			ps2p := ps2[i]
+			if ps1p.Code != ps2p.Code {
+				t.Errorf("mismatch: %s != %s, %s", ps1p.Name, ps2p.Name, s)
+			}
+		}
+	}
+
+	bad := []string{
+		"dsijafd",                           // bogus proto
+		"/ip4/tcp/fidosafoidsa",             // bogus proto
+		"////////ip4/tcp/21432141/////////", // bogus proto
+		"////////ip4///////tcp/////////",    // empty protos in between
+	}
+
+	for _, s := range bad {
+		if _, err := ProtocolsWithString(s); err == nil {
+			t.Error("ProtocolsWithString(%s) should have failed", s)
+		}
+	}
+
+}
+
 func TestEncapsulate(t *testing.T) {
 	m, err := NewMultiaddr("/ip4/127.0.0.1/udp/1234")
 	if err != nil {
