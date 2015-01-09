@@ -204,12 +204,12 @@ func TestProtocols(t *testing.T) {
 	}
 
 	ps := m.Protocols()
-	if ps[0] != ProtocolWithName("ip4") {
+	if ps[0].Code != ProtocolWithName("ip4").Code {
 		t.Error(ps[0], ProtocolWithName("ip4"))
 		t.Error("failed to get ip4 protocol")
 	}
 
-	if ps[1] != ProtocolWithName("udp") {
+	if ps[1].Code != ProtocolWithName("udp").Code {
 		t.Error(ps[1], ProtocolWithName("udp"))
 		t.Error("failed to get udp protocol")
 	}

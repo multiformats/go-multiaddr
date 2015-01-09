@@ -28,38 +28,38 @@ const (
 )
 
 // Protocols is the list of multiaddr protocols supported by this module.
-var Protocols = []*Protocol{
-	&Protocol{P_IP4, 32, "ip4", CodeToVarint(P_IP4)},
-	&Protocol{P_TCP, 16, "tcp", CodeToVarint(P_TCP)},
-	&Protocol{P_UDP, 16, "udp", CodeToVarint(P_UDP)},
-	&Protocol{P_DCCP, 16, "dccp", CodeToVarint(P_DCCP)},
-	&Protocol{P_IP6, 128, "ip6", CodeToVarint(P_IP6)},
+var Protocols = []Protocol{
+	Protocol{P_IP4, 32, "ip4", CodeToVarint(P_IP4)},
+	Protocol{P_TCP, 16, "tcp", CodeToVarint(P_TCP)},
+	Protocol{P_UDP, 16, "udp", CodeToVarint(P_UDP)},
+	Protocol{P_DCCP, 16, "dccp", CodeToVarint(P_DCCP)},
+	Protocol{P_IP6, 128, "ip6", CodeToVarint(P_IP6)},
 	// these require varint:
-	&Protocol{P_SCTP, 16, "sctp", CodeToVarint(P_SCTP)},
-	&Protocol{P_UTP, 0, "utp", CodeToVarint(P_UTP)},
-	&Protocol{P_UDT, 0, "udt", CodeToVarint(P_UDT)},
+	Protocol{P_SCTP, 16, "sctp", CodeToVarint(P_SCTP)},
+	Protocol{P_UTP, 0, "utp", CodeToVarint(P_UTP)},
+	Protocol{P_UDT, 0, "udt", CodeToVarint(P_UDT)},
 	// {480, 0, "http"},
 	// {443, 0, "https"},
 }
 
 // ProtocolWithName returns the Protocol description with given string name.
-func ProtocolWithName(s string) *Protocol {
+func ProtocolWithName(s string) Protocol {
 	for _, p := range Protocols {
 		if p.Name == s {
 			return p
 		}
 	}
-	return nil
+	return Protocol{}
 }
 
 // ProtocolWithCode returns the Protocol description with given protocol code.
-func ProtocolWithCode(c int) *Protocol {
+func ProtocolWithCode(c int) Protocol {
 	for _, p := range Protocols {
 		if p.Code == c {
 			return p
 		}
 	}
-	return nil
+	return Protocol{}
 }
 
 // CodeToVarint converts an integer to a varint-encoded []byte

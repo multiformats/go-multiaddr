@@ -25,7 +25,7 @@ func stringToBytes(s string) ([]byte, error) {
 
 	for len(sp) > 0 {
 		p := ProtocolWithName(sp[0])
-		if p == nil {
+		if p.Code == 0 {
 			return nil, fmt.Errorf("no protocol with name %s", sp[0])
 		}
 		b = append(b, CodeToVarint(p.Code)...)
@@ -62,7 +62,7 @@ func bytesToString(b []byte) (ret string, err error) {
 		code, n := ReadVarintCode(b)
 		b = b[n:]
 		p := ProtocolWithCode(code)
-		if p == nil {
+		if p.Code == 0 {
 			return "", fmt.Errorf("no protocol with code %d", code)
 		}
 		s = strings.Join([]string{s, "/", p.Name}, "")
@@ -92,7 +92,7 @@ func bytesSplit(b []byte) (ret [][]byte, err error) {
 	for len(b) > 0 {
 		code, n := ReadVarintCode(b)
 		p := ProtocolWithCode(code)
-		if p == nil {
+		if p.Code == 0 {
 			return [][]byte{}, fmt.Errorf("no protocol with code %d", b[0])
 		}
 
@@ -104,7 +104,7 @@ func bytesSplit(b []byte) (ret [][]byte, err error) {
 	return ret, nil
 }
 
-func addressStringToBytes(p *Protocol, s string) ([]byte, error) {
+func addressStringToBytes(p Protocol, s string) ([]byte, error) {
 	switch p.Code {
 
 	case P_IP4: // ipv4
@@ -138,7 +138,7 @@ func addressStringToBytes(p *Protocol, s string) ([]byte, error) {
 	return []byte{}, fmt.Errorf("failed to parse %s addr: unknown", p.Name)
 }
 
-func addressBytesToString(p *Protocol, b []byte) string {
+func addressBytesToString(p Protocol, b []byte) string {
 	switch p.Code {
 
 	// ipv4,6
