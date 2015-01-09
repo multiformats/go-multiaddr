@@ -14,6 +14,63 @@ func newMultiaddr(t *testing.T, a string) Multiaddr {
 	return m
 }
 
+func TestConstructFails(t *testing.T) {
+	cases := []string{
+		"/ip4",
+		"/ip4/::1",
+		"/ip4/fdpsofodsajfdoisa",
+		"/ip6",
+		"/udp",
+		"/tcp",
+		"/sctp",
+		"/udp/65536",
+		"/tcp/65536",
+		"/udp/1234/sctp",
+		"/udp/1234/udt/1234",
+		"/udp/1234/utp/1234",
+		"/ip4/127.0.0.1/udp/jfodsajfidosajfoidsa",
+		"/ip4/127.0.0.1/udp",
+		"/ip4/127.0.0.1/tcp/jfodsajfidosajfoidsa",
+		"/ip4/127.0.0.1/tcp",
+	}
+
+	for _, a := range cases {
+		if _, err := NewMultiaddr(a); err == nil {
+			t.Errorf("should have failed: %s", a)
+		}
+	}
+}
+
+func TestConstructSucceeds(t *testing.T) {
+	cases := []string{
+		"/ip4/1.2.3.4",
+		"/ip4/0.0.0.0",
+		"/ip6/::1",
+		"/ip6/2601:9:4f81:9700:803e:ca65:66e8:c21",
+		"/udp/0",
+		"/tcp/0",
+		"/sctp/0",
+		"/udp/1234",
+		"/tcp/1234",
+		"/sctp/1234",
+		"/udp/65535",
+		"/tcp/65535",
+		"/udp/1234/sctp/1234",
+		"/udp/1234/udt",
+		"/udp/1234/utp",
+		"/ip4/127.0.0.1/udp/1234",
+		"/ip4/127.0.0.1/udp/0",
+		"/ip4/127.0.0.1/tcp/1234",
+		"/ip4/127.0.0.1/tcp/1234/",
+	}
+
+	for _, a := range cases {
+		if _, err := NewMultiaddr(a); err != nil {
+			t.Errorf("should have succeeded: %s", a)
+		}
+	}
+}
+
 func TestEqual(t *testing.T) {
 	m1 := newMultiaddr(t, "/ip4/127.0.0.1/udp/1234")
 	m2 := newMultiaddr(t, "/ip4/127.0.0.1/tcp/1234")

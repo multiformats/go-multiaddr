@@ -32,7 +32,13 @@ func stringToBytes(s string) ([]byte, error) {
 		sp = sp[1:]
 
 		if p.Size > 0 {
-			a := addressStringToBytes(p, sp[0])
+			if len(sp) < 1 {
+				return nil, fmt.Errorf("protocol requires address, none given: %s", sp)
+			}
+			a, err := addressStringToBytes(p, sp[0])
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse %s: %s %s", p.Name, sp[0], err)
+			}
 			b = append(b, a...)
 			sp = sp[1:]
 		}
@@ -98,26 +104,38 @@ func bytesSplit(b []byte) (ret [][]byte, err error) {
 	return ret, nil
 }
 
-func addressStringToBytes(p *Protocol, s string) []byte {
+func addressStringToBytes(p *Protocol, s string) ([]byte, error) {
 	switch p.Code {
 
 	case P_IP4: // ipv4
-		return net.ParseIP(s).To4()
+		i := net.ParseIP(s).To4()
+		if i == nil {
+			return nil, fmt.Errorf("failed to parse ip4 addr: %s", s)
+		}
+		return i, nil
 
 	case P_IP6: // ipv6
-		return net.ParseIP(s).To16()
+		i := net.ParseIP(s).To16()
+		if i == nil {
+			return nil, fmt.Errorf("failed to parse ip6 addr: %s", s)
+		}
+		return i, nil
 
 	// tcp udp dccp sctp
 	case P_TCP, P_UDP, P_DCCP, P_SCTP:
-		b := make([]byte, 2)
 		i, err := strconv.Atoi(s)
-		if err == nil {
-			binary.BigEndian.PutUint16(b, uint16(i))
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse %s addr: %s", p.Name, err)
 		}
-		return b
+		if i >= 65536 {
+			return nil, fmt.Errorf("failed to parse %s addr: %s", p.Name, "greater than 65536")
+		}
+		b := make([]byte, 2)
+		binary.BigEndian.PutUint16(b, uint16(i))
+		return b, nil
 	}
 
-	return []byte{}
+	return []byte{}, fmt.Errorf("failed to parse %s addr: unknown", p.Name)
 }
 
 func addressBytesToString(p *Protocol, b []byte) string {
