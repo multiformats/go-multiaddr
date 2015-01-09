@@ -33,7 +33,7 @@ func stringToBytes(s string) ([]byte, error) {
 
 		if p.Size > 0 {
 			if len(sp) < 1 {
-				return nil, fmt.Errorf("protocol requires address, none given: %s", sp)
+				return nil, fmt.Errorf("protocol requires address, none given: %s", p.Name)
 			}
 			a, err := addressStringToBytes(p, sp[0])
 			if err != nil {
