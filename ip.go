@@ -69,6 +69,12 @@ func IsIPLoopback(m ma.Multiaddr) bool {
 	return false
 }
 
+// IPV6 Link Local addresses are non routable.
+func IsIPV6LinkLocal(m ma.Multiaddr) bool {
+	b := m.Bytes()
+	return bytes.HasPrefix(b, []byte{41, 254, 128})
+}
+
 // IsIPUnspecified returns whether a Multiaddr is am Unspecified IP address
 // This means either /ip4/0.0.0.0 or /ip6/::
 func IsIPUnspecified(m ma.Multiaddr) bool {
