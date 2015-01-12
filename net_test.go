@@ -2,6 +2,7 @@ package manet
 
 import (
 	"bytes"
+	"fmt"
 	"net"
 	"sync"
 	"testing"
@@ -332,5 +333,19 @@ func TestIPUnspecified(t *testing.T) {
 
 	if !IsIPUnspecified(IP6Unspecified) {
 		t.Error("IsIPUnspecified failed (IP6Unspecified)")
+	}
+}
+
+func TestIP6LinkLocal(t *testing.T) {
+	if !IsIP6LinkLocal(IP6LinkLocalLoopback) {
+		t.Error("IsIP6LinkLocal failed (IP6LinkLocalLoopback)")
+	}
+
+	for a := 0; a < 65536; a++ {
+		isLinkLocal := (a == 0xfe80)
+		m := newMultiaddr(t, fmt.Sprintf("/ip6/%x::1", a))
+		if IsIP6LinkLocal(m) != isLinkLocal {
+			t.Error("IsIP6LinkLocal failed (%s != %v)", m, isLinkLocal)
+		}
 	}
 }
