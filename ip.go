@@ -70,11 +70,11 @@ func IsIPLoopback(m ma.Multiaddr) bool {
 }
 
 // IP6 Link Local addresses are non routable. The prefix is technically
-// fe80::/10, but we test fe80::/12 for simplicity (no need to mask).
+// fe80::/10, but we test fe80::/16 for simplicity (no need to mask).
 // So far, no hardware interfaces exist long enough to use those 2 bits.
 // Send a PR if there is.
 func IsIP6LinkLocal(m ma.Multiaddr) bool {
-	return bytes.HasPrefix(m.Bytes(), []byte{ma.P_IP6, 0xfe, 0x80, 0})
+	return bytes.HasPrefix(m.Bytes(), []byte{ma.P_IP6, 0xfe, 0x80})
 }
 
 // IsIPUnspecified returns whether a Multiaddr is am Unspecified IP address
