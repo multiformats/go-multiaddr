@@ -141,7 +141,10 @@ func TestListen(t *testing.T) {
 
 func TestListenAddrs(t *testing.T) {
 
-	test := func(addr string, succeed bool) {
+	test := func(addr, resaddr string, succeed bool) {
+		if resaddr == "" {
+			resaddr = addr
+		}
 
 		maddr := newMultiaddr(t, addr)
 		l, err := Listen(maddr)
@@ -152,10 +155,13 @@ func TestListenAddrs(t *testing.T) {
 			return
 		}
 		if succeed && err != nil {
-			t.Fatal("failed to listen", addr, err)
+			t.Error("failed to listen", addr, err)
 		}
 		if l == nil {
-			t.Fatal("failed to listen", addr, succeed, err)
+			t.Error("failed to listen", addr, succeed, err)
+		}
+		if l.Multiaddr().String() != resaddr {
+			t.Error("listen addr did not resolve properly", l.Multiaddr().String(), resaddr, succeed, err)
 		}
 
 		if err = l.Close(); err != nil {
@@ -163,9 +169,18 @@ func TestListenAddrs(t *testing.T) {
 		}
 	}
 
-	test("/ip4/127.0.0.1/tcp/4324", true)
-	test("/ip4/127.0.0.1/udp/4325", false)
-	test("/ip4/127.0.0.1/udp/4326/udt", false)
+	test("/ip4/127.0.0.1/tcp/4324", "", true)
+	test("/ip4/127.0.0.1/udp/4325", "", false)
+	test("/ip4/127.0.0.1/udp/4326/udt", "", false)
+	test("/ip4/0.0.0.0/tcp/4324", "", true)
+	test("/ip4/0.0.0.0/udp/4325", "", false)
+	test("/ip4/0.0.0.0/udp/4326/udt", "", false)
+	test("/ip6/::1/tcp/4324", "", true)
+	test("/ip6/::1/udp/4325", "", false)
+	test("/ip6/::1/udp/4326/udt", "", false)
+	test("/ip6/::/tcp/4324", "", true)
+	test("/ip6/::/udp/4325", "", false)
+	test("/ip6/::/udp/4326/udt", "", false)
 	// test("/ip4/127.0.0.1/udp/4326/utp", true)
 }
 

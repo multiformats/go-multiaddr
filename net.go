@@ -106,12 +106,12 @@ func (d *Dialer) Dial(remote ma.Multiaddr) (Conn, error) {
 	// ok, Dial!
 	var nconn net.Conn
 	switch rnet {
-	case "tcp":
+	case "tcp", "tcp4", "tcp6":
 		nconn, err = d.Dialer.Dial(rnet, rnaddr)
 		if err != nil {
 			return nil, err
 		}
-	case "utp":
+	case "udp", "udp4", "udp6":
 		return nil, fmt.Errorf("utp is currently broken")
 
 		// // construct utp dialer, with options on our net.Dialer
@@ -235,6 +235,14 @@ func Listen(laddr ma.Multiaddr) (Listener, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// we need to fetch the new multiaddr from the listener, as it
+	// may have resolved to some other value.
+	nladdr, err := FromNetAddr(nl.Addr())
+	if err != nil {
+		return nil, err
+	}
+	laddr = nladdr
 
 	return &maListener{
 		Listener: nl,
