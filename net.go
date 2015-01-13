@@ -266,3 +266,30 @@ func InterfaceMultiaddrs() ([]ma.Multiaddr, error) {
 	}
 	return maddrs, nil
 }
+
+// AddrMatch returns the Multiaddrs that match the protocol stack on addr
+func AddrMatch(match ma.Multiaddr, addrs []ma.Multiaddr) []ma.Multiaddr {
+
+	// we should match transports entirely.
+	p1s := match.Protocols()
+
+	out := make([]ma.Multiaddr, 0, len(addrs))
+	for _, a := range addrs {
+		p2s := a.Protocols()
+		if len(p1s) != len(p2s) {
+			continue
+		}
+
+		match := true
+		for i, p2 := range p2s {
+			if p1s[i].Code != p2.Code {
+				match = false
+				break
+			}
+		}
+		if match {
+			out = append(out, a)
+		}
+	}
+	return out
+}

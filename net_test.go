@@ -364,3 +364,75 @@ func TestIP6LinkLocal(t *testing.T) {
 		}
 	}
 }
+
+func TestAddrMatch(t *testing.T) {
+
+	test := func(m ma.Multiaddr, input, expect []ma.Multiaddr) {
+		actual := AddrMatch(m, input)
+		testSliceEqual(t, expect, actual)
+	}
+
+	a := []ma.Multiaddr{
+		newMultiaddr(t, "/ip4/1.2.3.4/tcp/1234"),
+		newMultiaddr(t, "/ip4/1.2.3.4/tcp/2345"),
+		newMultiaddr(t, "/ip4/1.2.3.4/tcp/1234/tcp/2345"),
+		newMultiaddr(t, "/ip4/1.2.3.4/tcp/1234/tcp/2345"),
+		newMultiaddr(t, "/ip4/1.2.3.4/tcp/1234/udp/1234"),
+		newMultiaddr(t, "/ip4/1.2.3.4/tcp/1234/udp/1234"),
+		newMultiaddr(t, "/ip4/1.2.3.4/tcp/1234/ip6/::1"),
+		newMultiaddr(t, "/ip4/1.2.3.4/tcp/1234/ip6/::1"),
+		newMultiaddr(t, "/ip6/::1/tcp/1234"),
+		newMultiaddr(t, "/ip6/::1/tcp/2345"),
+		newMultiaddr(t, "/ip6/::1/tcp/1234/tcp/2345"),
+		newMultiaddr(t, "/ip6/::1/tcp/1234/tcp/2345"),
+		newMultiaddr(t, "/ip6/::1/tcp/1234/udp/1234"),
+		newMultiaddr(t, "/ip6/::1/tcp/1234/udp/1234"),
+		newMultiaddr(t, "/ip6/::1/tcp/1234/ip6/::1"),
+		newMultiaddr(t, "/ip6/::1/tcp/1234/ip6/::1"),
+	}
+
+	test(a[0], a, []ma.Multiaddr{
+		newMultiaddr(t, "/ip4/1.2.3.4/tcp/1234"),
+		newMultiaddr(t, "/ip4/1.2.3.4/tcp/2345"),
+	})
+	test(a[2], a, []ma.Multiaddr{
+		newMultiaddr(t, "/ip4/1.2.3.4/tcp/1234/tcp/2345"),
+		newMultiaddr(t, "/ip4/1.2.3.4/tcp/1234/tcp/2345"),
+	})
+	test(a[4], a, []ma.Multiaddr{
+		newMultiaddr(t, "/ip4/1.2.3.4/tcp/1234/udp/1234"),
+		newMultiaddr(t, "/ip4/1.2.3.4/tcp/1234/udp/1234"),
+	})
+	test(a[6], a, []ma.Multiaddr{
+		newMultiaddr(t, "/ip4/1.2.3.4/tcp/1234/ip6/::1"),
+		newMultiaddr(t, "/ip4/1.2.3.4/tcp/1234/ip6/::1"),
+	})
+	test(a[8], a, []ma.Multiaddr{
+		newMultiaddr(t, "/ip6/::1/tcp/1234"),
+		newMultiaddr(t, "/ip6/::1/tcp/2345"),
+	})
+	test(a[10], a, []ma.Multiaddr{
+		newMultiaddr(t, "/ip6/::1/tcp/1234/tcp/2345"),
+		newMultiaddr(t, "/ip6/::1/tcp/1234/tcp/2345"),
+	})
+	test(a[12], a, []ma.Multiaddr{
+		newMultiaddr(t, "/ip6/::1/tcp/1234/udp/1234"),
+		newMultiaddr(t, "/ip6/::1/tcp/1234/udp/1234"),
+	})
+	test(a[14], a, []ma.Multiaddr{
+		newMultiaddr(t, "/ip6/::1/tcp/1234/ip6/::1"),
+		newMultiaddr(t, "/ip6/::1/tcp/1234/ip6/::1"),
+	})
+
+}
+
+func testSliceEqual(t *testing.T, a, b []ma.Multiaddr) {
+	if len(a) != len(b) {
+		t.Error("differ", a, b)
+	}
+	for i, addrA := range a {
+		if !addrA.Equal(b[i]) {
+			t.Error("differ", a, b)
+		}
+	}
+}
