@@ -2,6 +2,7 @@ package multiaddr
 
 import (
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"net"
 	"strconv"
@@ -55,7 +56,14 @@ func bytesToString(b []byte) (ret string, err error) {
 	defer func() {
 		if e := recover(); e != nil {
 			ret = ""
-			err = e.(error)
+			switch e := e.(type) {
+			case error:
+				err = e
+			case string:
+				err = errors.New(e)
+			default:
+				err = fmt.Errorf("%v", e)
+			}
 		}
 	}()
 
@@ -69,23 +77,36 @@ func bytesToString(b []byte) (ret string, err error) {
 		if p.Code == 0 {
 			return "", fmt.Errorf("no protocol with code %d", code)
 		}
-		s = strings.Join([]string{s, "/", p.Name}, "")
+		s += "/" + p.Name
 
 		if p.Size == 0 {
 			continue
 		}
 
-		a, err := addressBytesToString(p, b[:(p.Size/8)])
+		size := sizeForAddr(p, b)
+		a, err := addressBytesToString(p, b[:size])
 		if err != nil {
 			return "", err
 		}
 		if len(a) > 0 {
-			s = strings.Join([]string{s, "/", a}, "")
+			s += "/" + a
 		}
-		b = b[(p.Size / 8):]
+		b = b[size:]
 	}
 
 	return s, nil
+}
+
+func sizeForAddr(p Protocol, b []byte) int {
+	switch {
+	case p.Size > 0:
+		return (p.Size / 8)
+	case p.Size == 0:
+		return 0
+	default:
+		size, n := ReadVarintCode(b)
+		return size + n
+	}
 }
 
 func bytesSplit(b []byte) (ret [][]byte, err error) {
@@ -105,7 +126,8 @@ func bytesSplit(b []byte) (ret [][]byte, err error) {
 			return [][]byte{}, fmt.Errorf("no protocol with code %d", b[0])
 		}
 
-		length := n + (p.Size / 8)
+		size := sizeForAddr(p, b[n:])
+		length := n + size
 		ret = append(ret, b[:length])
 		b = b[length:]
 	}
@@ -144,12 +166,14 @@ func addressStringToBytes(p Protocol, s string) ([]byte, error) {
 		return b, nil
 
 	case P_IPFS: // ipfs
-		// the address is a multihash string representation
+		// the address is a varint prefixed multihash string representation
 		m, err := mh.FromB58String(s)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse ipfs addr: %s %s", s, err)
 		}
-		return []byte(m), nil
+		size := CodeToVarint(len(m))
+		b := append(size, m...)
+		return b, nil
 	}
 
 	return []byte{}, fmt.Errorf("failed to parse %s addr: unknown", p.Name)
@@ -168,7 +192,12 @@ func addressBytesToString(p Protocol, b []byte) (string, error) {
 		return strconv.Itoa(int(i)), nil
 
 	case P_IPFS: // ipfs
-		// the address is a multihash string representation
+		// the address is a varint-prefixed multihash string representation
+		size, n := ReadVarintCode(b)
+		b = b[n:]
+		if len(b) != size {
+			panic("inconsistent lengths")
+		}
 		m, err := mh.Cast(b)
 		if err != nil {
 			return "", err
