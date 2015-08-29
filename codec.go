@@ -1,6 +1,7 @@
 package multiaddr
 
 import (
+	"encoding/base32"
 	"encoding/binary"
 	"errors"
 	"fmt"
@@ -165,6 +166,16 @@ func addressStringToBytes(p Protocol, s string) ([]byte, error) {
 		binary.BigEndian.PutUint16(b, uint16(i))
 		return b, nil
 
+	case P_TOR:
+		fields := strings.Split(s, ".onion")
+		if len(fields) != 2 {
+			return nil, fmt.Errorf("failed to parse ipfs addr: %s not a Tor .onion address.", s)
+		}
+		b, err := base32.StdEncoding.DecodeString(strings.ToUpper(fields[0]))
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse ipfs addr: %s %s", s, err)
+		}
+		return b, nil
 	case P_IPFS: // ipfs
 		// the address is a varint prefixed multihash string representation
 		m, err := mh.FromB58String(s)
