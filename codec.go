@@ -168,12 +168,15 @@ func addressStringToBytes(p Protocol, s string) ([]byte, error) {
 
 	case P_TOR:
 		fields := strings.Split(s, ".onion")
-		if len(fields) != 2 {
-			return nil, fmt.Errorf("failed to parse ipfs addr: %s not a Tor .onion address.", s)
+		if len(fields) != 2 || len(fields[1]) != 0 {
+			return nil, fmt.Errorf("failed to parse tor addr: %s does not end with .onion", s)
 		}
 		b, err := base32.StdEncoding.DecodeString(strings.ToUpper(fields[0]))
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse ipfs addr: %s %s", s, err)
+			return nil, fmt.Errorf("failed to parse tor addr: %s %s", s, err)
+		}
+		if len(b) != 10 {
+			return nil, fmt.Errorf("failed to parse tor addr: %s decoded to %s bytes, expected 10", s, len(b))
 		}
 		return b, nil
 	case P_IPFS: // ipfs

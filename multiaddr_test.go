@@ -27,6 +27,8 @@ func TestConstructFails(t *testing.T) {
 		"/tcp/65536",
 		"/tor/9imaq4ygg2iegci7.onion",
 		"/tor/aaimaq4ygg2iegci7.onion",
+		"/tor/timaq4ygg2iegci7.onionxxx",
+		"/tor/timaq4yg.onion",
 		"/udp/1234/sctp",
 		"/udp/1234/udt/1234",
 		"/udp/1234/utp/1234",
