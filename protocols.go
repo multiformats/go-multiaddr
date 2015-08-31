@@ -25,12 +25,12 @@ const (
 	P_DCCP  = 33
 	P_IP6   = 41
 	P_SCTP  = 132
-	P_TOR   = 133
 	P_UTP   = 301
 	P_UDT   = 302
 	P_IPFS  = 421
 	P_HTTP  = 480
 	P_HTTPS = 443
+	P_ONION = 444
 )
 
 // These are special sizes
@@ -47,7 +47,7 @@ var Protocols = []Protocol{
 	Protocol{P_IP6, 128, "ip6", CodeToVarint(P_IP6)},
 	// these require varint:
 	Protocol{P_SCTP, 16, "sctp", CodeToVarint(P_SCTP)},
-	Protocol{P_TOR, 10, "tor", CodeToVarint(P_TOR)},
+	Protocol{P_ONION, 10, "onion", CodeToVarint(P_ONION)},
 	Protocol{P_UTP, 0, "utp", CodeToVarint(P_UTP)},
 	Protocol{P_UDT, 0, "udt", CodeToVarint(P_UDT)},
 	Protocol{P_HTTP, 0, "http", CodeToVarint(P_HTTP)},

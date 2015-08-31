@@ -166,16 +166,36 @@ func addressStringToBytes(p Protocol, s string) ([]byte, error) {
 		binary.BigEndian.PutUint16(b, uint16(i))
 		return b, nil
 
-	case P_TOR:
-		fields := strings.Split(s, ".onion")
-		if len(fields) != 2 {
-			return nil, fmt.Errorf("failed to parse ipfs addr: %s not a Tor .onion address.", s)
+	case P_ONION:
+		addr := strings.Split(s, ":")
+		if len(addr) != 2 {
+			return nil, fmt.Errorf("failed to parse %s addr: %s does not contain a port number.", p.Name, s)
 		}
-		b, err := base32.StdEncoding.DecodeString(strings.ToUpper(fields[0]))
+
+		// onion address without the ".onion" substring
+		if len(addr[0]) != 16 {
+			return nil, fmt.Errorf("failed to parse %s addr: %s not a Tor onion address.", p.Name, s)
+		}
+		onionHostBytes, err := base32.StdEncoding.DecodeString(strings.ToUpper(addr[0]))
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse ipfs addr: %s %s", s, err)
+			return nil, fmt.Errorf("failed to decode base32 %s addr: %s %s", p.Name, s, err)
 		}
-		return b, nil
+
+		// onion port number
+		i, err := strconv.Atoi(addr[1])
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse %s addr: %s", p.Name, err)
+		}
+		if i >= 65536 {
+			return nil, fmt.Errorf("failed to parse %s addr: %s", p.Name, "greater than 65536")
+		}
+		onionPortBytes := make([]byte, 2)
+		binary.BigEndian.PutUint16(onionPortBytes, uint16(i))
+		bytes := []byte{}
+		bytes = append(bytes, onionHostBytes...)
+		bytes = append(bytes, onionPortBytes...)
+		return bytes, nil
+
 	case P_IPFS: // ipfs
 		// the address is a varint prefixed multihash string representation
 		m, err := mh.FromB58String(s)
