@@ -153,7 +153,7 @@ func addressStringToBytes(p Protocol, s string) ([]byte, error) {
 		return i, nil
 
 	// tcp udp dccp sctp
-	case P_TCP, P_UDP, P_DCCP, P_SCTP:
+	case P_TCP, P_UDP, P_DCCP, P_SCTP, P_UDT:
 		i, err := strconv.Atoi(s)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse %s addr: %s", p.Name, err)
@@ -174,9 +174,11 @@ func addressStringToBytes(p Protocol, s string) ([]byte, error) {
 		size := CodeToVarint(len(m))
 		b := append(size, m...)
 		return b, nil
+
+	default:
+		return nil, fmt.Errorf("failed to parse %s addr: unknown", p.Name)
 	}
 
-	return []byte{}, fmt.Errorf("failed to parse %s addr: unknown", p.Name)
 }
 
 func addressBytesToString(p Protocol, b []byte) (string, error) {
@@ -187,7 +189,7 @@ func addressBytesToString(p Protocol, b []byte) (string, error) {
 		return net.IP(b).String(), nil
 
 	// tcp udp dccp sctp
-	case P_TCP, P_UDP, P_DCCP, P_SCTP:
+	case P_TCP, P_UDP, P_DCCP, P_SCTP, P_UDT:
 		i := binary.BigEndian.Uint16(b)
 		return strconv.Itoa(int(i)), nil
 

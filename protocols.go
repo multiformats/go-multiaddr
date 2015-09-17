@@ -47,7 +47,7 @@ var Protocols = []Protocol{
 	// these require varint:
 	Protocol{P_SCTP, 16, "sctp", CodeToVarint(P_SCTP)},
 	Protocol{P_UTP, 0, "utp", CodeToVarint(P_UTP)},
-	Protocol{P_UDT, 0, "udt", CodeToVarint(P_UDT)},
+	Protocol{P_UDT, 16, "udt", CodeToVarint(P_UDT)},
 	Protocol{P_HTTP, 0, "http", CodeToVarint(P_HTTP)},
 	Protocol{P_HTTPS, 0, "https", CodeToVarint(P_HTTPS)},
 	Protocol{P_IPFS, LengthPrefixedVarSize, "ipfs", CodeToVarint(P_IPFS)},
