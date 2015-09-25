@@ -187,8 +187,12 @@ func addressStringToBytes(p Protocol, s string) ([]byte, error) {
 			return nil, fmt.Errorf("failed to parse %s addr: %s", p.Name, err)
 		}
 		if i >= 65536 {
-			return nil, fmt.Errorf("failed to parse %s addr: %s", p.Name, "greater than 65536")
+			return nil, fmt.Errorf("failed to parse %s addr: %s", p.Name, "port greater than 65536")
 		}
+		if i < 1 {
+			return nil, fmt.Errorf("failed to parse %s addr: %s", p.Name, "port less than 1")
+		}
+
 		onionPortBytes := make([]byte, 2)
 		binary.BigEndian.PutUint16(onionPortBytes, uint16(i))
 		bytes := []byte{}
