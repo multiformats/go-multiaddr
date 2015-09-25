@@ -47,7 +47,7 @@ var Protocols = []Protocol{
 	Protocol{P_IP6, 128, "ip6", CodeToVarint(P_IP6)},
 	// these require varint:
 	Protocol{P_SCTP, 16, "sctp", CodeToVarint(P_SCTP)},
-	Protocol{P_ONION, 10, "onion", CodeToVarint(P_ONION)},
+	Protocol{P_ONION, 80, "onion", CodeToVarint(P_ONION)},
 	Protocol{P_UTP, 0, "utp", CodeToVarint(P_UTP)},
 	Protocol{P_UDT, 0, "udt", CodeToVarint(P_UDT)},
 	Protocol{P_HTTP, 0, "http", CodeToVarint(P_HTTP)},
