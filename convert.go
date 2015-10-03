@@ -5,8 +5,8 @@ import (
 	"net"
 	"strings"
 
-	utp "github.com/jbenet/go-multiaddr-net/Godeps/_workspace/src/github.com/h2so5/utp"
 	ma "github.com/jbenet/go-multiaddr-net/Godeps/_workspace/src/github.com/jbenet/go-multiaddr"
+	utp "github.com/jbenet/go-multiaddr-net/utp"
 )
 
 var errIncorrectNetAddr = fmt.Errorf("incorrect network addr conversion")
@@ -63,7 +63,7 @@ func FromNetAddr(a net.Addr) (ma.Multiaddr, error) {
 		}
 
 		// Get UDP Addr
-		ac, ok := acc.Addr.(*net.UDPAddr)
+		ac, ok := acc.Child().(*net.UDPAddr)
 		if !ok {
 			return nil, errIncorrectNetAddr
 		}
