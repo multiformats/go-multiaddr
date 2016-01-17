@@ -55,6 +55,20 @@ var Protocols = []Protocol{
 	Protocol{P_IPFS, LengthPrefixedVarSize, "ipfs", CodeToVarint(P_IPFS)},
 }
 
+func AddProtocol(p Protocol) error {
+	for _, pt := range Protocols {
+		if pt.Code == p.Code {
+			return fmt.Errorf("protocol code %d already taken by %q", p.Code, pt.Name)
+		}
+		if pt.Name == p.Name {
+			return fmt.Errorf("protocol by the name %q already exists", p.Name)
+		}
+	}
+
+	Protocols = append(Protocols, p)
+	return nil
+}
+
 // ProtocolWithName returns the Protocol description with given string name.
 func ProtocolWithName(s string) Protocol {
 	for _, p := range Protocols {
