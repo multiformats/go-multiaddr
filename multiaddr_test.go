@@ -330,4 +330,15 @@ func TestGetValue(t *testing.T) {
 	default:
 		t.Fatalf("expected ErrProtocolNotFound but got: %s", err)
 	}
+
+	a = newMultiaddr(t, "/ip4/0.0.0.0") // only one addr
+	assertValueForProto(t, a, P_IP4, "0.0.0.0")
+
+	a = newMultiaddr(t, "/ip4/0.0.0.0/ip4/0.0.0.0/ip4/0.0.0.0") // same sub-addr
+	assertValueForProto(t, a, P_IP4, "0.0.0.0")
+
+	a = newMultiaddr(t, "/ip4/0.0.0.0/udp/12345/utp") // ending in a no-value one.
+	assertValueForProto(t, a, P_IP4, "0.0.0.0")
+	assertValueForProto(t, a, P_UDP, "12345")
+	assertValueForProto(t, a, P_UTP, "")
 }
