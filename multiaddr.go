@@ -113,3 +113,19 @@ func (m *multiaddr) Decapsulate(o Multiaddr) Multiaddr {
 	}
 	return ma
 }
+
+var ErrProtocolNotFound = fmt.Errorf("protocol not found in multiaddr")
+
+func (m *multiaddr) ValueForProtocol(code int) (string, error) {
+	for _, sub := range Split(m) {
+		p := sub.Protocols()[0]
+		if p.Code == code {
+			if p.Size == 0 {
+				return "", nil
+			}
+			return strings.Split(sub.String(), "/")[2], nil
+		}
+	}
+
+	return "", ErrProtocolNotFound
+}

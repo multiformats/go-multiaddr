@@ -300,3 +300,45 @@ func TestEncapsulate(t *testing.T) {
 		t.Error("decapsulate /ip4 failed.", "/", s)
 	}
 }
+
+func assertValueForProto(t *testing.T, a Multiaddr, p int, exp string) {
+	t.Logf("checking for %s in %s", ProtocolWithCode(p).Name, a)
+	fv, err := a.ValueForProtocol(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if fv != exp {
+		t.Fatalf("expected %q for %d in %d, but got %q instead", exp, p, a, fv)
+	}
+}
+
+func TestGetValue(t *testing.T) {
+	a := newMultiaddr(t, "/ip4/127.0.0.1/utp/tcp/5555/udp/1234/utp/ipfs/QmbHVEEepCi7rn7VL7Exxpd2Ci9NNB6ifvqwhsrbRMgQFP")
+	assertValueForProto(t, a, P_IP4, "127.0.0.1")
+	assertValueForProto(t, a, P_UTP, "")
+	assertValueForProto(t, a, P_TCP, "5555")
+	assertValueForProto(t, a, P_UDP, "1234")
+	assertValueForProto(t, a, P_IPFS, "QmbHVEEepCi7rn7VL7Exxpd2Ci9NNB6ifvqwhsrbRMgQFP")
+
+	_, err := a.ValueForProtocol(P_IP6)
+	switch err {
+	case ErrProtocolNotFound:
+		break
+	case nil:
+		t.Fatal("expected value lookup to fail")
+	default:
+		t.Fatalf("expected ErrProtocolNotFound but got: %s", err)
+	}
+
+	a = newMultiaddr(t, "/ip4/0.0.0.0") // only one addr
+	assertValueForProto(t, a, P_IP4, "0.0.0.0")
+
+	a = newMultiaddr(t, "/ip4/0.0.0.0/ip4/0.0.0.0/ip4/0.0.0.0") // same sub-addr
+	assertValueForProto(t, a, P_IP4, "0.0.0.0")
+
+	a = newMultiaddr(t, "/ip4/0.0.0.0/udp/12345/utp") // ending in a no-value one.
+	assertValueForProto(t, a, P_IP4, "0.0.0.0")
+	assertValueForProto(t, a, P_UDP, "12345")
+	assertValueForProto(t, a, P_UTP, "")
+}

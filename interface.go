@@ -39,4 +39,7 @@ type Multiaddr interface {
 	//      /ip4/1.2.3.4/tcp/80 decapsulate /ip4/1.2.3.4 = /tcp/80
 	//
 	Decapsulate(Multiaddr) Multiaddr
+
+	// ValueForProtocol returns the value (if any) following the specified protocol
+	ValueForProtocol(code int) (string, error)
 }
