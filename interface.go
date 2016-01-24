@@ -14,9 +14,6 @@ Multiaddrs have both a binary and string representation.
 
 */
 type Multiaddr interface {
-	// Equal returns whether two Multiaddrs are exactly equal
-	Equal(Multiaddr) bool
-
 	// Bytes returns the []byte representation of this Multiaddr
 	Bytes() []byte
 
@@ -27,18 +24,6 @@ type Multiaddr interface {
 	// Protocols returns the list of Protocols this Multiaddr includes
 	// will panic if protocol code incorrect (and bytes accessed incorrectly)
 	Protocols() []Protocol
-
-	// Encapsulate wraps this Multiaddr around another. For example:
-	//
-	//      /ip4/1.2.3.4 encapsulate /tcp/80 = /ip4/1.2.3.4/tcp/80
-	//
-	Encapsulate(Multiaddr) Multiaddr
-
-	// Decapsultate removes a Multiaddr wrapping. For example:
-	//
-	//      /ip4/1.2.3.4/tcp/80 decapsulate /ip4/1.2.3.4 = /tcp/80
-	//
-	Decapsulate(Multiaddr) Multiaddr
 
 	// ValueForProtocol returns the value (if any) following the specified protocol
 	ValueForProtocol(code int) (string, error)

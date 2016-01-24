@@ -12,7 +12,7 @@ type multiaddr struct {
 }
 
 // NewMultiaddr parses and validates an input string, returning a *Multiaddr
-func NewMultiaddr(s string) (Multiaddr, error) {
+func NewMultiaddr(s string) (*multiaddr, error) {
 	b, err := stringToBytes(s)
 	if err != nil {
 		return nil, err
@@ -22,7 +22,7 @@ func NewMultiaddr(s string) (Multiaddr, error) {
 
 // NewMultiaddrBytes initializes a Multiaddr from a byte representation.
 // It validates it as an input string.
-func NewMultiaddrBytes(b []byte) (Multiaddr, error) {
+func NewMultiaddrBytes(b []byte) (*multiaddr, error) {
 	s, err := bytesToString(b)
 	if err != nil {
 		return nil, err
@@ -33,6 +33,10 @@ func NewMultiaddrBytes(b []byte) (Multiaddr, error) {
 // Equal tests whether two multiaddrs are equal
 func (m *multiaddr) Equal(m2 Multiaddr) bool {
 	return bytes.Equal(m.bytes, m2.Bytes())
+}
+
+func Equal(m, m2 Multiaddr) bool {
+	return bytes.Equal(m.Bytes(), m2.Bytes())
 }
 
 // Bytes returns the []byte representation of this Multiaddr
@@ -85,25 +89,20 @@ func (m *multiaddr) Protocols() []Protocol {
 }
 
 // Encapsulate wraps a given Multiaddr, returning the resulting joined Multiaddr
-func (m *multiaddr) Encapsulate(o Multiaddr) Multiaddr {
-	mb := m.bytes
+func Encapsulate(m, o Multiaddr) Multiaddr {
+	mb := m.Bytes()
 	ob := o.Bytes()
-
-	b := make([]byte, len(mb)+len(ob))
-	copy(b, mb)
-	copy(b[len(mb):], ob)
-	return &multiaddr{bytes: b}
+	return &multiaddr{bytes: append(mb, ob...)}
 }
 
 // Decapsulate unwraps Multiaddr up until the given Multiaddr is found.
-func (m *multiaddr) Decapsulate(o Multiaddr) Multiaddr {
+func Decapsulate(m, o Multiaddr) Multiaddr {
 	s1 := m.String()
 	s2 := o.String()
 	i := strings.LastIndex(s1, s2)
 	if i < 0 {
 		// if multiaddr not contained, returns a copy.
-		cpy := make([]byte, len(m.bytes))
-		copy(cpy, m.bytes)
+		cpy := m.Bytes()
 		return &multiaddr{bytes: cpy}
 	}
 

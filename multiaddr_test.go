@@ -93,31 +93,31 @@ func TestEqual(t *testing.T) {
 	m3 := newMultiaddr(t, "/ip4/127.0.0.1/tcp/1234")
 	m4 := newMultiaddr(t, "/ip4/127.0.0.1/tcp/1234/")
 
-	if m1.Equal(m2) {
+	if Equal(m1, m2) {
 		t.Error("should not be equal")
 	}
 
-	if m2.Equal(m1) {
+	if Equal(m2, m1) {
 		t.Error("should not be equal")
 	}
 
-	if !m2.Equal(m3) {
+	if !Equal(m2, m3) {
 		t.Error("should be equal")
 	}
 
-	if !m3.Equal(m2) {
+	if !Equal(m3, m2) {
 		t.Error("should be equal")
 	}
 
-	if !m1.Equal(m1) {
+	if !Equal(m1, m1) {
 		t.Error("should be equal")
 	}
 
-	if !m2.Equal(m4) {
+	if !Equal(m2, m4) {
 		t.Error("should be equal")
 	}
 
-	if !m4.Equal(m3) {
+	if !Equal(m4, m3) {
 		t.Error("should be equal")
 	}
 }
@@ -194,9 +194,8 @@ func TestBytesSplitAndJoin(t *testing.T) {
 		}
 
 		// modifying underlying bytes is fine.
-		m2 := m.(*multiaddr)
-		for i := range m2.bytes {
-			m2.bytes[i] = 0
+		for i := range m.bytes {
+			m.bytes[i] = 0
 		}
 
 		for i, a := range split {
@@ -283,19 +282,19 @@ func TestEncapsulate(t *testing.T) {
 		t.Error(err)
 	}
 
-	b := m.Encapsulate(m2)
+	b := Encapsulate(m, m2)
 	if s := b.String(); s != "/ip4/127.0.0.1/udp/1234/udp/5678" {
 		t.Error("encapsulate /ip4/127.0.0.1/udp/1234/udp/5678 failed.", s)
 	}
 
 	m3, _ := NewMultiaddr("/udp/5678")
-	c := b.Decapsulate(m3)
+	c := Decapsulate(b, m3)
 	if s := c.String(); s != "/ip4/127.0.0.1/udp/1234" {
 		t.Error("decapsulate /udp failed.", "/ip4/127.0.0.1/udp/1234", s)
 	}
 
 	m4, _ := NewMultiaddr("/ip4/127.0.0.1")
-	d := c.Decapsulate(m4)
+	d := Decapsulate(c, m4)
 	if s := d.String(); s != "" {
 		t.Error("decapsulate /ip4 failed.", "/", s)
 	}
