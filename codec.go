@@ -211,6 +211,13 @@ func addressStringToBytes(p Protocol, s string) ([]byte, error) {
 		return b, nil
 	}
 
+	// otherwise just encode the bare string
+	if p.Size == LengthPrefixedVarSize {
+		b := []byte(s)
+		size := CodeToVarint(len(b))
+		return append(size, b...), nil
+	}
+
 	return []byte{}, fmt.Errorf("failed to parse %s addr: unknown", p.Name)
 }
 
@@ -238,6 +245,16 @@ func addressBytesToString(p Protocol, b []byte) (string, error) {
 			return "", err
 		}
 		return m.B58String(), nil
+	}
+
+	// otherwise just decode to bare string
+	if p.Size == LengthPrefixedVarSize {
+		size, n := ReadVarintCode(b)
+		b = b[n:]
+		if len(b) != size {
+			panic("inconsistent lengths")
+		}
+		return string(b), nil
 	}
 
 	return "", fmt.Errorf("unknown protocol")
