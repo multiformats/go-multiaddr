@@ -4,7 +4,7 @@ import (
 	"net"
 	"testing"
 
-	ma "github.com/jbenet/go-multiaddr-net/Godeps/_workspace/src/github.com/jbenet/go-multiaddr"
+	ma "github.com/jbenet/go-multiaddr"
 	mautp "github.com/jbenet/go-multiaddr-net/utp"
 )
 
