@@ -1,19 +1,28 @@
-all: install
+export PATH := bin:$(PATH)
 
-godep:
-	go get github.com/tools/godep
+deps: gxbins
+	bin/gx install --global
+	bin/gx-go rewrite
 
-# saves/vendors third-party dependencies to Godeps/_workspace
-# -r flag rewrites import paths to use the vendored path
-# ./... performs operation on all packages in tree
-vendor: godep
-	godep save -r ./...
+publish:
+	bin/gx-go rewrite --undo
+	bin/gx publish
 
-install: dep
-	cd multiaddr && go install
-
-test:
+test: deps
 	go test -race -cpu=5 -v ./...
 
-dep:
-	cd multiaddr && go get ./...
+gxbins: bin/gx-v0.6.0 bin/gx-go-v1.2.0
+
+bin/gx-v0.6.0:
+	mkdir -p bin
+	./bin/dist_get gx bin/gx-v0.6.0 v0.6.0
+	ln -s gx-v0.6.0 bin/gx
+
+bin/gx-go-v1.2.0:
+	mkdir -p bin
+	./bin/dist_get gx-go bin/gx-go-v1.2.0 v1.2.0
+	ln -s gx-go-v1.2.0 bin/gx-go
+
+clean:
+	rm -f bin/gx*
+	rm -rf bin/tmp
