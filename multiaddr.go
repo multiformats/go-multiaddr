@@ -23,11 +23,11 @@ func NewMultiaddr(s string) (Multiaddr, error) {
 // NewMultiaddrBytes initializes a Multiaddr from a byte representation.
 // It validates it as an input string.
 func NewMultiaddrBytes(b []byte) (Multiaddr, error) {
-	s, err := bytesToString(b)
-	if err != nil {
+	if err := validateBytes(b); err != nil {
 		return nil, err
 	}
-	return NewMultiaddr(s)
+
+	return &multiaddr{bytes: b}, nil
 }
 
 // Equal tests whether two multiaddrs are equal
@@ -64,11 +64,14 @@ func (m *multiaddr) Protocols() []Protocol {
 		}
 	}()
 
-	size := 0
-	ps := []Protocol{}
-	b := m.bytes[:]
+	var ps []Protocol
+	b := m.bytes
 	for len(b) > 0 {
-		code, n := ReadVarintCode(b)
+		code, n, err := ReadVarintCode(b)
+		if err != nil {
+			panic(err)
+		}
+
 		p := ProtocolWithCode(code)
 		if p.Code == 0 {
 			// this is a panic (and not returning err) because this should've been
@@ -78,7 +81,7 @@ func (m *multiaddr) Protocols() []Protocol {
 		ps = append(ps, p)
 		b = b[n:]
 
-		size = sizeForAddr(p, b)
+		size, err := sizeForAddr(p, b)
 		b = b[size:]
 	}
 	return ps

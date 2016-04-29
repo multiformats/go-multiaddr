@@ -117,16 +117,19 @@ func CodeToVarint(num int) []byte {
 
 // VarintToCode converts a varint-encoded []byte to an integer protocol code
 func VarintToCode(buf []byte) int {
-	num, _ := ReadVarintCode(buf)
+	num, _, err := ReadVarintCode(buf)
+	if err != nil {
+		panic(err)
+	}
 	return num
 }
 
 // ReadVarintCode reads a varint code from the beginning of buf.
 // returns the code, and the number of bytes read.
-func ReadVarintCode(buf []byte) (int, int) {
+func ReadVarintCode(buf []byte) (int, int, error) {
 	num, n := binary.Uvarint(buf)
 	if n < 0 {
-		panic("varints larger than uint64 not yet supported")
+		return 0, 0, fmt.Errorf("varints larger than uint64 not yet supported")
 	}
-	return int(num), n
+	return int(num), n, nil
 }

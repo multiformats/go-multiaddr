@@ -3,7 +3,9 @@ package multiaddr
 import (
 	"bytes"
 	"encoding/hex"
+	"math/rand"
 	"testing"
+	"time"
 )
 
 func newMultiaddr(t *testing.T, a string) Multiaddr {
@@ -341,4 +343,22 @@ func TestGetValue(t *testing.T) {
 	assertValueForProto(t, a, P_IP4, "0.0.0.0")
 	assertValueForProto(t, a, P_UDP, "12345")
 	assertValueForProto(t, a, P_UTP, "")
+}
+
+func TestFuzzBytes(t *testing.T) {
+	rand.Seed(time.Now().UnixNano())
+	// Bump up these numbers if you want to stress this
+	buf := make([]byte, 256)
+	for i := 0; i < 2000; i++ {
+		l := rand.Intn(len(buf))
+		rand.Read(buf[:l])
+
+		// just checking that it doesnt panic
+		ma, err := NewMultiaddrBytes(buf[:l])
+		if err == nil {
+			// for any valid multiaddrs, make sure these calls don't panic
+			ma.String()
+			ma.Protocols()
+		}
+	}
 }

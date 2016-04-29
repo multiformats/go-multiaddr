@@ -3,7 +3,6 @@ package multiaddr
 import (
 	"encoding/base32"
 	"encoding/binary"
-	"errors"
 	"fmt"
 	"net"
 	"strconv"
@@ -52,27 +51,42 @@ func stringToBytes(s string) ([]byte, error) {
 	return b, nil
 }
 
-func bytesToString(b []byte) (ret string, err error) {
+func validateBytes(b []byte) (err error) {
 	// panic handler, in case we try accessing bytes incorrectly.
-	defer func() {
-		if e := recover(); e != nil {
-			ret = ""
-			switch e := e.(type) {
-			case error:
-				err = e
-			case string:
-				err = errors.New(e)
-			default:
-				err = fmt.Errorf("%v", e)
-			}
+	for len(b) > 0 {
+		code, n, err := ReadVarintCode(b)
+		b = b[n:]
+		p := ProtocolWithCode(code)
+		if p.Code == 0 {
+			return fmt.Errorf("no protocol with code %d", code)
 		}
-	}()
 
+		if p.Size == 0 {
+			continue
+		}
+
+		size, err := sizeForAddr(p, b)
+		if err != nil {
+			return err
+		}
+
+		if len(b) < size {
+			return fmt.Errorf("invalid value for size")
+		}
+		b = b[size:]
+	}
+
+	return nil
+}
+func bytesToString(b []byte) (ret string, err error) {
 	s := ""
 
 	for len(b) > 0 {
+		code, n, err := ReadVarintCode(b)
+		if err != nil {
+			return "", err
+		}
 
-		code, n := ReadVarintCode(b)
 		b = b[n:]
 		p := ProtocolWithCode(code)
 		if p.Code == 0 {
@@ -84,7 +98,11 @@ func bytesToString(b []byte) (ret string, err error) {
 			continue
 		}
 
-		size := sizeForAddr(p, b)
+		size, err := sizeForAddr(p, b)
+		if err != nil {
+			return "", err
+		}
+
 		a, err := addressBytesToString(p, b[:size])
 		if err != nil {
 			return "", err
@@ -98,36 +116,40 @@ func bytesToString(b []byte) (ret string, err error) {
 	return s, nil
 }
 
-func sizeForAddr(p Protocol, b []byte) int {
+func sizeForAddr(p Protocol, b []byte) (int, error) {
 	switch {
 	case p.Size > 0:
-		return (p.Size / 8)
+		return (p.Size / 8), nil
 	case p.Size == 0:
-		return 0
+		return 0, nil
 	default:
-		size, n := ReadVarintCode(b)
-		return size + n
+		size, n, err := ReadVarintCode(b)
+		if err != nil {
+			return 0, err
+		}
+
+		return size + n, nil
 	}
 }
 
-func bytesSplit(b []byte) (ret [][]byte, err error) {
-	// panic handler, in case we try accessing bytes incorrectly.
-	defer func() {
-		if e := recover(); e != nil {
-			ret = [][]byte{}
-			err = e.(error)
-		}
-	}()
-
-	ret = [][]byte{}
+func bytesSplit(b []byte) ([][]byte, error) {
+	var ret [][]byte
 	for len(b) > 0 {
-		code, n := ReadVarintCode(b)
+		code, n, err := ReadVarintCode(b)
+		if err != nil {
+			return nil, err
+		}
+
 		p := ProtocolWithCode(code)
 		if p.Code == 0 {
-			return [][]byte{}, fmt.Errorf("no protocol with code %d", b[0])
+			return nil, fmt.Errorf("no protocol with code %d", b[0])
 		}
 
-		size := sizeForAddr(p, b[n:])
+		size, err := sizeForAddr(p, b[n:])
+		if err != nil {
+			return nil, err
+		}
+
 		length := n + size
 		ret = append(ret, b[:length])
 		b = b[length:]
@@ -228,10 +250,14 @@ func addressBytesToString(p Protocol, b []byte) (string, error) {
 
 	case P_IPFS: // ipfs
 		// the address is a varint-prefixed multihash string representation
-		size, n := ReadVarintCode(b)
+		size, n, err := ReadVarintCode(b)
+		if err != nil {
+			return "", err
+		}
+
 		b = b[n:]
 		if len(b) != size {
-			panic("inconsistent lengths")
+			return "", fmt.Errorf("inconsistent lengths")
 		}
 		m, err := mh.Cast(b)
 		if err != nil {
