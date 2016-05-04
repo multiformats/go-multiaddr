@@ -70,9 +70,10 @@ func validateBytes(b []byte) (err error) {
 			return err
 		}
 
-		if len(b) < size {
+		if len(b) < size || size < 0 {
 			return fmt.Errorf("invalid value for size")
 		}
+
 		b = b[size:]
 	}
 
