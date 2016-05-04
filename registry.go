@@ -15,32 +15,43 @@ var maddrParsers map[string]MaddrParser
 var addrParsers map[string]AddrParser
 var addrParsersLock sync.Mutex
 
-func RegisterAddressType(netname, maname string, ap AddrParser, mp MaddrParser) {
+type AddressSpec struct {
+	// NetNames is an array of strings that may be returned
+	// by net.Addr.Network() calls on addresses belonging to this type
+	NetNames []string
+
+	// Key is the string value for Multiaddr address keys
+	Key string
+
+	// ParseNetAddr parses a net.Addr belonging to this type into a multiaddr
+	ParseNetAddr AddrParser
+
+	// ConvertMultiaddr converts a multiaddr of this type back into a net.Addr
+	ConvertMultiaddr MaddrParser
+
+	// Protocol returns the multiaddr protocol struct for this type
+	Protocol ma.Protocol
+}
+
+func RegisterAddressType(a *AddressSpec) {
 	addrParsersLock.Lock()
 	defer addrParsersLock.Unlock()
-	addrParsers[netname] = ap
-	maddrParsers[maname] = mp
+	for _, n := range a.NetNames {
+		addrParsers[n] = a.ParseNetAddr
+	}
+
+	maddrParsers[a.Key] = a.ConvertMultiaddr
 }
 
 func init() {
 	addrParsers = make(map[string]AddrParser)
 	maddrParsers = make(map[string]MaddrParser)
 
-	funcs := map[string]AddrParser{
-		"tcp": parseTcpNetAddr,
-		"udp": parseUdpNetAddr,
-		"utp": parseUtpNetAddr,
-	}
-
-	for k, v := range funcs {
-		RegisterAddressType(k, k, v, parseBasicNetMaddr)
-		RegisterAddressType(k+"4", k, v, parseBasicNetMaddr)
-		RegisterAddressType(k+"6", k, v, parseBasicNetMaddr)
-	}
-
-	for _, i := range []string{"ip", "ip4", "ip6"} {
-		RegisterAddressType(i, i, parseIpNetAddr, parseBasicNetMaddr)
-	}
+	RegisterAddressType(tcpAddrSpec)
+	RegisterAddressType(udpAddrSpec)
+	RegisterAddressType(utpAddrSpec)
+	RegisterAddressType(ip4AddrSpec)
+	RegisterAddressType(ip6AddrSpec)
 
 	addrParsers["ip+net"] = parseIpPlusNetAddr
 }
