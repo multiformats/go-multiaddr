@@ -257,7 +257,7 @@ func TestProtocolsWithString(t *testing.T) {
 	for s, ps1 := range good {
 		ps2, err := ProtocolsWithString(s)
 		if err != nil {
-			t.Error("ProtocolsWithString(%s) should have succeeded", s)
+			t.Errorf("ProtocolsWithString(%s) should have succeeded", s)
 		}
 
 		for i, ps1p := range ps1 {
@@ -277,7 +277,7 @@ func TestProtocolsWithString(t *testing.T) {
 
 	for _, s := range bad {
 		if _, err := ProtocolsWithString(s); err == nil {
-			t.Error("ProtocolsWithString(%s) should have failed", s)
+			t.Errorf("ProtocolsWithString(%s) should have failed", s)
 		}
 	}
 
@@ -320,7 +320,7 @@ func assertValueForProto(t *testing.T, a Multiaddr, p int, exp string) {
 	}
 
 	if fv != exp {
-		t.Fatalf("expected %q for %d in %d, but got %q instead", exp, p, a, fv)
+		t.Fatalf("expected %q for %d in %s, but got %q instead", exp, p, a, fv)
 	}
 }
 
@@ -366,7 +366,7 @@ func TestFuzzBytes(t *testing.T) {
 		ma, err := NewMultiaddrBytes(buf[:l])
 		if err == nil {
 			// for any valid multiaddrs, make sure these calls don't panic
-			ma.String()
+			_ = ma.String()
 			ma.Protocols()
 		}
 	}
@@ -400,7 +400,7 @@ func TestFuzzString(t *testing.T) {
 		ma, err := NewMultiaddr(randMaddrString())
 		if err == nil {
 			// for any valid multiaddrs, make sure these calls don't panic
-			ma.String()
+			_ = ma.String()
 			ma.Protocols()
 		}
 	}
