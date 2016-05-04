@@ -1,6 +1,7 @@
 package multiaddr
 
 import (
+	"bytes"
 	"encoding/base32"
 	"encoding/binary"
 	"fmt"
@@ -16,7 +17,7 @@ func stringToBytes(s string) ([]byte, error) {
 	// consume trailing slashes
 	s = strings.TrimRight(s, "/")
 
-	b := []byte{}
+	b := new(bytes.Buffer)
 	sp := strings.Split(s, "/")
 
 	if sp[0] != "" {
@@ -31,7 +32,7 @@ func stringToBytes(s string) ([]byte, error) {
 		if p.Code == 0 {
 			return nil, fmt.Errorf("no protocol with name %s", sp[0])
 		}
-		b = append(b, CodeToVarint(p.Code)...)
+		b.Write(CodeToVarint(p.Code))
 		sp = sp[1:]
 
 		if p.Size == 0 { // no length.
@@ -41,18 +42,19 @@ func stringToBytes(s string) ([]byte, error) {
 		if len(sp) < 1 {
 			return nil, fmt.Errorf("protocol requires address, none given: %s", p.Name)
 		}
+
 		a, err := addressStringToBytes(p, sp[0])
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse %s: %s %s", p.Name, sp[0], err)
 		}
-		b = append(b, a...)
+		b.Write(a)
 		sp = sp[1:]
 	}
-	return b, nil
+
+	return b.Bytes(), nil
 }
 
 func validateBytes(b []byte) (err error) {
-	// panic handler, in case we try accessing bytes incorrectly.
 	for len(b) > 0 {
 		code, n, err := ReadVarintCode(b)
 		b = b[n:]
@@ -102,6 +104,10 @@ func bytesToString(b []byte) (ret string, err error) {
 		size, err := sizeForAddr(p, b)
 		if err != nil {
 			return "", err
+		}
+
+		if len(b) < size || size < 0 {
+			return "", fmt.Errorf("invalid value for size")
 		}
 
 		a, err := addressBytesToString(p, b[:size])
@@ -265,7 +271,7 @@ func addressBytesToString(p Protocol, b []byte) (string, error) {
 			return "", err
 		}
 		return m.B58String(), nil
+	default:
+		return "", fmt.Errorf("unknown protocol")
 	}
-
-	return "", fmt.Errorf("unknown protocol")
 }
