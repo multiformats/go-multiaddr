@@ -3,6 +3,7 @@ package multiaddr
 import (
 	"bytes"
 	"fmt"
+	"log"
 	"strings"
 )
 
@@ -12,7 +13,13 @@ type multiaddr struct {
 }
 
 // NewMultiaddr parses and validates an input string, returning a *Multiaddr
-func NewMultiaddr(s string) (Multiaddr, error) {
+func NewMultiaddr(s string) (a Multiaddr, err error) {
+	defer func() {
+		if e := recover(); e != nil {
+			log.Printf("Panic in NewMultiaddr on input %q: %s", s, e)
+			err = fmt.Errorf("%v", e)
+		}
+	}()
 	b, err := stringToBytes(s)
 	if err != nil {
 		return nil, err
@@ -22,7 +29,14 @@ func NewMultiaddr(s string) (Multiaddr, error) {
 
 // NewMultiaddrBytes initializes a Multiaddr from a byte representation.
 // It validates it as an input string.
-func NewMultiaddrBytes(b []byte) (Multiaddr, error) {
+func NewMultiaddrBytes(b []byte) (a Multiaddr, err error) {
+	defer func() {
+		if e := recover(); e != nil {
+			log.Printf("Panic in NewMultiaddrBytes on input %q: %s", b, e)
+			err = fmt.Errorf("%v", e)
+		}
+	}()
+
 	if err := validateBytes(b); err != nil {
 		return nil, err
 	}
@@ -82,6 +96,10 @@ func (m *multiaddr) Protocols() []Protocol {
 		b = b[n:]
 
 		size, err := sizeForAddr(p, b)
+		if err != nil {
+			panic(err)
+		}
+
 		b = b[size:]
 	}
 	return ps

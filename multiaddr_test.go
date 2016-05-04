@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/hex"
 	"math/rand"
+	"strings"
 	"testing"
 	"time"
 )
@@ -140,6 +141,10 @@ func TestStringToBytes(t *testing.T) {
 		if !bytes.Equal(b1, b2) {
 			t.Error("failed to convert", s, "to", b1, "got", b2)
 		}
+
+		if err := validateBytes(b2); err != nil {
+			t.Error(err)
+		}
 	}
 
 	testString("/ip4/127.0.0.1/udp/1234", "047f0000011104d2")
@@ -153,6 +158,10 @@ func TestBytesToString(t *testing.T) {
 		b, err := hex.DecodeString(h)
 		if err != nil {
 			t.Error("failed to decode hex", h)
+		}
+
+		if err := validateBytes(b); err != nil {
+			t.Error(err)
 		}
 
 		s2, err := bytesToString(b)
@@ -355,6 +364,40 @@ func TestFuzzBytes(t *testing.T) {
 
 		// just checking that it doesnt panic
 		ma, err := NewMultiaddrBytes(buf[:l])
+		if err == nil {
+			// for any valid multiaddrs, make sure these calls don't panic
+			ma.String()
+			ma.Protocols()
+		}
+	}
+}
+
+func randMaddrString() string {
+	good_corpus := []string{"tcp", "ip", "udp", "ipfs", "0.0.0.0", "127.0.0.1", "12345", "QmbHVEEepCi7rn7VL7Exxpd2Ci9NNB6ifvqwhsrbRMgQFP"}
+
+	size := rand.Intn(256)
+	parts := make([]string, 0, size)
+	for i := 0; i < size; i++ {
+		switch rand.Intn(5) {
+		case 0, 1, 2:
+			parts = append(parts, good_corpus[rand.Intn(len(good_corpus))])
+		default:
+			badbuf := make([]byte, rand.Intn(256))
+			rand.Read(badbuf)
+			parts = append(parts, string(badbuf))
+		}
+	}
+
+	return "/" + strings.Join(parts, "/")
+}
+
+func TestFuzzString(t *testing.T) {
+	rand.Seed(time.Now().UnixNano())
+	// Bump up these numbers if you want to stress this
+	for i := 0; i < 2000; i++ {
+
+		// just checking that it doesnt panic
+		ma, err := NewMultiaddr(randMaddrString())
 		if err == nil {
 			// for any valid multiaddrs, make sure these calls don't panic
 			ma.String()

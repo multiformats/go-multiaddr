@@ -57,6 +57,10 @@ func stringToBytes(s string) ([]byte, error) {
 func validateBytes(b []byte) (err error) {
 	for len(b) > 0 {
 		code, n, err := ReadVarintCode(b)
+		if err != nil {
+			return err
+		}
+
 		b = b[n:]
 		p := ProtocolWithCode(code)
 		if p.Code == 0 {
@@ -81,6 +85,7 @@ func validateBytes(b []byte) (err error) {
 
 	return nil
 }
+
 func bytesToString(b []byte) (ret string, err error) {
 	s := ""
 
