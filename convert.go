@@ -101,13 +101,6 @@ func DialArgs(m ma.Multiaddr) (string, string, error) {
 	return network, host, nil
 }
 
-var tcpAddrSpec = &AddressSpec{
-	Key:              "tcp",
-	NetNames:         []string{"tcp", "tcp4", "tcp6"},
-	ParseNetAddr:     parseTcpNetAddr,
-	ConvertMultiaddr: parseBasicNetMaddr,
-}
-
 func parseTcpNetAddr(a net.Addr) (ma.Multiaddr, error) {
 	ac, ok := a.(*net.TCPAddr)
 	if !ok {
@@ -130,13 +123,6 @@ func parseTcpNetAddr(a net.Addr) (ma.Multiaddr, error) {
 	return ipm.Encapsulate(tcpm), nil
 }
 
-var udpAddrSpec = &AddressSpec{
-	Key:              "udp",
-	NetNames:         []string{"udp", "udp4", "udp6"},
-	ParseNetAddr:     parseUdpNetAddr,
-	ConvertMultiaddr: parseBasicNetMaddr,
-}
-
 func parseUdpNetAddr(a net.Addr) (ma.Multiaddr, error) {
 	ac, ok := a.(*net.UDPAddr)
 	if !ok {
@@ -157,13 +143,6 @@ func parseUdpNetAddr(a net.Addr) (ma.Multiaddr, error) {
 
 	// Encapsulate
 	return ipm.Encapsulate(udpm), nil
-}
-
-var utpAddrSpec = &AddressSpec{
-	Key:              "utp",
-	NetNames:         []string{"utp", "utp4", "utp6"},
-	ParseNetAddr:     parseUtpNetAddr,
-	ConvertMultiaddr: parseBasicNetMaddr,
 }
 
 func parseUtpNetAddr(a net.Addr) (ma.Multiaddr, error) {
@@ -192,20 +171,6 @@ func parseUtpNetAddr(a net.Addr) (ma.Multiaddr, error) {
 
 	// Encapsulate
 	return ipm.Encapsulate(utpm), nil
-}
-
-var ip4AddrSpec = &AddressSpec{
-	Key:              "ip4",
-	NetNames:         []string{"ip4"},
-	ParseNetAddr:     parseIpNetAddr,
-	ConvertMultiaddr: parseBasicNetMaddr,
-}
-
-var ip6AddrSpec = &AddressSpec{
-	Key:              "ip6",
-	NetNames:         []string{"ip6"},
-	ParseNetAddr:     parseIpNetAddr,
-	ConvertMultiaddr: parseBasicNetMaddr,
 }
 
 func parseIpNetAddr(a net.Addr) (ma.Multiaddr, error) {

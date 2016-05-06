@@ -56,6 +56,41 @@ func init() {
 	addrParsers["ip+net"] = parseIpPlusNetAddr
 }
 
+var tcpAddrSpec = &AddressSpec{
+	Key:              "tcp",
+	NetNames:         []string{"tcp", "tcp4", "tcp6"},
+	ParseNetAddr:     parseTcpNetAddr,
+	ConvertMultiaddr: parseBasicNetMaddr,
+}
+
+var udpAddrSpec = &AddressSpec{
+	Key:              "udp",
+	NetNames:         []string{"udp", "udp4", "udp6"},
+	ParseNetAddr:     parseUdpNetAddr,
+	ConvertMultiaddr: parseBasicNetMaddr,
+}
+
+var utpAddrSpec = &AddressSpec{
+	Key:              "utp",
+	NetNames:         []string{"utp", "utp4", "utp6"},
+	ParseNetAddr:     parseUtpNetAddr,
+	ConvertMultiaddr: parseBasicNetMaddr,
+}
+
+var ip4AddrSpec = &AddressSpec{
+	Key:              "ip4",
+	NetNames:         []string{"ip4"},
+	ParseNetAddr:     parseIpNetAddr,
+	ConvertMultiaddr: parseBasicNetMaddr,
+}
+
+var ip6AddrSpec = &AddressSpec{
+	Key:              "ip6",
+	NetNames:         []string{"ip6"},
+	ParseNetAddr:     parseIpNetAddr,
+	ConvertMultiaddr: parseBasicNetMaddr,
+}
+
 func getAddrParser(net string) (AddrParser, error) {
 	addrParsersLock.Lock()
 	defer addrParsersLock.Unlock()
