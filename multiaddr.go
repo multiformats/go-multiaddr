@@ -123,7 +123,7 @@ func (m *multiaddr) ValueForProtocol(code int) (string, error) {
 			if p.Size == 0 {
 				return "", nil
 			}
-			return strings.Split(sub.String(), "/")[2], nil
+			return strings.Join(strings.Split(sub.String(), "/")[2:], "/"), nil
 		}
 	}
 

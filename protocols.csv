@@ -11,3 +11,4 @@ code	size	name
 480	0	http
 443	0	https
 444	10	onion
+445	V	dns

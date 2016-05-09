@@ -40,6 +40,8 @@ func TestConstructFails(t *testing.T) {
 		"/ip4/127.0.0.1/tcp",
 		"/ip4/127.0.0.1/ipfs",
 		"/ip4/127.0.0.1/ipfs/tcp",
+		"/dns/www.google.com/ip3/tcp/1234",
+		"/dns/www.yahoo.com/udp/1234",
 	}
 
 	for _, a := range cases {
@@ -78,6 +80,8 @@ func TestConstructSucceeds(t *testing.T) {
 		"/ip4/127.0.0.1/tcp/1234/",
 		"/ip4/127.0.0.1/ipfs/QmcgpsyWgH8Y8ajJz1Cu72KnS5uo2Aa2LpzU7kinSupNKC",
 		"/ip4/127.0.0.1/ipfs/QmcgpsyWgH8Y8ajJz1Cu72KnS5uo2Aa2LpzU7kinSupNKC/tcp/1234",
+		"/dns/www.google.com/ip4/tcp/1234",
+		"/dns/www.yahoo.com/ip6/udp/1234",
 	}
 
 	for _, a := range cases {
@@ -136,13 +140,14 @@ func TestStringToBytes(t *testing.T) {
 		}
 
 		if !bytes.Equal(b1, b2) {
-			t.Error("failed to convert", s, "to", b1, "got", b2)
+			t.Error("failed to convert", s, "to", hex.EncodeToString(b1), "got", hex.EncodeToString(b2))
 		}
 	}
 
 	testString("/ip4/127.0.0.1/udp/1234", "047f0000011104d2")
 	testString("/ip4/127.0.0.1/tcp/4321", "047f0000010610e1")
 	testString("/ip4/127.0.0.1/udp/1234/ip4/127.0.0.1/tcp/4321", "047f0000011104d2047f0000010610e1")
+	testString("/dns/www.google.com/ip4/tcp/1234", "bd030f7777772e676f6f676c652e636f6d040604d2")
 }
 
 func TestBytesToString(t *testing.T) {
@@ -159,13 +164,14 @@ func TestBytesToString(t *testing.T) {
 		}
 
 		if s1 != s2 {
-			t.Error("failed to convert", b, "to", s1, "got", s2)
+			t.Error("failed to convert", hex.EncodeToString(b), "to", s1, "got", s2)
 		}
 	}
 
 	testString("/ip4/127.0.0.1/udp/1234", "047f0000011104d2")
 	testString("/ip4/127.0.0.1/tcp/4321", "047f0000010610e1")
 	testString("/ip4/127.0.0.1/udp/1234/ip4/127.0.0.1/tcp/4321", "047f0000011104d2047f0000010610e1")
+	testString("/dns/www.google.com/ip4/tcp/1234", "bd030f7777772e676f6f676c652e636f6d040604d2")
 }
 
 func TestBytesSplitAndJoin(t *testing.T) {
@@ -211,6 +217,7 @@ func TestBytesSplitAndJoin(t *testing.T) {
 		[]string{"/ip4/1.2.3.4", "/tcp/1", "/ip4/2.3.4.5", "/udp/2"})
 	testString("/ip4/1.2.3.4/utp/ip4/2.3.4.5/udp/2/udt",
 		[]string{"/ip4/1.2.3.4", "/utp", "/ip4/2.3.4.5", "/udp/2", "/udt"})
+	testString("/dns/www.google.com/ip4/udp/2", []string{"/dns/www.google.com/ip4", "/udp/2"})
 }
 
 func TestProtocols(t *testing.T) {
@@ -299,6 +306,17 @@ func TestEncapsulate(t *testing.T) {
 	if s := d.String(); s != "" {
 		t.Error("decapsulate /ip4 failed.", "/", s)
 	}
+
+	m5, _ := NewMultiaddr("/dns/www.google.com/ip4")
+	e := m5.Encapsulate(m3)
+	if s := e.String(); s != "/dns/www.google.com/ip4/udp/5678" {
+		t.Error("encapsulate /dns/www.google.com/ip4/udp/5678")
+	}
+
+	f := e.Decapsulate(m3)
+	if s := f.String(); s != "/dns/www.google.com/ip4" {
+		t.Error("decapsulate /udp failed.", "/dns/www.google.com/ip4", s)
+	}
 }
 
 func assertValueForProto(t *testing.T, a Multiaddr, p int, exp string) {
@@ -341,4 +359,8 @@ func TestGetValue(t *testing.T) {
 	assertValueForProto(t, a, P_IP4, "0.0.0.0")
 	assertValueForProto(t, a, P_UDP, "12345")
 	assertValueForProto(t, a, P_UTP, "")
+
+	a = newMultiaddr(t, "/dns/www.google.com/ip4/udp/12345")
+	assertValueForProto(t, a, P_DNS, "www.google.com/ip4")
+	assertValueForProto(t, a, P_UDP, "12345")
 }
