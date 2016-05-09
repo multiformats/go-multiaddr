@@ -31,6 +31,7 @@ const (
 	P_HTTP  = 480
 	P_HTTPS = 443
 	P_ONION = 444
+	P_DNS   = 445
 )
 
 // These are special sizes
@@ -53,6 +54,7 @@ var Protocols = []Protocol{
 	Protocol{P_HTTP, 0, "http", CodeToVarint(P_HTTP)},
 	Protocol{P_HTTPS, 0, "https", CodeToVarint(P_HTTPS)},
 	Protocol{P_IPFS, LengthPrefixedVarSize, "ipfs", CodeToVarint(P_IPFS)},
+	Protocol{P_DNS, LengthPrefixedVarSize, "dns", CodeToVarint(P_DNS)},
 }
 
 func AddProtocol(p Protocol) error {
