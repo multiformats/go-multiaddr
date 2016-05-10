@@ -3,7 +3,10 @@ package multiaddr
 import (
 	"bytes"
 	"encoding/hex"
+	"math/rand"
+	"strings"
 	"testing"
+	"time"
 )
 
 func newMultiaddr(t *testing.T, a string) Multiaddr {
@@ -138,6 +141,10 @@ func TestStringToBytes(t *testing.T) {
 		if !bytes.Equal(b1, b2) {
 			t.Error("failed to convert", s, "to", b1, "got", b2)
 		}
+
+		if err := validateBytes(b2); err != nil {
+			t.Error(err)
+		}
 	}
 
 	testString("/ip4/127.0.0.1/udp/1234", "047f0000011104d2")
@@ -151,6 +158,10 @@ func TestBytesToString(t *testing.T) {
 		b, err := hex.DecodeString(h)
 		if err != nil {
 			t.Error("failed to decode hex", h)
+		}
+
+		if err := validateBytes(b); err != nil {
+			t.Error(err)
 		}
 
 		s2, err := bytesToString(b)
@@ -246,7 +257,7 @@ func TestProtocolsWithString(t *testing.T) {
 	for s, ps1 := range good {
 		ps2, err := ProtocolsWithString(s)
 		if err != nil {
-			t.Error("ProtocolsWithString(%s) should have succeeded", s)
+			t.Errorf("ProtocolsWithString(%s) should have succeeded", s)
 		}
 
 		for i, ps1p := range ps1 {
@@ -266,7 +277,7 @@ func TestProtocolsWithString(t *testing.T) {
 
 	for _, s := range bad {
 		if _, err := ProtocolsWithString(s); err == nil {
-			t.Error("ProtocolsWithString(%s) should have failed", s)
+			t.Errorf("ProtocolsWithString(%s) should have failed", s)
 		}
 	}
 
@@ -309,7 +320,7 @@ func assertValueForProto(t *testing.T, a Multiaddr, p int, exp string) {
 	}
 
 	if fv != exp {
-		t.Fatalf("expected %q for %d in %d, but got %q instead", exp, p, a, fv)
+		t.Fatalf("expected %q for %d in %s, but got %q instead", exp, p, a, fv)
 	}
 }
 
@@ -341,4 +352,56 @@ func TestGetValue(t *testing.T) {
 	assertValueForProto(t, a, P_IP4, "0.0.0.0")
 	assertValueForProto(t, a, P_UDP, "12345")
 	assertValueForProto(t, a, P_UTP, "")
+}
+
+func TestFuzzBytes(t *testing.T) {
+	rand.Seed(time.Now().UnixNano())
+	// Bump up these numbers if you want to stress this
+	buf := make([]byte, 256)
+	for i := 0; i < 2000; i++ {
+		l := rand.Intn(len(buf))
+		rand.Read(buf[:l])
+
+		// just checking that it doesnt panic
+		ma, err := NewMultiaddrBytes(buf[:l])
+		if err == nil {
+			// for any valid multiaddrs, make sure these calls don't panic
+			_ = ma.String()
+			ma.Protocols()
+		}
+	}
+}
+
+func randMaddrString() string {
+	good_corpus := []string{"tcp", "ip", "udp", "ipfs", "0.0.0.0", "127.0.0.1", "12345", "QmbHVEEepCi7rn7VL7Exxpd2Ci9NNB6ifvqwhsrbRMgQFP"}
+
+	size := rand.Intn(256)
+	parts := make([]string, 0, size)
+	for i := 0; i < size; i++ {
+		switch rand.Intn(5) {
+		case 0, 1, 2:
+			parts = append(parts, good_corpus[rand.Intn(len(good_corpus))])
+		default:
+			badbuf := make([]byte, rand.Intn(256))
+			rand.Read(badbuf)
+			parts = append(parts, string(badbuf))
+		}
+	}
+
+	return "/" + strings.Join(parts, "/")
+}
+
+func TestFuzzString(t *testing.T) {
+	rand.Seed(time.Now().UnixNano())
+	// Bump up these numbers if you want to stress this
+	for i := 0; i < 2000; i++ {
+
+		// just checking that it doesnt panic
+		ma, err := NewMultiaddr(randMaddrString())
+		if err == nil {
+			// for any valid multiaddrs, make sure these calls don't panic
+			_ = ma.String()
+			ma.Protocols()
+		}
+	}
 }

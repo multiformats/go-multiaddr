@@ -1,9 +1,9 @@
 package multiaddr
 
 import (
+	"bytes"
 	"encoding/base32"
 	"encoding/binary"
-	"errors"
 	"fmt"
 	"net"
 	"strconv"
@@ -17,7 +17,7 @@ func stringToBytes(s string) ([]byte, error) {
 	// consume trailing slashes
 	s = strings.TrimRight(s, "/")
 
-	b := []byte{}
+	b := new(bytes.Buffer)
 	sp := strings.Split(s, "/")
 
 	if sp[0] != "" {
@@ -32,7 +32,7 @@ func stringToBytes(s string) ([]byte, error) {
 		if p.Code == 0 {
 			return nil, fmt.Errorf("no protocol with name %s", sp[0])
 		}
-		b = append(b, CodeToVarint(p.Code)...)
+		b.Write(CodeToVarint(p.Code))
 		sp = sp[1:]
 
 		if p.Size == 0 { // no length.
@@ -42,37 +42,59 @@ func stringToBytes(s string) ([]byte, error) {
 		if len(sp) < 1 {
 			return nil, fmt.Errorf("protocol requires address, none given: %s", p.Name)
 		}
+
 		a, err := addressStringToBytes(p, sp[0])
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse %s: %s %s", p.Name, sp[0], err)
 		}
-		b = append(b, a...)
+		b.Write(a)
 		sp = sp[1:]
 	}
-	return b, nil
+
+	return b.Bytes(), nil
+}
+
+func validateBytes(b []byte) (err error) {
+	for len(b) > 0 {
+		code, n, err := ReadVarintCode(b)
+		if err != nil {
+			return err
+		}
+
+		b = b[n:]
+		p := ProtocolWithCode(code)
+		if p.Code == 0 {
+			return fmt.Errorf("no protocol with code %d", code)
+		}
+
+		if p.Size == 0 {
+			continue
+		}
+
+		size, err := sizeForAddr(p, b)
+		if err != nil {
+			return err
+		}
+
+		if len(b) < size || size < 0 {
+			return fmt.Errorf("invalid value for size")
+		}
+
+		b = b[size:]
+	}
+
+	return nil
 }
 
 func bytesToString(b []byte) (ret string, err error) {
-	// panic handler, in case we try accessing bytes incorrectly.
-	defer func() {
-		if e := recover(); e != nil {
-			ret = ""
-			switch e := e.(type) {
-			case error:
-				err = e
-			case string:
-				err = errors.New(e)
-			default:
-				err = fmt.Errorf("%v", e)
-			}
-		}
-	}()
-
 	s := ""
 
 	for len(b) > 0 {
+		code, n, err := ReadVarintCode(b)
+		if err != nil {
+			return "", err
+		}
 
-		code, n := ReadVarintCode(b)
 		b = b[n:]
 		p := ProtocolWithCode(code)
 		if p.Code == 0 {
@@ -84,7 +106,15 @@ func bytesToString(b []byte) (ret string, err error) {
 			continue
 		}
 
-		size := sizeForAddr(p, b)
+		size, err := sizeForAddr(p, b)
+		if err != nil {
+			return "", err
+		}
+
+		if len(b) < size || size < 0 {
+			return "", fmt.Errorf("invalid value for size")
+		}
+
 		a, err := addressBytesToString(p, b[:size])
 		if err != nil {
 			return "", err
@@ -98,36 +128,40 @@ func bytesToString(b []byte) (ret string, err error) {
 	return s, nil
 }
 
-func sizeForAddr(p Protocol, b []byte) int {
+func sizeForAddr(p Protocol, b []byte) (int, error) {
 	switch {
 	case p.Size > 0:
-		return (p.Size / 8)
+		return (p.Size / 8), nil
 	case p.Size == 0:
-		return 0
+		return 0, nil
 	default:
-		size, n := ReadVarintCode(b)
-		return size + n
+		size, n, err := ReadVarintCode(b)
+		if err != nil {
+			return 0, err
+		}
+
+		return size + n, nil
 	}
 }
 
-func bytesSplit(b []byte) (ret [][]byte, err error) {
-	// panic handler, in case we try accessing bytes incorrectly.
-	defer func() {
-		if e := recover(); e != nil {
-			ret = [][]byte{}
-			err = e.(error)
-		}
-	}()
-
-	ret = [][]byte{}
+func bytesSplit(b []byte) ([][]byte, error) {
+	var ret [][]byte
 	for len(b) > 0 {
-		code, n := ReadVarintCode(b)
+		code, n, err := ReadVarintCode(b)
+		if err != nil {
+			return nil, err
+		}
+
 		p := ProtocolWithCode(code)
 		if p.Code == 0 {
-			return [][]byte{}, fmt.Errorf("no protocol with code %d", b[0])
+			return nil, fmt.Errorf("no protocol with code %d", b[0])
 		}
 
-		size := sizeForAddr(p, b[n:])
+		size, err := sizeForAddr(p, b[n:])
+		if err != nil {
+			return nil, err
+		}
+
 		length := n + size
 		ret = append(ret, b[:length])
 		b = b[length:]
@@ -228,17 +262,21 @@ func addressBytesToString(p Protocol, b []byte) (string, error) {
 
 	case P_IPFS: // ipfs
 		// the address is a varint-prefixed multihash string representation
-		size, n := ReadVarintCode(b)
+		size, n, err := ReadVarintCode(b)
+		if err != nil {
+			return "", err
+		}
+
 		b = b[n:]
 		if len(b) != size {
-			panic("inconsistent lengths")
+			return "", fmt.Errorf("inconsistent lengths")
 		}
 		m, err := mh.Cast(b)
 		if err != nil {
 			return "", err
 		}
 		return m.B58String(), nil
+	default:
+		return "", fmt.Errorf("unknown protocol")
 	}
-
-	return "", fmt.Errorf("unknown protocol")
 }
