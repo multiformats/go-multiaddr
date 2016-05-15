@@ -8,43 +8,43 @@ import (
 )
 
 func TestRegisterSpec(t *testing.T) {
-	myproto := &AddressSpec{
-		Key:              "test",
-		NetNames:         []string{"test", "iptest", "blahtest"},
+	cm := NewCodecMap()
+	myproto := &NetCodec{
+		ProtocolName:     "test",
+		NetAddrNetworks:  []string{"test", "iptest", "blahtest"},
 		ConvertMultiaddr: func(a ma.Multiaddr) (net.Addr, error) { return nil, nil },
 		ParseNetAddr:     func(a net.Addr) (ma.Multiaddr, error) { return nil, nil },
 	}
 
-	RegisterAddressType(myproto)
+	cm.RegisterNetCodec(myproto)
 
-	_, ok := addrParsers["test"]
+	_, ok := cm.addrParsers["test"]
 	if !ok {
 		t.Fatal("myproto not properly registered")
 	}
 
-	_, ok = addrParsers["iptest"]
+	_, ok = cm.addrParsers["iptest"]
 	if !ok {
 		t.Fatal("myproto not properly registered")
 	}
 
-	_, ok = addrParsers["blahtest"]
+	_, ok = cm.addrParsers["blahtest"]
 	if !ok {
 		t.Fatal("myproto not properly registered")
 	}
 
-	_, ok = maddrParsers["test"]
+	_, ok = cm.maddrParsers["test"]
 	if !ok {
 		t.Fatal("myproto not properly registered")
 	}
 
-	_, ok = maddrParsers["iptest"]
+	_, ok = cm.maddrParsers["iptest"]
 	if ok {
 		t.Fatal("myproto not properly registered")
 	}
 
-	_, ok = maddrParsers["blahtest"]
+	_, ok = cm.maddrParsers["blahtest"]
 	if ok {
 		t.Fatal("myproto not properly registered")
 	}
-
 }

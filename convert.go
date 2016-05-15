@@ -13,10 +13,14 @@ var errIncorrectNetAddr = fmt.Errorf("incorrect network addr conversion")
 
 // FromNetAddr converts a net.Addr type to a Multiaddr.
 func FromNetAddr(a net.Addr) (ma.Multiaddr, error) {
+	return defaultCodecs.FromNetAddr(a)
+}
+
+func (cm *CodecMap) FromNetAddr(a net.Addr) (ma.Multiaddr, error) {
 	if a == nil {
 		return nil, fmt.Errorf("nil multiaddr")
 	}
-	p, err := getAddrParser(a.Network())
+	p, err := cm.getAddrParser(a.Network())
 	if err != nil {
 		return nil, err
 	}
@@ -28,10 +32,14 @@ func FromNetAddr(a net.Addr) (ma.Multiaddr, error) {
 // Must be ThinWaist. acceptable protocol stacks are:
 // /ip{4,6}/{tcp, udp}
 func ToNetAddr(maddr ma.Multiaddr) (net.Addr, error) {
+	return defaultCodecs.ToNetAddr(maddr)
+}
+
+func (cm *CodecMap) ToNetAddr(maddr ma.Multiaddr) (net.Addr, error) {
 	protos := maddr.Protocols()
 	final := protos[len(protos)-1]
 
-	p, err := getMaddrParser(final.Name)
+	p, err := cm.getMaddrParser(final.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -73,6 +81,8 @@ func FromIP(ip net.IP) (ma.Multiaddr, error) {
 
 // DialArgs is a convenience function returning arguments for use in net.Dial
 func DialArgs(m ma.Multiaddr) (string, string, error) {
+	// TODO: find a 'good' way to eliminate the function.
+	// My preference is with a multiaddr.Format(...) function
 	if !IsThinWaist(m) {
 		return "", "", fmt.Errorf("%s is not a 'thin waist' address", m)
 	}

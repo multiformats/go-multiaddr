@@ -8,104 +8,118 @@ import (
 	ma "github.com/jbenet/go-multiaddr"
 )
 
-type AddrParser func(a net.Addr) (ma.Multiaddr, error)
-type MaddrParser func(ma ma.Multiaddr) (net.Addr, error)
+type FromNetAddrFunc func(a net.Addr) (ma.Multiaddr, error)
+type ToNetAddrFunc func(ma ma.Multiaddr) (net.Addr, error)
 
-var maddrParsers map[string]MaddrParser
-var addrParsers map[string]AddrParser
-var addrParsersLock sync.Mutex
+var defaultCodecs *CodecMap
 
-type AddressSpec struct {
-	// NetNames is an array of strings that may be returned
+func init() {
+	defaultCodecs = NewCodecMap()
+	defaultCodecs.RegisterNetCodec(tcpAddrSpec)
+	defaultCodecs.RegisterNetCodec(udpAddrSpec)
+	defaultCodecs.RegisterNetCodec(utpAddrSpec)
+	defaultCodecs.RegisterNetCodec(ip4AddrSpec)
+	defaultCodecs.RegisterNetCodec(ip6AddrSpec)
+}
+
+type CodecMap struct {
+	codecs       map[string]*NetCodec
+	addrParsers  map[string]FromNetAddrFunc
+	maddrParsers map[string]ToNetAddrFunc
+	lk           sync.Mutex
+}
+
+func NewCodecMap() *CodecMap {
+	return &CodecMap{
+		codecs:       make(map[string]*NetCodec),
+		addrParsers:  make(map[string]FromNetAddrFunc),
+		maddrParsers: make(map[string]ToNetAddrFunc),
+	}
+}
+
+type NetCodec struct {
+	// NetAddrNetworks is an array of strings that may be returned
 	// by net.Addr.Network() calls on addresses belonging to this type
-	NetNames []string
+	NetAddrNetworks []string
 
-	// Key is the string value for Multiaddr address keys
-	Key string
+	// ProtocolName is the string value for Multiaddr address keys
+	ProtocolName string
 
 	// ParseNetAddr parses a net.Addr belonging to this type into a multiaddr
-	ParseNetAddr AddrParser
+	ParseNetAddr FromNetAddrFunc
 
 	// ConvertMultiaddr converts a multiaddr of this type back into a net.Addr
-	ConvertMultiaddr MaddrParser
+	ConvertMultiaddr ToNetAddrFunc
 
 	// Protocol returns the multiaddr protocol struct for this type
 	Protocol ma.Protocol
 }
 
-func RegisterAddressType(a *AddressSpec) {
-	addrParsersLock.Lock()
-	defer addrParsersLock.Unlock()
-	for _, n := range a.NetNames {
-		addrParsers[n] = a.ParseNetAddr
+func RegisterNetCodec(a *NetCodec) {
+	defaultCodecs.RegisterNetCodec(a)
+}
+
+func (cm *CodecMap) RegisterNetCodec(a *NetCodec) {
+	cm.lk.Lock()
+	defer cm.lk.Unlock()
+	cm.codecs[a.ProtocolName] = a
+	for _, n := range a.NetAddrNetworks {
+		cm.addrParsers[n] = a.ParseNetAddr
 	}
 
-	maddrParsers[a.Key] = a.ConvertMultiaddr
+	cm.maddrParsers[a.ProtocolName] = a.ConvertMultiaddr
 }
 
-func init() {
-	addrParsers = make(map[string]AddrParser)
-	maddrParsers = make(map[string]MaddrParser)
-
-	RegisterAddressType(tcpAddrSpec)
-	RegisterAddressType(udpAddrSpec)
-	RegisterAddressType(utpAddrSpec)
-	RegisterAddressType(ip4AddrSpec)
-	RegisterAddressType(ip6AddrSpec)
-
-	addrParsers["ip+net"] = parseIpPlusNetAddr
-}
-
-var tcpAddrSpec = &AddressSpec{
-	Key:              "tcp",
-	NetNames:         []string{"tcp", "tcp4", "tcp6"},
+var tcpAddrSpec = &NetCodec{
+	ProtocolName:     "tcp",
+	NetAddrNetworks:  []string{"tcp", "tcp4", "tcp6"},
 	ParseNetAddr:     parseTcpNetAddr,
 	ConvertMultiaddr: parseBasicNetMaddr,
 }
 
-var udpAddrSpec = &AddressSpec{
-	Key:              "udp",
-	NetNames:         []string{"udp", "udp4", "udp6"},
+var udpAddrSpec = &NetCodec{
+	ProtocolName:     "udp",
+	NetAddrNetworks:  []string{"udp", "udp4", "udp6"},
 	ParseNetAddr:     parseUdpNetAddr,
 	ConvertMultiaddr: parseBasicNetMaddr,
 }
 
-var utpAddrSpec = &AddressSpec{
-	Key:              "utp",
-	NetNames:         []string{"utp", "utp4", "utp6"},
+var utpAddrSpec = &NetCodec{
+	ProtocolName:     "utp",
+	NetAddrNetworks:  []string{"utp", "utp4", "utp6"},
 	ParseNetAddr:     parseUtpNetAddr,
 	ConvertMultiaddr: parseBasicNetMaddr,
 }
 
-var ip4AddrSpec = &AddressSpec{
-	Key:              "ip4",
-	NetNames:         []string{"ip4"},
+var ip4AddrSpec = &NetCodec{
+	ProtocolName:     "ip4",
+	NetAddrNetworks:  []string{"ip4"},
 	ParseNetAddr:     parseIpNetAddr,
 	ConvertMultiaddr: parseBasicNetMaddr,
 }
 
-var ip6AddrSpec = &AddressSpec{
-	Key:              "ip6",
-	NetNames:         []string{"ip6"},
+var ip6AddrSpec = &NetCodec{
+	ProtocolName:     "ip6",
+	NetAddrNetworks:  []string{"ip6"},
 	ParseNetAddr:     parseIpNetAddr,
 	ConvertMultiaddr: parseBasicNetMaddr,
 }
 
-func getAddrParser(net string) (AddrParser, error) {
-	addrParsersLock.Lock()
-	defer addrParsersLock.Unlock()
+func (cm *CodecMap) getAddrParser(net string) (FromNetAddrFunc, error) {
+	cm.lk.Lock()
+	defer cm.lk.Unlock()
 
-	parser, ok := addrParsers[net]
+	parser, ok := cm.addrParsers[net]
 	if !ok {
 		return nil, fmt.Errorf("unknown network %v", net)
 	}
 	return parser, nil
 }
 
-func getMaddrParser(name string) (MaddrParser, error) {
-	addrParsersLock.Lock()
-	defer addrParsersLock.Unlock()
-	p, ok := maddrParsers[name]
+func (cm *CodecMap) getMaddrParser(name string) (ToNetAddrFunc, error) {
+	cm.lk.Lock()
+	defer cm.lk.Unlock()
+	p, ok := cm.maddrParsers[name]
 	if !ok {
 		return nil, fmt.Errorf("network not supported: %s", name)
 	}
