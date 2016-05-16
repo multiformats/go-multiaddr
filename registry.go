@@ -20,6 +20,7 @@ func init() {
 	defaultCodecs.RegisterNetCodec(utpAddrSpec)
 	defaultCodecs.RegisterNetCodec(ip4AddrSpec)
 	defaultCodecs.RegisterNetCodec(ip6AddrSpec)
+	defaultCodecs.RegisterNetCodec(ipnetAddrSpec)
 }
 
 type CodecMap struct {
@@ -103,6 +104,15 @@ var ip6AddrSpec = &NetCodec{
 	NetAddrNetworks:  []string{"ip6"},
 	ParseNetAddr:     parseIpNetAddr,
 	ConvertMultiaddr: parseBasicNetMaddr,
+}
+
+var ipnetAddrSpec = &NetCodec{
+	ProtocolName:    "ip+net",
+	NetAddrNetworks: []string{"ip+net"},
+	ParseNetAddr:    parseIpPlusNetAddr,
+	ConvertMultiaddr: func(ma.Multiaddr) (net.Addr, error) {
+		return nil, fmt.Errorf("converting ip+net multiaddr not supported")
+	},
 }
 
 func (cm *CodecMap) getAddrParser(net string) (FromNetAddrFunc, error) {

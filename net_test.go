@@ -505,3 +505,10 @@ func testSliceEqual(t *testing.T, a, b []ma.Multiaddr) {
 		}
 	}
 }
+
+func TestInterfaceAddressesWorks(t *testing.T) {
+	_, err := InterfaceMultiaddrs()
+	if err != nil {
+		t.Fatal(err)
+	}
+}
