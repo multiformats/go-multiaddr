@@ -218,9 +218,12 @@ func addressStringToBytes(p Protocol, s []string) ([]byte, []string, error) {
 	case P_DNS: // dns
 		b := append(CodeToVarint(len(s[0])+1), []byte(s[0])...)
 		s = s[1:]
+		if len(s) == 0 {
+			return nil, s, fmt.Errorf("ip version not specified in dns addr")
+		}
 		p := ProtocolWithName(s[0])
 		if p.Code != P_IP4 && p.Code != P_IP6 {
-			return nil, s, fmt.Errorf("unsupported dns address protocol %s", s[0])
+			return nil, s, fmt.Errorf("unsupported ip version in dns addr: %s", s[0])
 		}
 		b = append(b, byte(p.Code))
 		s = s[1:]

@@ -40,8 +40,9 @@ func TestConstructFails(t *testing.T) {
 		"/ip4/127.0.0.1/tcp",
 		"/ip4/127.0.0.1/ipfs",
 		"/ip4/127.0.0.1/ipfs/tcp",
-		"/dns/www.google.com/ip3/tcp/1234",
-		"/dns/www.yahoo.com/udp/1234",
+		"/dns/ipfs.io",
+		"/dns/ipfs.io/ip3/tcp/1234",
+		"/dns/ipfs.io/udp/1234",
 	}
 
 	for _, a := range cases {
