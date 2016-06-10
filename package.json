@@ -9,12 +9,6 @@
   "gxDependencies": [
     {
       "author": "whyrusleeping",
-      "hash": "QmaxuoSyFFzKgrujaburn4j3MQWFQu8ASqVSwrMER6Mk9L",
-      "name": "utp",
-      "version": "0.0.0"
-    },
-    {
-      "author": "whyrusleeping",
       "hash": "QmYzDkkgAEmrcNzFCiYo6L1dTX4EAG1gZkbtdbd9trL4vd",
       "name": "go-multiaddr",
       "version": "0.0.0"
@@ -24,5 +18,5 @@
   "language": "go",
   "license": "",
   "name": "go-multiaddr-net",
-  "version": "1.1.0"
+  "version": "1.2.0"
 }

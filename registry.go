@@ -17,7 +17,6 @@ func init() {
 	defaultCodecs = NewCodecMap()
 	defaultCodecs.RegisterNetCodec(tcpAddrSpec)
 	defaultCodecs.RegisterNetCodec(udpAddrSpec)
-	defaultCodecs.RegisterNetCodec(utpAddrSpec)
 	defaultCodecs.RegisterNetCodec(ip4AddrSpec)
 	defaultCodecs.RegisterNetCodec(ip6AddrSpec)
 	defaultCodecs.RegisterNetCodec(ipnetAddrSpec)
@@ -82,13 +81,6 @@ var udpAddrSpec = &NetCodec{
 	ProtocolName:     "udp",
 	NetAddrNetworks:  []string{"udp", "udp4", "udp6"},
 	ParseNetAddr:     parseUdpNetAddr,
-	ConvertMultiaddr: parseBasicNetMaddr,
-}
-
-var utpAddrSpec = &NetCodec{
-	ProtocolName:     "utp",
-	NetAddrNetworks:  []string{"utp", "utp4", "utp6"},
-	ParseNetAddr:     parseUtpNetAddr,
 	ConvertMultiaddr: parseBasicNetMaddr,
 }
 

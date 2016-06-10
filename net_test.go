@@ -181,7 +181,6 @@ func TestListenAddrs(t *testing.T) {
 	test("/ip6/::/tcp/4324", "", true)
 	test("/ip6/::/udp/4325", "", false)
 	test("/ip6/::/udp/4326/udt", "", false)
-	// test("/ip4/127.0.0.1/udp/4326/utp", true)
 }
 
 func TestListenAndDial(t *testing.T) {
@@ -221,68 +220,6 @@ func TestListenAndDial(t *testing.T) {
 	cA, err := Dial(newMultiaddr(t, "/ip4/127.0.0.1/tcp/4323"))
 	if err != nil {
 		t.Fatal("failed to dial")
-	}
-
-	buf := make([]byte, 1024)
-	if _, err := cA.Write([]byte("beep boop")); err != nil {
-		t.Fatal("failed to write:", err)
-	}
-
-	if _, err := cA.Read(buf); err != nil {
-		t.Fatal("failed to read:", buf, err)
-	}
-
-	if !bytes.Equal(buf[:9], []byte("beep boop")) {
-		t.Fatal("failed to echo:", buf)
-	}
-
-	maddr2 := cA.RemoteMultiaddr()
-	if !maddr2.Equal(maddr) {
-		t.Fatal("remote multiaddr not equal:", maddr, maddr2)
-	}
-
-	cA.Close()
-	wg.Wait()
-}
-
-func TestListenAndDialUTP(t *testing.T) {
-	maddr := newMultiaddr(t, "/ip4/127.0.0.1/udp/4323/utp")
-	listener, err := Listen(maddr)
-	if err != nil {
-		t.Fatal("failed to listen: ", err)
-	}
-
-	var wg sync.WaitGroup
-	wg.Add(1)
-	go func() {
-
-		cB, err := listener.Accept()
-		if err != nil {
-			t.Fatal("failed to accept")
-		}
-
-		if !cB.LocalMultiaddr().Equal(maddr) {
-			t.Fatal("local multiaddr not equal:", maddr, cB.LocalMultiaddr())
-		}
-
-		defer cB.Close()
-
-		// echo out
-		buf := make([]byte, 1024)
-		for {
-			_, err := cB.Read(buf)
-			if err != nil {
-				break
-			}
-			cB.Write(buf)
-		}
-
-		wg.Done()
-	}()
-
-	cA, err := Dial(newMultiaddr(t, "/ip4/127.0.0.1/udp/4323/utp"))
-	if err != nil {
-		t.Fatal("failed to dial", err)
 	}
 
 	buf := make([]byte, 1024)

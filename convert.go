@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	ma "github.com/jbenet/go-multiaddr"
-	utp "github.com/jbenet/go-multiaddr-net/utp"
 )
 
 var errIncorrectNetAddr = fmt.Errorf("incorrect network addr conversion")
@@ -58,8 +57,6 @@ func parseBasicNetMaddr(maddr ma.Multiaddr) (net.Addr, error) {
 		return net.ResolveTCPAddr(network, host)
 	case "udp", "udp4", "udp6":
 		return net.ResolveUDPAddr(network, host)
-	case "utp", "utp4", "utp6":
-		return utp.ResolveAddr(network, host)
 	case "ip", "ip4", "ip6":
 		return net.ResolveIPAddr(network, host)
 	}
@@ -95,9 +92,6 @@ func DialArgs(m ma.Multiaddr) (string, string, error) {
 	}
 
 	network := parts[2]
-	if parts[2] == "udp" && len(parts) > 4 && parts[4] == "utp" {
-		network = parts[4]
-	}
 
 	var host string
 	switch parts[0] {
@@ -153,34 +147,6 @@ func parseUdpNetAddr(a net.Addr) (ma.Multiaddr, error) {
 
 	// Encapsulate
 	return ipm.Encapsulate(udpm), nil
-}
-
-func parseUtpNetAddr(a net.Addr) (ma.Multiaddr, error) {
-	acc, ok := a.(*utp.Addr)
-	if !ok {
-		return nil, errIncorrectNetAddr
-	}
-
-	// Get UDP Addr
-	ac, ok := acc.Child().(*net.UDPAddr)
-	if !ok {
-		return nil, errIncorrectNetAddr
-	}
-
-	// Get IP Addr
-	ipm, err := FromIP(ac.IP)
-	if err != nil {
-		return nil, errIncorrectNetAddr
-	}
-
-	// Get UDP Addr
-	utpm, err := ma.NewMultiaddr(fmt.Sprintf("/udp/%d/utp", ac.Port))
-	if err != nil {
-		return nil, errIncorrectNetAddr
-	}
-
-	// Encapsulate
-	return ipm.Encapsulate(utpm), nil
 }
 
 func parseIpNetAddr(a net.Addr) (ma.Multiaddr, error) {

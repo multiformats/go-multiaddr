@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	ma "github.com/jbenet/go-multiaddr"
-	mautp "github.com/jbenet/go-multiaddr-net/utp"
 )
 
 type GenFunc func() (ma.Multiaddr, error)
@@ -89,27 +88,17 @@ func TestFromUDP(t *testing.T) {
 	})
 }
 
-func TestFromUTP(t *testing.T) {
-	a := &net.UDPAddr{IP: net.ParseIP("10.20.30.40"), Port: 1234}
-	testConvert(t, "/ip4/10.20.30.40/udp/1234/utp", func() (ma.Multiaddr, error) {
-		return FromNetAddr(mautp.MakeAddr(a))
-	})
-}
-
 func TestThinWaist(t *testing.T) {
 	addrs := map[string]bool{
 		"/ip4/127.0.0.1/udp/1234":              true,
 		"/ip4/127.0.0.1/tcp/1234":              true,
-		"/ip4/127.0.0.1/udp/1234/utp":          true,
 		"/ip4/127.0.0.1/udp/1234/tcp/1234":     true,
 		"/ip4/127.0.0.1/tcp/12345/ip4/1.2.3.4": true,
 		"/ip6/::1/tcp/80":                      true,
 		"/ip6/::1/udp/80":                      true,
 		"/ip6/::1":                             true,
-		"/ip6/::1/utp":                         false,
 		"/tcp/1234/ip4/1.2.3.4":                false,
 		"/tcp/1234":                            false,
-		"/tcp/1234/utp":                        false,
 		"/tcp/1234/udp/1234":                   false,
 		"/ip4/1.2.3.4/ip4/2.3.4.5":             true,
 		"/ip6/::1/ip4/2.3.4.5":                 true,
@@ -150,8 +139,6 @@ func TestDialArgs(t *testing.T) {
 
 	test("/ip4/127.0.0.1/udp/1234", "udp4", "127.0.0.1:1234")
 	test("/ip4/127.0.0.1/tcp/4321", "tcp4", "127.0.0.1:4321")
-	test("/ip4/127.0.0.1/udp/1234/utp", "utp4", "127.0.0.1:1234")
 	test("/ip6/::1/udp/1234", "udp6", "[::1]:1234")
 	test("/ip6/::1/tcp/4321", "tcp6", "[::1]:4321")
-	test("/ip6/::1/udp/1234/utp", "utp6", "[::1]:1234")
 }
