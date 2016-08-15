@@ -1,10 +1,37 @@
 # go-multiaddr
 
-[multiaddr](https://github.com/jbenet/multiaddr) implementation in Go.
+[![](https://img.shields.io/badge/made%20by-Protocol%20Labs-blue.svg?style=flat-square)](http://ipn.io)
+[![](https://img.shields.io/badge/project-multiformats-blue.svg?style=flat-square)](http://github.com/multiformats/multiformats)
+[![](https://img.shields.io/badge/freenode-%23ipfs-blue.svg?style=flat-square)](http://webchat.freenode.net/?channels=%23ipfs)
 
-## Example
+> multiaddr implementation in go
 
-### Simple
+This is a [multiaddr](https://github.com/multiformats/multiaddr) implementation in Go.
+
+## Table of Contents
+
+- [Install](#install)
+- [Usage](#usage)
+  - [Example](#example)
+    - [Simple](#simple)
+    - [Protocols](#protocols)
+    - [En/decapsulate](#endecapsulate)
+    - [Tunneling](#tunneling)
+- [Maintainers](#maintainers)
+- [Contribute](#contribute)
+- [License](#license)
+
+## Install
+
+```sh
+go get multiformats/multiaddr
+```
+
+## Usage
+
+### Example
+
+#### Simple
 
 ```go
 import ma "github.com/jbenet/go-multiaddr"
@@ -23,7 +50,7 @@ m1.Equal(m2)
 m2.Equal(m1)
 ```
 
-### Protocols
+#### Protocols
 
 ```go
 // get the multiaddr protocol description objects
@@ -34,7 +61,7 @@ addr.Protocols()
 // }
 ```
 
-### En/decapsulate
+#### En/decapsulate
 
 ```go
 m.Encapsulate(ma.NewMultiaddr("/sctp/5678"))
@@ -43,7 +70,7 @@ m.Decapsulate(ma.NewMultiaddr("/udp")) // up to + inc last occurrence of subaddr
 // <Multiaddr /ip4/127.0.0.1>
 ```
 
-### Tunneling
+#### Tunneling
 
 Multiaddr allows expressing tunnels very nicely.
 
@@ -56,3 +83,19 @@ printerOverProxy := proxy.Encapsulate(printer)
 proxyAgain := printerOverProxy.Decapsulate(printer)
 // /ip4/10.20.30.40/tcp/443
 ```
+
+## Maintainers
+
+Captain: [@whyrusleeping](https://github.com/whyrusleeping).
+
+## Contribute
+
+Contributions welcome. Please check out [the issues](https://github.com/multiformats/go-multiaddr/issues).
+
+Check out our [contributing document](https://github.com/multiformats/multiformats/blob/master/contributing.md) for more information on how we work, and about contributing in general. Please be aware that all interactions related to multiformats are subject to the IPFS [Code of Conduct](https://github.com/ipfs/community/blob/master/code-of-conduct.md).
+
+Small note: If editing the Readme, please conform to the [standard-readme](https://github.com/RichardLitt/standard-readme) specification.
+
+## License
+
+[MIT](LICENSE) © Juan Batiz-Benet
