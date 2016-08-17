@@ -1,6 +1,7 @@
 package manet
 
 import (
+	"context"
 	"fmt"
 	"net"
 
@@ -86,7 +87,10 @@ type Dialer struct {
 // net.Conn, then wraps that in a Conn object (with local and
 // remote Multiaddrs).
 func (d *Dialer) Dial(remote ma.Multiaddr) (Conn, error) {
+	return d.DialContext(context.Background(), remote)
+}
 
+func (d *Dialer) DialContext(ctx context.Context, remote ma.Multiaddr) (Conn, error) {
 	// if a LocalAddr is specified, use it on the embedded dialer.
 	if d.LocalAddr != nil {
 		// convert our multiaddr to net.Addr friendly
@@ -109,7 +113,7 @@ func (d *Dialer) Dial(remote ma.Multiaddr) (Conn, error) {
 	var nconn net.Conn
 	switch rnet {
 	case "tcp", "tcp4", "tcp6", "udp", "udp4", "udp6":
-		nconn, err = d.Dialer.Dial(rnet, rnaddr)
+		nconn, err = d.Dialer.DialContext(ctx, rnet, rnaddr)
 		if err != nil {
 			return nil, err
 		}
