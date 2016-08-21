@@ -10,4 +10,5 @@ code	size	name
 421	V	ipfs
 480	0	http
 443	0	https
+477	0	websockets
 444	10	onion
