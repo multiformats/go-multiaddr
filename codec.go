@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	b58 "github.com/jbenet/go-base58"
 	mh "github.com/jbenet/go-multihash"
 )
 
@@ -243,6 +244,16 @@ func addressStringToBytes(p Protocol, s string) ([]byte, error) {
 		size := CodeToVarint(len(m))
 		b := append(size, m...)
 		return b, nil
+
+	case P_SHS: // shs
+		// the address is a varint prefixed multihash string representation
+		a := b58.Decode(s[:])
+		if len(a) == 0 {
+			return nil, fmt.Errorf("failed to parse shs addr: %s", s)
+		}
+		size := CodeToVarint(len(a))
+		b := append(size, a...)
+		return b, nil
 	}
 
 	return []byte{}, fmt.Errorf("failed to parse %s addr: unknown", p.Name)
@@ -280,7 +291,24 @@ func addressBytesToString(p Protocol, b []byte) (string, error) {
 	case P_ONION:
 		addr := strings.ToLower(base32.StdEncoding.EncodeToString(b[0:10]))
 		port := binary.BigEndian.Uint16(b[10:12])
-		return addr + ":"+ strconv.Itoa(int(port)), nil
+		return addr + ":" + strconv.Itoa(int(port)), nil
+
+	case P_SHS: // shs
+		// the address is a varint-prefixed multihash string representation
+		size, n, err := ReadVarintCode(b)
+		if err != nil {
+			return "", err
+		}
+
+		b = b[n:]
+		if len(b) != size {
+			return "", fmt.Errorf("inconsistent lengths")
+		}
+		m := b58.Encode(b)
+		if len(m) == 0 {
+			return m, fmt.Errorf("could not decode address")
+		}
+		return m, nil
 
 	default:
 		return "", fmt.Errorf("unknown protocol")

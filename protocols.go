@@ -27,6 +27,7 @@ const (
 	P_SCTP  = 132
 	P_UTP   = 301
 	P_UDT   = 302
+	P_SHS   = 350
 	P_IPFS  = 421
 	P_HTTP  = 480
 	P_HTTPS = 443
@@ -50,6 +51,7 @@ var Protocols = []Protocol{
 	Protocol{P_ONION, 96, "onion", CodeToVarint(P_ONION)},
 	Protocol{P_UTP, 0, "utp", CodeToVarint(P_UTP)},
 	Protocol{P_UDT, 0, "udt", CodeToVarint(P_UDT)},
+	Protocol{P_SHS, LengthPrefixedVarSize, "shs", CodeToVarint(P_SHS)},
 	Protocol{P_HTTP, 0, "http", CodeToVarint(P_HTTP)},
 	Protocol{P_HTTPS, 0, "https", CodeToVarint(P_HTTPS)},
 	Protocol{P_IPFS, LengthPrefixedVarSize, "ipfs", CodeToVarint(P_IPFS)},
