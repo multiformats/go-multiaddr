@@ -276,6 +276,12 @@ func addressBytesToString(p Protocol, b []byte) (string, error) {
 			return "", err
 		}
 		return m.B58String(), nil
+
+	case P_ONION:
+		addr := strings.ToLower(base32.StdEncoding.EncodeToString(b[0:10]))
+		port := binary.BigEndian.Uint16(b[10:12])
+		return addr + ":"+ strconv.Itoa(int(port)), nil
+
 	default:
 		return "", fmt.Errorf("unknown protocol")
 	}
