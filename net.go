@@ -117,6 +117,8 @@ func (d *Dialer) DialContext(ctx context.Context, remote ma.Multiaddr) (Conn, er
 		if err != nil {
 			return nil, err
 		}
+	default:
+		return nil, fmt.Errorf("unrecognized network: %s", rnet)
 	}
 
 	// get local address (pre-specified or assigned within net.Conn)
