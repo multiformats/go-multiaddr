@@ -3,7 +3,7 @@ Package multiaddr provides an implementation of the Multiaddr network
 address format. Multiaddr emphasizes explicitness, self-description, and
 portability. It allows applications to treat addresses as opaque tokens,
 and to avoid making assumptions about the address representation (e.g. length).
-Learn more at https://github.com/jbenet/multiaddr
+Learn more at https://github.com/multiformats/multiaddr
 
 Basic Use:
 

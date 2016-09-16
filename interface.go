@@ -3,7 +3,7 @@ package multiaddr
 /*
 Multiaddr is a cross-protocol, cross-platform format for representing
 internet addresses. It emphasizes explicitness and self-description.
-Learn more here: https://github.com/jbenet/multiaddr
+Learn more here: https://github.com/multiformats/multiaddr
 
 Multiaddrs have both a binary and string representation.
 
