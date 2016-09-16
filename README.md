@@ -7,6 +7,7 @@
 > [multiaddr](https://github.com/multiformats/multiaddr) implementation in go
 
 Multiaddr is a standard way to represent addresses that:
+
 - Support any standard network protocols.
 - Self-describe (include protocols).
 - Have a binary packed format.
