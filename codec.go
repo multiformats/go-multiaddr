@@ -260,6 +260,11 @@ func addressBytesToString(p Protocol, b []byte) (string, error) {
 		i := binary.BigEndian.Uint16(b)
 		return strconv.Itoa(int(i)), nil
 
+	case P_ONION: // tor onion
+		host := strings.ToLower(base32.StdEncoding.EncodeToString(b[:10]))
+		port := binary.BigEndian.Uint16(b[10:])
+		return host + ":" + strconv.Itoa(int(port)), nil
+
 	case P_IPFS: // ipfs
 		// the address is a varint-prefixed multihash string representation
 		size, n, err := ReadVarintCode(b)
