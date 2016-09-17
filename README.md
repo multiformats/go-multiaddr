@@ -70,9 +70,9 @@ m1.Protocols()
 #### En/decapsulate
 
 ```go
-ma.Encapsulate(ma.NewMultiaddr("/sctp/5678"))
+m.Encapsulate(ma.NewMultiaddr("/sctp/5678"))
 // <Multiaddr /ip4/127.0.0.1/udp/1234/sctp/5678>
-ma.Decapsulate(ma.NewMultiaddr("/udp")) // up to + inc last occurrence of subaddr
+m.Decapsulate(ma.NewMultiaddr("/udp")) // up to + inc last occurrence of subaddr
 // <Multiaddr /ip4/127.0.0.1>
 ```
 
