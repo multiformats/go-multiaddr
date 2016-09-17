@@ -41,6 +41,8 @@ func TestConstructFails(t *testing.T) {
 		"/ip4/127.0.0.1/udp",
 		"/ip4/127.0.0.1/tcp/jfodsajfidosajfoidsa",
 		"/ip4/127.0.0.1/tcp",
+		"/ip4/127.0.0.1/shs",
+		"/ip4/127.0.0.1/tcp/8008/shs/7ZVaSM9sQ4mCCkn4MVIAhkcmSqF9V4u8p8r5hvxX4FnW", // contains illegal char 'I'
 		"/ip4/127.0.0.1/ipfs",
 		"/ip4/127.0.0.1/ipfs/tcp",
 	}
@@ -68,6 +70,7 @@ func TestConstructSucceeds(t *testing.T) {
 		"/sctp/1234",
 		"/udp/65535",
 		"/tcp/65535",
+		"/shs/7ZVaSM9sQ4mCCkn4MV1AhkcmSqF9V4u8p8r5hvxX4FnW",
 		"/ipfs/QmcgpsyWgH8Y8ajJz1Cu72KnS5uo2Aa2LpzU7kinSupNKC",
 		"/udp/1234/sctp/1234",
 		"/udp/1234/udt",
@@ -79,6 +82,7 @@ func TestConstructSucceeds(t *testing.T) {
 		"/ip4/127.0.0.1/udp/0",
 		"/ip4/127.0.0.1/tcp/1234",
 		"/ip4/127.0.0.1/tcp/1234/",
+		"/ip4/127.0.0.1/tcp/8008/shs/7ZVaSM9sQ4mCCkn4MV1AhkcmSqF9V4u8p8r5hvxX4FnW",
 		"/ip4/127.0.0.1/ipfs/QmcgpsyWgH8Y8ajJz1Cu72KnS5uo2Aa2LpzU7kinSupNKC",
 		"/ip4/127.0.0.1/ipfs/QmcgpsyWgH8Y8ajJz1Cu72KnS5uo2Aa2LpzU7kinSupNKC/tcp/1234",
 	}
@@ -353,6 +357,10 @@ func TestGetValue(t *testing.T) {
 	assertValueForProto(t, a, P_IP4, "0.0.0.0")
 	assertValueForProto(t, a, P_UDP, "12345")
 	assertValueForProto(t, a, P_UTP, "")
+
+	a = newMultiaddr(t, "/ip4/0.0.0.0/shs/7ZVaSM9sQ4mCCkn4MV1AhkcmSqF9V4u8p8r5hvxX4FnW") // test shs.
+	assertValueForProto(t, a, P_IP4, "0.0.0.0")
+	assertValueForProto(t, a, P_SHS, "7ZVaSM9sQ4mCCkn4MV1AhkcmSqF9V4u8p8r5hvxX4FnW")
 }
 
 func TestFuzzBytes(t *testing.T) {
@@ -374,7 +382,7 @@ func TestFuzzBytes(t *testing.T) {
 }
 
 func randMaddrString() string {
-	good_corpus := []string{"tcp", "ip", "udp", "ipfs", "0.0.0.0", "127.0.0.1", "12345", "QmbHVEEepCi7rn7VL7Exxpd2Ci9NNB6ifvqwhsrbRMgQFP"}
+	good_corpus := []string{"tcp", "ip", "udp", "ipfs", "shs", "0.0.0.0", "127.0.0.1", "12345", "QmbHVEEepCi7rn7VL7Exxpd2Ci9NNB6ifvqwhsrbRMgQFP", ""}
 
 	size := rand.Intn(256)
 	parts := make([]string, 0, size)
