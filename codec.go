@@ -13,6 +13,9 @@ import (
 	mh "github.com/jbenet/go-multihash"
 )
 
+// Size of an ed25519 public key. Copied from github.com/agl/ed25519.
+const ed25519PublicKeySize = 32
+
 func stringToBytes(s string) ([]byte, error) {
 
 	// consume trailing slashes
@@ -247,13 +250,12 @@ func addressStringToBytes(p Protocol, s string) ([]byte, error) {
 
 	case P_SHS: // shs
 		// the address is a varint prefixed multihash string representation
-		a := b58.Decode(s[:])
-		if len(a) == 0 {
-			return nil, fmt.Errorf("failed to parse shs addr: %s", s)
+		a := b58.Decode(s)
+		if len(a) != ed25519PublicKeySize {
+			return nil, fmt.Errorf("failed to parse %s addr %s", p.Name, s)
 		}
-		size := CodeToVarint(len(a))
-		b := append(size, a...)
-		return b, nil
+
+		return a, nil
 	}
 
 	return []byte{}, fmt.Errorf("failed to parse %s addr: unknown", p.Name)
@@ -294,16 +296,10 @@ func addressBytesToString(p Protocol, b []byte) (string, error) {
 		return addr + ":" + strconv.Itoa(int(port)), nil
 
 	case P_SHS: // shs
-		// the address is a varint-prefixed multihash string representation
-		size, n, err := ReadVarintCode(b)
-		if err != nil {
-			return "", err
+		if len(b) != ed25519PublicKeySize {
+			return "", fmt.Errorf("shs address has wrong length")
 		}
 
-		b = b[n:]
-		if len(b) != size {
-			return "", fmt.Errorf("inconsistent lengths")
-		}
 		m := b58.Encode(b)
 		if len(m) == 0 {
 			return m, fmt.Errorf("could not decode address")
