@@ -4,14 +4,18 @@ import (
 	"bytes"
 	"encoding/base32"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"net"
 	"strconv"
 	"strings"
-	"errors"
 
+	b58 "github.com/jbenet/go-base58"
 	mh "github.com/jbenet/go-multihash"
 )
+
+// Size of an ed25519 public key. Copied from github.com/agl/ed25519.
+const ed25519PublicKeySize = 32
 
 func stringToBytes(s string) ([]byte, error) {
 
@@ -256,6 +260,15 @@ func addressStringToBytes(p Protocol, s string) ([]byte, error) {
 		b := append(size, m...)
 		return b, nil
 
+	case P_SHS: // shs
+		// the address is a varint prefixed multihash string representation
+		a := b58.Decode(s)
+		if len(a) != ed25519PublicKeySize {
+			return nil, fmt.Errorf("failed to parse %s addr %s", p.Name, s)
+		}
+
+		return a, nil
+
 	case P_UNIX:
 		// the address is the whole remaining string, prefixed by a varint len
 		size := CodeToVarint(len(s))
@@ -298,7 +311,18 @@ func addressBytesToString(p Protocol, b []byte) (string, error) {
 	case P_ONION:
 		addr := strings.ToLower(base32.StdEncoding.EncodeToString(b[0:10]))
 		port := binary.BigEndian.Uint16(b[10:12])
-		return addr + ":"+ strconv.Itoa(int(port)), nil
+		return addr + ":" + strconv.Itoa(int(port)), nil
+
+	case P_SHS: // shs
+		if len(b) != ed25519PublicKeySize {
+			return "", fmt.Errorf("shs address has wrong length")
+		}
+
+		m := b58.Encode(b)
+		if len(m) == 0 {
+			return m, fmt.Errorf("could not decode address")
+		}
+		return m, nil
 
 	case P_UNIX:
 		// the address is a varint len prefixed string

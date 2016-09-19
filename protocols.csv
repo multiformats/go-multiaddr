@@ -8,6 +8,7 @@ code	size	name
 132	16	sctp
 301	0	utp
 302	0	udt
+350	256	shs
 400 V unix
 421	V	ipfs
 480	0	http
