@@ -382,7 +382,7 @@ func TestFuzzBytes(t *testing.T) {
 }
 
 func randMaddrString() string {
-	good_corpus := []string{"tcp", "ip", "udp", "ipfs", "shs", "0.0.0.0", "127.0.0.1", "12345", "QmbHVEEepCi7rn7VL7Exxpd2Ci9NNB6ifvqwhsrbRMgQFP", ""}
+	good_corpus := []string{"tcp", "ip", "udp", "ipfs", "shs", "0.0.0.0", "127.0.0.1", "12345", "QmbHVEEepCi7rn7VL7Exxpd2Ci9NNB6ifvqwhsrbRMgQFP", "7ZVaSM9sQ4mCCkn4MV1AhkcmSqF9V4u8p8r5hvxX4FnW"}
 
 	size := rand.Intn(256)
 	parts := make([]string, 0, size)
