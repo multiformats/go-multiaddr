@@ -1,5 +1,5 @@
 {
-  "author": "jbenet",
+  "author": "multiformats",
   "bugs": {
     "url": "https://github.com/multiformats/go-multiaddr-net"
   },
@@ -18,5 +18,5 @@
   "language": "go",
   "license": "",
   "name": "go-multiaddr-net",
-  "version": "1.3.0"
+  "version": "1.4.0"
 }
