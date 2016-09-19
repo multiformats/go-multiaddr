@@ -12,6 +12,7 @@ type Protocol struct {
 	Size  int // a size of -1 indicates a length-prefixed variable size
 	Name  string
 	VCode []byte
+	Path  bool // indicates a path protocol (eg unix, http)
 }
 
 // replicating table here to:
@@ -28,6 +29,7 @@ const (
 	P_UTP   = 301
 	P_UDT   = 302
 	P_SHS   = 350
+	P_UNIX  = 400
 	P_IPFS  = 421
 	P_HTTP  = 480
 	P_HTTPS = 443
@@ -41,20 +43,21 @@ const (
 
 // Protocols is the list of multiaddr protocols supported by this module.
 var Protocols = []Protocol{
-	Protocol{P_IP4, 32, "ip4", CodeToVarint(P_IP4)},
-	Protocol{P_TCP, 16, "tcp", CodeToVarint(P_TCP)},
-	Protocol{P_UDP, 16, "udp", CodeToVarint(P_UDP)},
-	Protocol{P_DCCP, 16, "dccp", CodeToVarint(P_DCCP)},
-	Protocol{P_IP6, 128, "ip6", CodeToVarint(P_IP6)},
+	Protocol{P_IP4, 32, "ip4", CodeToVarint(P_IP4), false},
+	Protocol{P_TCP, 16, "tcp", CodeToVarint(P_TCP), false},
+	Protocol{P_UDP, 16, "udp", CodeToVarint(P_UDP), false},
+	Protocol{P_DCCP, 16, "dccp", CodeToVarint(P_DCCP), false},
+	Protocol{P_IP6, 128, "ip6", CodeToVarint(P_IP6), false},
 	// these require varint:
-	Protocol{P_SCTP, 16, "sctp", CodeToVarint(P_SCTP)},
-	Protocol{P_ONION, 96, "onion", CodeToVarint(P_ONION)},
-	Protocol{P_UTP, 0, "utp", CodeToVarint(P_UTP)},
-	Protocol{P_UDT, 0, "udt", CodeToVarint(P_UDT)},
-	Protocol{P_SHS, 256, "shs", CodeToVarint(P_SHS)},
-	Protocol{P_HTTP, 0, "http", CodeToVarint(P_HTTP)},
-	Protocol{P_HTTPS, 0, "https", CodeToVarint(P_HTTPS)},
-	Protocol{P_IPFS, LengthPrefixedVarSize, "ipfs", CodeToVarint(P_IPFS)},
+	Protocol{P_SCTP, 16, "sctp", CodeToVarint(P_SCTP), false},
+	Protocol{P_ONION, 96, "onion", CodeToVarint(P_ONION), false},
+	Protocol{P_UTP, 0, "utp", CodeToVarint(P_UTP), false},
+	Protocol{P_UDT, 0, "udt", CodeToVarint(P_UDT), false},
+	Protocol{P_SHS, 256, "shs", CodeToVarint(P_SHS), false},
+	Protocol{P_HTTP, 0, "http", CodeToVarint(P_HTTP), false},
+	Protocol{P_HTTPS, 0, "https", CodeToVarint(P_HTTPS), false},
+	Protocol{P_IPFS, LengthPrefixedVarSize, "ipfs", CodeToVarint(P_IPFS), false},
+	Protocol{P_UNIX, LengthPrefixedVarSize, "unix", CodeToVarint(P_UNIX), true},
 }
 
 func AddProtocol(p Protocol) error {

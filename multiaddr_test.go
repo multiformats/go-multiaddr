@@ -45,6 +45,8 @@ func TestConstructFails(t *testing.T) {
 		"/ip4/127.0.0.1/tcp/8008/shs/7ZVaSM9sQ4mCCkn4MVIAhkcmSqF9V4u8p8r5hvxX4FnW", // contains illegal char 'I'
 		"/ip4/127.0.0.1/ipfs",
 		"/ip4/127.0.0.1/ipfs/tcp",
+		"/unix",
+		"/ip4/1.2.3.4/tcp/80/unix",
 	}
 
 	for _, a := range cases {
@@ -85,6 +87,10 @@ func TestConstructSucceeds(t *testing.T) {
 		"/ip4/127.0.0.1/tcp/8008/shs/7ZVaSM9sQ4mCCkn4MV1AhkcmSqF9V4u8p8r5hvxX4FnW",
 		"/ip4/127.0.0.1/ipfs/QmcgpsyWgH8Y8ajJz1Cu72KnS5uo2Aa2LpzU7kinSupNKC",
 		"/ip4/127.0.0.1/ipfs/QmcgpsyWgH8Y8ajJz1Cu72KnS5uo2Aa2LpzU7kinSupNKC/tcp/1234",
+		"/unix/a/b/c/d/e",
+		"/unix/stdio",
+		"/ip4/1.2.3.4/tcp/80/unix/a/b/c/d/e/f",
+		"/ip4/127.0.0.1/ipfs/QmcgpsyWgH8Y8ajJz1Cu72KnS5uo2Aa2LpzU7kinSupNKC/tcp/1234/unix/stdio",
 	}
 
 	for _, a := range cases {
@@ -361,6 +367,10 @@ func TestGetValue(t *testing.T) {
 	a = newMultiaddr(t, "/ip4/0.0.0.0/shs/7ZVaSM9sQ4mCCkn4MV1AhkcmSqF9V4u8p8r5hvxX4FnW") // test shs.
 	assertValueForProto(t, a, P_IP4, "0.0.0.0")
 	assertValueForProto(t, a, P_SHS, "7ZVaSM9sQ4mCCkn4MV1AhkcmSqF9V4u8p8r5hvxX4FnW")
+
+	a = newMultiaddr(t, "/ip4/0.0.0.0/unix/a/b/c/d") // ending in a path one.
+	assertValueForProto(t, a, P_IP4, "0.0.0.0")
+	assertValueForProto(t, a, P_UNIX, "a/b/c/d")
 }
 
 func TestFuzzBytes(t *testing.T) {

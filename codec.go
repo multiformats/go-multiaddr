@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/base32"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"net"
 	"strconv"
@@ -45,6 +46,12 @@ func stringToBytes(s string) ([]byte, error) {
 
 		if len(sp) < 1 {
 			return nil, fmt.Errorf("protocol requires address, none given: %s", p.Name)
+		}
+
+		if p.Path {
+			// it's a path protocol (terminal).
+			// consume the rest of the address as the next component.
+			sp = []string{"/" + strings.Join(sp, "/")}
 		}
 
 		a, err := addressStringToBytes(p, sp[0])
@@ -138,12 +145,17 @@ func sizeForAddr(p Protocol, b []byte) (int, error) {
 		return (p.Size / 8), nil
 	case p.Size == 0:
 		return 0, nil
+	case p.Path:
+		size, n, err := ReadVarintCode(b)
+		if err != nil {
+			return 0, err
+		}
+		return size + n, nil
 	default:
 		size, n, err := ReadVarintCode(b)
 		if err != nil {
 			return 0, err
 		}
-
 		return size + n, nil
 	}
 }
@@ -256,6 +268,12 @@ func addressStringToBytes(p Protocol, s string) ([]byte, error) {
 		}
 
 		return a, nil
+
+	case P_UNIX:
+		// the address is the whole remaining string, prefixed by a varint len
+		size := CodeToVarint(len(s))
+		b := append(size, []byte(s)...)
+		return b, nil
 	}
 
 	return []byte{}, fmt.Errorf("failed to parse %s addr: unknown", p.Name)
@@ -282,7 +300,7 @@ func addressBytesToString(p Protocol, b []byte) (string, error) {
 
 		b = b[n:]
 		if len(b) != size {
-			return "", fmt.Errorf("inconsistent lengths")
+			return "", errors.New("inconsistent lengths")
 		}
 		m, err := mh.Cast(b)
 		if err != nil {
@@ -306,7 +324,25 @@ func addressBytesToString(p Protocol, b []byte) (string, error) {
 		}
 		return m, nil
 
+	case P_UNIX:
+		// the address is a varint len prefixed string
+		size, n, err := ReadVarintCode(b)
+		if err != nil {
+			return "", err
+		}
+
+		b = b[n:]
+		if len(b) != size {
+			return "", errors.New("inconsistent lengths")
+		}
+		if size == 0 {
+			return "", errors.New("invalid length")
+		}
+		s := string(b)
+		s = s[1:] // remove starting slash
+		return s, nil
+
 	default:
-		return "", fmt.Errorf("unknown protocol")
+		return "", errors.New("unknown protocol")
 	}
 }
