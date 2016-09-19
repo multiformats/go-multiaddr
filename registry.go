@@ -5,7 +5,7 @@ import (
 	"net"
 	"sync"
 
-	ma "github.com/jbenet/go-multiaddr"
+	ma "github.com/multiformats/go-multiaddr"
 )
 
 type FromNetAddrFunc func(a net.Addr) (ma.Multiaddr, error)

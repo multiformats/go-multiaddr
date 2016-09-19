@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net"
 
-	ma "github.com/jbenet/go-multiaddr"
+	ma "github.com/multiformats/go-multiaddr"
 )
 
 // Conn is the equivalent of a net.Conn object. It is the

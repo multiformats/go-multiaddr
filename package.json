@@ -1,15 +1,15 @@
 {
   "author": "jbenet",
   "bugs": {
-    "url": "https://github.com/jbenet/go-multiaddr-net"
+    "url": "https://github.com/multiformats/go-multiaddr-net"
   },
   "gx": {
-    "dvcsimport": "github.com/jbenet/go-multiaddr-net"
+    "dvcsimport": "github.com/multiformats/go-multiaddr-net"
   },
   "gxDependencies": [
     {
-      "author": "whyrusleeping",
-      "hash": "QmYzDkkgAEmrcNzFCiYo6L1dTX4EAG1gZkbtdbd9trL4vd",
+      "author": "multiformats",
+      "hash": "QmfZmQJ7J3MeBChAdcYfgDAWfbqjMU75bdLcmpD3TEhSZ1",
       "name": "go-multiaddr",
       "version": "0.0.0"
     }
