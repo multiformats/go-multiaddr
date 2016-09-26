@@ -10,7 +10,7 @@ Basic Use:
   import (
     "bytes"
     "strings"
-    ma "github.com/jbenet/go-multiaddr"
+    ma "github.com/multiformats/go-multiaddr"
   )
 
   // construct from a string (err signals parse failure)

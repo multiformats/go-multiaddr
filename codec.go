@@ -4,13 +4,13 @@ import (
 	"bytes"
 	"encoding/base32"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"net"
 	"strconv"
 	"strings"
-	"errors"
 
-	mh "github.com/jbenet/go-multihash"
+	mh "github.com/multiformats/go-multihash"
 )
 
 func stringToBytes(s string) ([]byte, error) {
@@ -298,7 +298,7 @@ func addressBytesToString(p Protocol, b []byte) (string, error) {
 	case P_ONION:
 		addr := strings.ToLower(base32.StdEncoding.EncodeToString(b[0:10]))
 		port := binary.BigEndian.Uint16(b[10:12])
-		return addr + ":"+ strconv.Itoa(int(port)), nil
+		return addr + ":" + strconv.Itoa(int(port)), nil
 
 	case P_UNIX:
 		// the address is a varint len prefixed string
