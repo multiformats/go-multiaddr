@@ -7,7 +7,7 @@ Learn more here: https://github.com/jbenet/multiaddr
 
 Multiaddrs have both a binary and string representation.
 
-    import ma "github.com/jbenet/go-multiaddr"
+    import ma "github.com/multiformats/go-multiaddr"
 
     addr, err := ma.NewMultiaddr("/ip4/1.2.3.4/tcp/80")
     // err non-nil when parsing failed.

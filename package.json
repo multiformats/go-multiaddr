@@ -6,9 +6,17 @@
   "gx": {
     "dvcsimport": "github.com/multiformats/go-multiaddr"
   },
+  "gxDependencies": [
+    {
+      "hash": "QmTvWHtHQhkRD33UNzP3NKsUxX2k2oonrgHXYis7wdhCbA",
+      "name": "go-multihash",
+      "version": "0.1.0"
+    }
+  ],
   "gxVersion": "0.9.0",
   "language": "go",
   "license": "MIT",
   "name": "go-multiaddr",
-  "version": "1.1.0"
+  "releaseCmd": "git commit -a -m 'gx publish $VERSION'",
+  "version": "1.1.1"
 }

@@ -2,7 +2,7 @@ language: go
 
 go:
   - tip
-  - 1.6.1
+  - 1.7
 
 script:
   - go test -race -cpu=5 -v ./...

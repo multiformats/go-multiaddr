@@ -34,7 +34,7 @@ go get multiformats/multiaddr
 #### Simple
 
 ```go
-import ma "github.com/jbenet/go-multiaddr"
+import ma "github.com/multiformats/go-multiaddr"
 
 // construct from a string (err signals parse failure)
 m1, err := ma.NewMultiaddr("/ip4/127.0.0.1/udp/1234")
