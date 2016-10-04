@@ -9,9 +9,9 @@
   "gxDependencies": [
     {
       "author": "multiformats",
-      "hash": "QmSFsUAmvbFuQvTCotbb5Ev2tAXDM6fihYY4HAB4gxGYnD",
+      "hash": "QmTKShqzu4Sr5trPY8KN7DihwFMaPMX78RZbrSZ8M3rSf9",
       "name": "go-multiaddr",
-      "version": "1.0.0"
+      "version": "1.1.1"
     }
   ],
   "gxVersion": "0.6.0",
@@ -20,3 +20,4 @@
   "name": "go-multiaddr-net",
   "version": "1.5.0"
 }
+
