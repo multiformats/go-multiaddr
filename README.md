@@ -24,7 +24,7 @@ This is a [multiaddr](https://github.com/multiformats/multiaddr) implementation 
 ## Install
 
 ```sh
-go get multiformats/multiaddr
+go get github.com/multiformats/go-multiaddr
 ```
 
 ## Usage
