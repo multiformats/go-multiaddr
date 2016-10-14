@@ -20,7 +20,7 @@ as conversion to and from `net.Addr`.
 ## Install
 
 ```sh
-go get multiformats/go-multiaddr-net
+go get github.com/multiformats/go-multiaddr-net
 ```
 
 ## Usage
