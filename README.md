@@ -4,9 +4,15 @@
 [![](https://img.shields.io/badge/project-multiformats-blue.svg?style=flat-square)](http://github.com/multiformats/multiformats)
 [![](https://img.shields.io/badge/freenode-%23ipfs-blue.svg?style=flat-square)](http://webchat.freenode.net/?channels=%23ipfs)
 
-> multiaddr implementation in go
+> [multiaddr](https://github.com/multiformats/multiaddr) implementation in go
 
-This is a [multiaddr](https://github.com/multiformats/multiaddr) implementation in Go.
+Multiaddr is a standard way to represent addresses that:
+
+- Support any standard network protocols.
+- Self-describe (include protocols).
+- Have a binary packed format.
+- Have a nice string representation.
+- Encapsulate well.
 
 ## Table of Contents
 
@@ -54,7 +60,7 @@ m2.Equal(m1)
 
 ```go
 // get the multiaddr protocol description objects
-addr.Protocols()
+m1.Protocols()
 // []Protocol{
 //   Protocol{ Code: 4, Name: 'ip4', Size: 32},
 //   Protocol{ Code: 17, Name: 'udp', Size: 16},
