@@ -17,6 +17,12 @@ type Transcoder interface {
 	BytesToString([]byte) (string, error)
 }
 
+func NewTranscoderFromFunctions(s2b func(string) ([]byte, error),
+	b2s func([]byte) (string, error)) Transcoder {
+
+	return twrp{s2b, b2s}
+}
+
 type twrp struct {
 	strtobyte func(string) ([]byte, error)
 	bytetostr func([]byte) (string, error)
@@ -29,8 +35,8 @@ func (t twrp) BytesToString(b []byte) (string, error) {
 	return t.bytetostr(b)
 }
 
-var TranscoderIP4 = (Transcoder)(twrp{ip4StB, ipBtS})
-var TranscoderIP6 = (Transcoder)(twrp{ip6StB, ipBtS})
+var TranscoderIP4 = NewTranscoderFromFunctions(ip4StB, ipBtS)
+var TranscoderIP6 = NewTranscoderFromFunctions(ip6StB, ipBtS)
 
 func ip4StB(s string) ([]byte, error) {
 	i := net.ParseIP(s).To4()
@@ -52,7 +58,7 @@ func ipBtS(b []byte) (string, error) {
 	return net.IP(b).String(), nil
 }
 
-var TranscoderPort = (Transcoder)(twrp{portStB, portBtS})
+var TranscoderPort = NewTranscoderFromFunctions(portStB, portBtS)
 
 func portStB(s string) ([]byte, error) {
 	i, err := strconv.Atoi(s)
@@ -72,7 +78,7 @@ func portBtS(b []byte) (string, error) {
 	return strconv.Itoa(int(i)), nil
 }
 
-var TranscoderOnion = (Transcoder)(twrp{onionStB, onionBtS})
+var TranscoderOnion = NewTranscoderFromFunctions(onionStB, onionBtS)
 
 func onionStB(s string) ([]byte, error) {
 	addr := strings.Split(s, ":")
@@ -115,7 +121,7 @@ func onionBtS(b []byte) (string, error) {
 	return addr + ":" + strconv.Itoa(int(port)), nil
 }
 
-var TranscoderIPFS = (Transcoder)(twrp{ipfsStB, ipfsBtS})
+var TranscoderIPFS = NewTranscoderFromFunctions(ipfsStB, ipfsBtS)
 
 func ipfsStB(s string) ([]byte, error) {
 	// the address is a varint prefixed multihash string representation
@@ -146,7 +152,7 @@ func ipfsBtS(b []byte) (string, error) {
 	return m.B58String(), nil
 }
 
-var TranscoderUnix = (Transcoder)(twrp{unixStB, unixBtS})
+var TranscoderUnix = NewTranscoderFromFunctions(unixStB, unixBtS)
 
 func unixStB(s string) ([]byte, error) {
 	// the address is the whole remaining string, prefixed by a varint len
