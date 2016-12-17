@@ -248,6 +248,81 @@ func WrapNetListener(nl net.Listener) (Listener, error) {
 	}, nil
 }
 
+// A PacketConn is a generic packet oriented network connection which uses an
+// underlying net.PacketConn, wrapped with the locally bound Multiaddr.
+type PacketConn interface {
+	Connection() net.PacketConn
+
+	Multiaddr() ma.Multiaddr
+
+	ReadFrom(b []byte) (int, ma.Multiaddr, error)
+	WriteTo(b []byte, maddr ma.Multiaddr) (int, error)
+
+	Close() error
+}
+
+// maPacketConn implements PacketConn
+type maPacketConn struct {
+	net.PacketConn
+	laddr ma.Multiaddr
+}
+
+// Connection returns the embedded net.PacketConn.
+func (l *maPacketConn) Connection() net.PacketConn {
+	return l.PacketConn
+}
+
+// Multiaddr returns the bound local Multiaddr.
+func (l *maPacketConn) Multiaddr() ma.Multiaddr {
+	return l.laddr
+}
+
+func (l *maPacketConn) ReadFrom(b []byte) (int, ma.Multiaddr, error) {
+	n, addr, err := l.PacketConn.ReadFrom(b)
+	maddr, _ := FromNetAddr(addr)
+	return n, maddr, err
+}
+
+func (l *maPacketConn) WriteTo(b []byte, maddr ma.Multiaddr) (int, error) {
+	addr, err := ToNetAddr(maddr)
+	if err != nil {
+		return 0, err
+	}
+	return l.PacketConn.WriteTo(b, addr)
+}
+
+// ListenPacket announces on the local network address laddr.
+// The Multiaddr must be a packet driven network, like udp4 or udp6.
+// See Dial for the syntax of laddr.
+func ListenPacket(laddr ma.Multiaddr) (PacketConn, error) {
+	lnet, lnaddr, err := DialArgs(laddr)
+	if err != nil {
+		return nil, err
+	}
+
+	pc, err := net.ListenPacket(lnet, lnaddr)
+	if err != nil {
+		return nil, err
+	}
+
+	// We want to fetch the new multiaddr from the listener, as it may
+	// have resolved to some other value. WrapPacketConn does this.
+	return WrapPacketConn(pc)
+}
+
+// WrapPacketConn wraps a net.PacketConn with a manet.PacketConn.
+func WrapPacketConn(pc net.PacketConn) (PacketConn, error) {
+	laddr, err := FromNetAddr(pc.LocalAddr())
+	if err != nil {
+		return nil, err
+	}
+
+	return &maPacketConn{
+		PacketConn: pc,
+		laddr:      laddr,
+	}, nil
+}
+
 // InterfaceMultiaddrs will return the addresses matching net.InterfaceAddrs
 func InterfaceMultiaddrs() ([]ma.Multiaddr, error) {
 	addrs, err := net.InterfaceAddrs()
