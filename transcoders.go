@@ -179,3 +179,24 @@ func unixBtS(b []byte) (string, error) {
 	s = s[1:] // remove starting slash
 	return s, nil
 }
+
+var TranscoderDNS = NewTranscoderFromFunctions(dnsStB, dnsBtS)
+
+func dnsStB(s string) ([]byte, error) {
+	size := CodeToVarint(len(s))
+	b := append(size, []byte(s)...)
+	return b, nil
+}
+
+func dnsBtS(b []byte) (string, error) {
+	size, n, err := ReadVarintCode(b)
+	if err != nil {
+		return "", err
+	}
+
+	b = b[n:]
+	if len(b) != size {
+		return "", errors.New("inconsistent lengths")
+	}
+	return string(b), nil
+}

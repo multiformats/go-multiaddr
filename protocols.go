@@ -20,20 +20,31 @@ type Protocol struct {
 // 1. avoid parsing the csv
 // 2. ensuring errors in the csv don't screw up code.
 // 3. changing a number has to happen in two places.
+//
+// MUST never contradict multiformats/multiaddr/protocols.csv
 const (
-	P_IP4   = 4
-	P_TCP   = 6
-	P_UDP   = 17
-	P_DCCP  = 33
-	P_IP6   = 41
-	P_SCTP  = 132
-	P_UTP   = 301
-	P_UDT   = 302
-	P_UNIX  = 400
-	P_IPFS  = 421
-	P_HTTP  = 480
-	P_HTTPS = 443
-	P_ONION = 444
+	P_IP4  = 4
+	P_TCP  = 6
+	P_UDP  = 17
+	P_DCCP = 33
+	P_IP6  = 41
+	P_DNS4 = 54
+	P_DNS6 = 55
+
+	// 2-byte varint from here on because code > 127
+	P_SCTP        = 132
+	P_WEBRTC_STAR = 275
+	P_P2P_CIRCUIT = 290
+	P_UTP         = 301
+	P_UDT         = 302
+	P_UNIX        = 400
+	P_P2P         = 420
+	P_IPFS        = 421
+	P_HTTP        = 480
+	P_HTTPS       = 443
+	P_ONION       = 444
+	P_WS          = 477
+	P_WSS         = 478
 )
 
 // These are special sizes
@@ -48,15 +59,20 @@ var Protocols = []Protocol{
 	Protocol{P_UDP, 16, "udp", CodeToVarint(P_UDP), false, TranscoderPort},
 	Protocol{P_DCCP, 16, "dccp", CodeToVarint(P_DCCP), false, TranscoderPort},
 	Protocol{P_IP6, 128, "ip6", CodeToVarint(P_IP6), false, TranscoderIP6},
-	// these require varint:
+	Protocol{P_DNS4, LengthPrefixedVarSize, "dns4", CodeToVarint(P_DNS4), false, TranscoderDNS},
+	Protocol{P_DNS6, LengthPrefixedVarSize, "dns6", CodeToVarint(P_DNS6), false, TranscoderDNS},
 	Protocol{P_SCTP, 16, "sctp", CodeToVarint(P_SCTP), false, TranscoderPort},
 	Protocol{P_ONION, 96, "onion", CodeToVarint(P_ONION), false, TranscoderOnion},
 	Protocol{P_UTP, 0, "utp", CodeToVarint(P_UTP), false, nil},
 	Protocol{P_UDT, 0, "udt", CodeToVarint(P_UDT), false, nil},
 	Protocol{P_HTTP, 0, "http", CodeToVarint(P_HTTP), false, nil},
 	Protocol{P_HTTPS, 0, "https", CodeToVarint(P_HTTPS), false, nil},
+	Protocol{P_WS, 0, "ws", CodeToVarint(P_WS), false, nil},
+	Protocol{P_WSS, 0, "wss", CodeToVarint(P_WSS), false, nil},
 	Protocol{P_IPFS, LengthPrefixedVarSize, "ipfs", CodeToVarint(P_IPFS), false, TranscoderIPFS},
+	Protocol{P_P2P, LengthPrefixedVarSize, "p2p", CodeToVarint(P_P2P), false, TranscoderIPFS},
 	Protocol{P_UNIX, LengthPrefixedVarSize, "unix", CodeToVarint(P_UNIX), true, TranscoderUnix},
+	Protocol{P_P2P_CIRCUIT, 0, "p2p-circuit", CodeToVarint(P_P2P_CIRCUIT), false, nil},
 }
 
 func AddProtocol(p Protocol) error {
