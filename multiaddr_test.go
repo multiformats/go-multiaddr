@@ -28,6 +28,12 @@ func TestConstructFails(t *testing.T) {
 		"/sctp",
 		"/udp/65536",
 		"/tcp/65536",
+		// "/dns4/1.2.3.4.5",
+		// "/dns4/::1",
+		"/dns4",
+		// "/dns6/1.2.3.4",
+		// "/dns6/::g",
+		"/dns6",
 		"/onion/9imaq4ygg2iegci7:80",
 		"/onion/aaimaq4ygg2iegci7:80",
 		"/onion/timaq4ygg2iegci7:0",
@@ -45,6 +51,15 @@ func TestConstructFails(t *testing.T) {
 		"/ip4/127.0.0.1/ipfs/tcp",
 		"/unix",
 		"/ip4/1.2.3.4/tcp/80/unix",
+		"/http/foo",
+		"/https/foo",
+		"/ws/foo",
+		"/wss/foo",
+		"/ipfs/Qmnope",
+		"/ipfs",
+		"/p2p/Qmnope",
+		"/p2p",
+		"/p2p-circuit/asdf",
 	}
 
 	for _, a := range cases {
@@ -77,6 +92,7 @@ func TestConstructSucceeds(t *testing.T) {
 		"/tcp/1234/http",
 		"/tcp/1234/https",
 		"/ipfs/QmcgpsyWgH8Y8ajJz1Cu72KnS5uo2Aa2LpzU7kinSupNKC/tcp/1234",
+		"/p2p/QmcgpsyWgH8Y8ajJz1Cu72KnS5uo2Aa2LpzU7kinSupNKC/tcp/1234",
 		"/ip4/127.0.0.1/udp/1234",
 		"/ip4/127.0.0.1/udp/0",
 		"/ip4/127.0.0.1/tcp/1234",
@@ -87,6 +103,16 @@ func TestConstructSucceeds(t *testing.T) {
 		"/unix/stdio",
 		"/ip4/1.2.3.4/tcp/80/unix/a/b/c/d/e/f",
 		"/ip4/127.0.0.1/ipfs/QmcgpsyWgH8Y8ajJz1Cu72KnS5uo2Aa2LpzU7kinSupNKC/tcp/1234/unix/stdio",
+		"/p2p-circuit",
+		"/p2p-circuit/p2p/QmSoLnSGccFuZQJzRadHn95W2CrSFmZuTdDWP8HXaHca9z",
+		"/ip4/1.2.3.4/tcp/80/http",
+		"/ip4/1.2.3.4/tcp/443/https",
+		"/ip4/1.2.3.4/tcp/80/ws",
+		"/ip4/1.2.3.4/tcp/443/wss",
+		"/dns4/example.net",
+		// "/dns4/1.2.3.4",
+		"/dns6/example.net",
+		// "/dns6/::1",
 	}
 
 	for _, a := range cases {
@@ -229,6 +255,10 @@ func TestBytesSplitAndJoin(t *testing.T) {
 		[]string{"/ip4/1.2.3.4", "/tcp/1", "/ip4/2.3.4.5", "/udp/2"})
 	testString("/ip4/1.2.3.4/utp/ip4/2.3.4.5/udp/2/udt",
 		[]string{"/ip4/1.2.3.4", "/utp", "/ip4/2.3.4.5", "/udp/2", "/udt"})
+	testString("/p2p-circuit/p2p/QmSoLnSGccFuZQJzRadHn95W2CrSFmZuTdDWP8HXaHca9z/https",
+		[]string{"/p2p-circuit", "/p2p/QmSoLnSGccFuZQJzRadHn95W2CrSFmZuTdDWP8HXaHca9z", "/https"})
+	testString("/dns4/relay.libp2p.io/tcp/4001/p2p/QmcgpsyWgH8Y8ajJz1Cu72KnS5uo2Aa2LpzU7kinSupNKC/p2p-circuit/p2p/QmSoLnSGccFuZQJzRadHn95W2CrSFmZuTdDWP8HXaHca9z",
+		[]string{"/dns4/relay.libp2p.io", "/tcp/4001", "/p2p/QmcgpsyWgH8Y8ajJz1Cu72KnS5uo2Aa2LpzU7kinSupNKC", "/p2p-circuit", "/p2p/QmSoLnSGccFuZQJzRadHn95W2CrSFmZuTdDWP8HXaHca9z"})
 }
 
 func TestProtocols(t *testing.T) {
