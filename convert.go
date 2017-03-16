@@ -15,6 +15,7 @@ func FromNetAddr(a net.Addr) (ma.Multiaddr, error) {
 	return defaultCodecs.FromNetAddr(a)
 }
 
+// FromNetAddr converts a net.Addr to Multiaddress.
 func (cm *CodecMap) FromNetAddr(a net.Addr) (ma.Multiaddr, error) {
 	if a == nil {
 		return nil, fmt.Errorf("nil multiaddr")
@@ -34,6 +35,7 @@ func ToNetAddr(maddr ma.Multiaddr) (net.Addr, error) {
 	return defaultCodecs.ToNetAddr(maddr)
 }
 
+// ToNetAddr converts a Multiaddress to a standard net.Addr.
 func (cm *CodecMap) ToNetAddr(maddr ma.Multiaddr) (net.Addr, error) {
 	protos := maddr.Protocols()
 	final := protos[len(protos)-1]
@@ -105,7 +107,7 @@ func DialArgs(m ma.Multiaddr) (string, string, error) {
 	return network, host, nil
 }
 
-func parseTcpNetAddr(a net.Addr) (ma.Multiaddr, error) {
+func parseTCPNetAddr(a net.Addr) (ma.Multiaddr, error) {
 	ac, ok := a.(*net.TCPAddr)
 	if !ok {
 		return nil, errIncorrectNetAddr
@@ -127,7 +129,7 @@ func parseTcpNetAddr(a net.Addr) (ma.Multiaddr, error) {
 	return ipm.Encapsulate(tcpm), nil
 }
 
-func parseUdpNetAddr(a net.Addr) (ma.Multiaddr, error) {
+func parseUDPNetAddr(a net.Addr) (ma.Multiaddr, error) {
 	ac, ok := a.(*net.UDPAddr)
 	if !ok {
 		return nil, errIncorrectNetAddr
@@ -149,7 +151,7 @@ func parseUdpNetAddr(a net.Addr) (ma.Multiaddr, error) {
 	return ipm.Encapsulate(udpm), nil
 }
 
-func parseIpNetAddr(a net.Addr) (ma.Multiaddr, error) {
+func parseIPNetAddr(a net.Addr) (ma.Multiaddr, error) {
 	ac, ok := a.(*net.IPAddr)
 	if !ok {
 		return nil, errIncorrectNetAddr
@@ -157,7 +159,7 @@ func parseIpNetAddr(a net.Addr) (ma.Multiaddr, error) {
 	return FromIP(ac.IP)
 }
 
-func parseIpPlusNetAddr(a net.Addr) (ma.Multiaddr, error) {
+func parseIPPlusNetAddr(a net.Addr) (ma.Multiaddr, error) {
 	ac, ok := a.(*net.IPNet)
 	if !ok {
 		return nil, errIncorrectNetAddr

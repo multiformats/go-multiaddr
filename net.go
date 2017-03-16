@@ -1,3 +1,8 @@
+// Package manet provides Multiaddr
+// (https://github.com/multiformats/go-multiaddr) specific versions of common
+// functions in Go's standard `net` package. This means wrappers of standard
+// net symbols like `net.Dial` and `net.Listen`, as well as conversion to
+// and from `net.Addr`.
 package manet
 
 import (
@@ -90,6 +95,7 @@ func (d *Dialer) Dial(remote ma.Multiaddr) (Conn, error) {
 	return d.DialContext(context.Background(), remote)
 }
 
+// DialContext allows to provide a custom context to Dial().
 func (d *Dialer) DialContext(ctx context.Context, remote ma.Multiaddr) (Conn, error) {
 	// if a LocalAddr is specified, use it on the embedded dialer.
 	if d.LocalAddr != nil {
