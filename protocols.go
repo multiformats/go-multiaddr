@@ -26,6 +26,7 @@ const (
 	P_UDP   = 17
 	P_DCCP  = 33
 	P_IP6   = 41
+	P_QUIC  = 81
 	P_SCTP  = 132
 	P_UTP   = 301
 	P_UDT   = 302
@@ -53,6 +54,7 @@ var Protocols = []Protocol{
 	Protocol{P_ONION, 96, "onion", CodeToVarint(P_ONION), false, TranscoderOnion},
 	Protocol{P_UTP, 0, "utp", CodeToVarint(P_UTP), false, nil},
 	Protocol{P_UDT, 0, "udt", CodeToVarint(P_UDT), false, nil},
+	Protocol{P_QUIC, 0, "quic", CodeToVarint(P_QUIC), false, nil},
 	Protocol{P_HTTP, 0, "http", CodeToVarint(P_HTTP), false, nil},
 	Protocol{P_HTTPS, 0, "https", CodeToVarint(P_HTTPS), false, nil},
 	Protocol{P_IPFS, LengthPrefixedVarSize, "ipfs", CodeToVarint(P_IPFS), false, TranscoderIPFS},
