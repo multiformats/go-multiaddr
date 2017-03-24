@@ -297,7 +297,7 @@ func TestIP6LinkLocal(t *testing.T) {
 		isLinkLocal := (a == 0xfe80)
 		m := newMultiaddr(t, fmt.Sprintf("/ip6/%x::1", a))
 		if IsIP6LinkLocal(m) != isLinkLocal {
-			t.Error("IsIP6LinkLocal failed (%s != %v)", m, isLinkLocal)
+			t.Errorf("IsIP6LinkLocal failed (%s != %v)", m, isLinkLocal)
 		}
 	}
 }
