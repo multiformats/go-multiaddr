@@ -63,7 +63,7 @@ func IsIPLoopback(m ma.Multiaddr) bool {
 	}
 
 	// /ip6/::1
-	if IP6Loopback.Equal(m) || IP6LinkLocalLoopback.Equal(m) {
+	if !m.Decapsulate(IP6Loopback).Equal(m) || !m.Decapsulate(IP6LinkLocalLoopback).Equal(m) {
 		return true
 	}
 
