@@ -21,20 +21,21 @@ type Protocol struct {
 // 2. ensuring errors in the csv don't screw up code.
 // 3. changing a number has to happen in two places.
 const (
-	P_IP4   = 4
-	P_TCP   = 6
-	P_UDP   = 17
-	P_DCCP  = 33
-	P_IP6   = 41
-	P_QUIC  = 81
-	P_SCTP  = 132
-	P_UTP   = 301
-	P_UDT   = 302
-	P_UNIX  = 400
-	P_IPFS  = 421
-	P_HTTP  = 480
-	P_HTTPS = 443
-	P_ONION = 444
+	P_IP4     = 4
+	P_TCP     = 6
+	P_UDP     = 17
+	P_DCCP    = 33
+	P_IP6     = 41
+	P_QUIC    = 81
+	P_SCTP    = 132
+	P_CIRCUIT = 290
+	P_UTP     = 301
+	P_UDT     = 302
+	P_UNIX    = 400
+	P_IPFS    = 421
+	P_HTTP    = 480
+	P_HTTPS   = 443
+	P_ONION   = 444
 )
 
 // These are special sizes
@@ -59,6 +60,7 @@ var Protocols = []Protocol{
 	Protocol{P_HTTPS, 0, "https", CodeToVarint(P_HTTPS), false, nil},
 	Protocol{P_IPFS, LengthPrefixedVarSize, "ipfs", CodeToVarint(P_IPFS), false, TranscoderIPFS},
 	Protocol{P_UNIX, LengthPrefixedVarSize, "unix", CodeToVarint(P_UNIX), true, TranscoderUnix},
+	Protocol{P_CIRCUIT, 0, "p2p-circuit", CodeToVarint(P_CIRCUIT), false, nil},
 }
 
 func AddProtocol(p Protocol) error {
