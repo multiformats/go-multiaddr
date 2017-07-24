@@ -27,7 +27,7 @@ const (
 	P_UDP   = 0x0111
 	P_DCCP  = 0x0021
 	P_IP6   = 0x0029
-	P_QUIC  = 0x0051
+	P_QUIC  = 0x01CC
 	P_SCTP  = 0x0084
 	P_UDT   = 0x012D
 	P_UTP   = 0x012E
