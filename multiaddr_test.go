@@ -157,9 +157,9 @@ func TestStringToBytes(t *testing.T) {
 		}
 	}
 
-	testString("/ip4/127.0.0.1/udp/1234", "047f0000011104d2")
+	testString("/ip4/127.0.0.1/udp/1234", "047f000001910204d2")
 	testString("/ip4/127.0.0.1/tcp/4321", "047f0000010610e1")
-	testString("/ip4/127.0.0.1/udp/1234/ip4/127.0.0.1/tcp/4321", "047f0000011104d2047f0000010610e1")
+	testString("/ip4/127.0.0.1/udp/1234/ip4/127.0.0.1/tcp/4321", "047f000001910204d2047f0000010610e1")
 }
 
 func TestBytesToString(t *testing.T) {
@@ -184,9 +184,9 @@ func TestBytesToString(t *testing.T) {
 		}
 	}
 
-	testString("/ip4/127.0.0.1/udp/1234", "047f0000011104d2")
+	testString("/ip4/127.0.0.1/udp/1234", "047f000001910204d2")
 	testString("/ip4/127.0.0.1/tcp/4321", "047f0000010610e1")
-	testString("/ip4/127.0.0.1/udp/1234/ip4/127.0.0.1/tcp/4321", "047f0000011104d2047f0000010610e1")
+	testString("/ip4/127.0.0.1/udp/1234/ip4/127.0.0.1/tcp/4321", "047f000001910204d2047f0000010610e1")
 	testString("/onion/aaimaq4ygg2iegci:80", "bc030010c0439831b48218480050")
 }
 

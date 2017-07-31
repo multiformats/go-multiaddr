@@ -16,25 +16,26 @@ type Protocol struct {
 	Transcoder Transcoder
 }
 
-// replicating table here to:
-// 1. avoid parsing the csv
-// 2. ensuring errors in the csv don't screw up code.
-// 3. changing a number has to happen in two places.
+// You **MUST** register your multicodecs with
+// https://github.com/multiformats/multicodec before adding them here.
+//
+// TODO: Use a single source of truth for all multicodecs instead of
+// distributing them like this...
 const (
-	P_IP4   = 4
-	P_TCP   = 6
-	P_UDP   = 17
-	P_DCCP  = 33
-	P_IP6   = 41
-	P_QUIC  = 81
-	P_SCTP  = 132
-	P_UTP   = 301
-	P_UDT   = 302
-	P_UNIX  = 400
-	P_IPFS  = 421
-	P_HTTP  = 480
-	P_HTTPS = 443
-	P_ONION = 444
+	P_IP4   = 0x0004
+	P_TCP   = 0x0006
+	P_UDP   = 0x0111
+	P_DCCP  = 0x0021
+	P_IP6   = 0x0029
+	P_QUIC  = 0x01CC
+	P_SCTP  = 0x0084
+	P_UDT   = 0x012D
+	P_UTP   = 0x012E
+	P_UNIX  = 0x0190
+	P_IPFS  = 0x01A5
+	P_HTTP  = 0x01E0
+	P_HTTPS = 0x01BB
+	P_ONION = 0x01BC
 )
 
 // These are special sizes
