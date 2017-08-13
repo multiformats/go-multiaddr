@@ -244,6 +244,59 @@ func TestListenAndDial(t *testing.T) {
 	wg.Wait()
 }
 
+func TestListenPacketAndDial(t *testing.T) {
+	maddr := newMultiaddr(t, "/ip4/127.0.0.1/udp/4324")
+	pc, err := ListenPacket(maddr)
+	if err != nil {
+		t.Fatal("failed to listen", err)
+	}
+
+	var wg sync.WaitGroup
+	wg.Add(1)
+
+	go func() {
+		if !pc.Multiaddr().Equal(maddr) {
+			t.Fatal("connection multiaddr not equal:", maddr, pc.Multiaddr())
+		}
+
+		buffer := make([]byte, 1024)
+		_, addr, err := pc.ReadFrom(buffer)
+		if err != nil {
+			t.Fatal("failed to read into buffer", err)
+		}
+		pc.WriteTo(buffer, addr)
+
+		wg.Done()
+	}()
+
+	cn, err := Dial(maddr)
+	if err != nil {
+		t.Fatal("failed to dial", err)
+	}
+
+	buf := make([]byte, 1024)
+	if _, err := cn.Write([]byte("beep boop")); err != nil {
+		t.Fatal("failed to write", err)
+	}
+
+	if _, err := cn.Read(buf); err != nil {
+		t.Fatal("failed to read:", buf, err)
+	}
+
+	if !bytes.Equal(buf[:9], []byte("beep boop")) {
+		t.Fatal("failed to echk:", buf)
+	}
+
+	maddr2 := cn.RemoteMultiaddr()
+	if !maddr2.Equal(maddr) {
+		t.Fatal("remote multiaddr not equal:", maddr, maddr2)
+	}
+
+	cn.Close()
+	pc.Close()
+	wg.Wait()
+}
+
 func TestIPLoopback(t *testing.T) {
 	if IP4Loopback.String() != "/ip4/127.0.0.1" {
 		t.Error("IP4Loopback incorrect:", IP4Loopback)
