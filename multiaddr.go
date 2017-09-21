@@ -78,7 +78,7 @@ func (m *multiaddr) Protocols() []Protocol {
 		}
 	}()
 
-	var ps []Protocol
+	ps := make([]Protocol, 0, 8)
 	b := m.bytes
 	for len(b) > 0 {
 		code, n, err := ReadVarintCode(b)
