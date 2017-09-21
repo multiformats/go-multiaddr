@@ -69,15 +69,6 @@ func (m *multiaddr) String() string {
 // Protocols returns the list of protocols this Multiaddr has.
 // will panic in case we access bytes incorrectly.
 func (m *multiaddr) Protocols() []Protocol {
-
-	// panic handler, in case we try accessing bytes incorrectly.
-	defer func() {
-		if e := recover(); e != nil {
-			err := e.(error)
-			panic("Multiaddr.Protocols error: " + err.Error())
-		}
-	}()
-
 	ps := make([]Protocol, 0, 8)
 	b := m.bytes
 	for len(b) > 0 {
