@@ -143,16 +143,16 @@ func TestStringToBytes(t *testing.T) {
 			t.Error("failed to decode hex", h)
 		}
 
-		b2, err := stringToBytes(s)
+		b2, err := stringToMultiaddr(s)
 		if err != nil {
 			t.Error("failed to convert", s)
 		}
 
-		if !bytes.Equal(b1, b2) {
+		if !bytes.Equal(b1, []byte(b2)) {
 			t.Error("failed to convert", s, "to", b1, "got", b2)
 		}
 
-		if err := validateBytes(b2); err != nil {
+		if err := validateBytes([]byte(b2)); err != nil {
 			t.Error(err)
 		}
 	}
@@ -170,7 +170,7 @@ func TestBytesToString(t *testing.T) {
 			t.Error("failed to decode hex", h)
 		}
 
-		if err := validateBytes(b); err != nil {
+		if err := validateBytes([]byte(b)); err != nil {
 			t.Error(err)
 		}
 
@@ -213,18 +213,6 @@ func TestBytesSplitAndJoin(t *testing.T) {
 		joined := Join(split...)
 		if !m.Equal(joined) {
 			t.Errorf("joined components failed: %s != %s", m, joined)
-		}
-
-		// modifying underlying bytes is fine.
-		m2 := m.(*multiaddr)
-		for i := range m2.bytes {
-			m2.bytes[i] = 0
-		}
-
-		for i, a := range split {
-			if a.String() != res[i] {
-				t.Errorf("split component failed: %s != %s", a, res[i])
-			}
 		}
 	}
 
@@ -418,5 +406,17 @@ func TestFuzzString(t *testing.T) {
 			_ = ma.String()
 			ma.Protocols()
 		}
+	}
+}
+
+func TestBinaryRepresentation(t *testing.T) {
+	expected := []byte{0x4, 0x7f, 0x0, 0x0, 0x1, 0x91, 0x2, 0x4, 0xd2}
+	ma, err := NewMultiaddr("/ip4/127.0.0.1/udp/1234")
+	if err != nil {
+		t.Error(err)
+	}
+
+	if !bytes.Equal(ma.Bytes(), expected) {
+		t.Errorf("expected %x, got %x", expected, ma.Bytes())
 	}
 }

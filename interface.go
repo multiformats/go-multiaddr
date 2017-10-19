@@ -17,8 +17,13 @@ type Multiaddr interface {
 	// Equal returns whether two Multiaddrs are exactly equal
 	Equal(Multiaddr) bool
 
-	// Bytes returns the []byte representation of this Multiaddr
+	// Bytes returns the binary representation of this Multiaddr
 	Bytes() []byte
+
+	// Return the binary representation of this multiaddr as a string.
+	//
+	// Doesn't allocate.
+	ByteString() string
 
 	// String returns the string representation of this Multiaddr
 	// (may panic if internal state is corrupted)
