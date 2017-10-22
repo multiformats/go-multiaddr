@@ -420,3 +420,15 @@ func TestFuzzString(t *testing.T) {
 		}
 	}
 }
+
+func TestBinaryRepresentation(t *testing.T) {
+	expected := []byte{0x4, 0x7f, 0x0, 0x0, 0x1, 0x91, 0x2, 0x4, 0xd2}
+	ma, err := NewMultiaddr("/ip4/127.0.0.1/udp/1234")
+	if err != nil {
+		t.Error(err)
+	}
+
+	if !bytes.Equal(ma.Bytes(), expected) {
+		t.Errorf("expected %x, got %x", expected, ma.Bytes())
+	}
+}
