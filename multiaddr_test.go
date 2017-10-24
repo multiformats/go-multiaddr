@@ -421,9 +421,41 @@ func TestFuzzString(t *testing.T) {
 	}
 }
 
-func TestBinaryRepresentation(t *testing.T) {
+func TestIp4UdpBinary(t *testing.T) {
 	expected := []byte{0x4, 0x7f, 0x0, 0x0, 0x1, 0x91, 0x2, 0x4, 0xd2}
 	ma, err := NewMultiaddr("/ip4/127.0.0.1/udp/1234")
+	if err != nil {
+		t.Error(err)
+	}
+
+	if !bytes.Equal(ma.Bytes(), expected) {
+		t.Errorf("expected %x, got %x", expected, ma.Bytes())
+	}
+
+	expected = []byte{0x4, 0x0, 0x0, 0x0, 0x0}
+	ma, err = NewMultiaddr("/ip4/0.0.0.0")
+	if err != nil {
+		t.Error(err)
+	}
+
+	if !bytes.Equal(ma.Bytes(), expected) {
+		t.Errorf("expected %x, got %x", expected, ma.Bytes())
+	}
+}
+
+func TestIp6TcpBinary(t *testing.T) {
+	expected := []byte{0x29, 0xfe, 0x80, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x4f, 0x83, 0xb2, 0x67, 0x76, 0x5b, 0xd5, 0x72, 0x6, 0x10, 0xe1}
+	ma, err := NewMultiaddr("/ip6/fe80::4f83:b267:765b:d572/tcp/4321")
+	if err != nil {
+		t.Error(err)
+	}
+
+	if !bytes.Equal(ma.Bytes(), expected) {
+		t.Errorf("expected %x, got %x", expected, ma.Bytes())
+	}
+
+	expected = []byte{0x29, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0}
+	ma, err = NewMultiaddr("/ip6/::")
 	if err != nil {
 		t.Error(err)
 	}
