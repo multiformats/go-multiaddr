@@ -103,13 +103,11 @@ func (m Multiaddr) Encapsulate(o Multiaddr) Multiaddr {
 
 // Decapsulate unwraps Multiaddr up until the given Multiaddr is found.
 func (m Multiaddr) Decapsulate(o Multiaddr) Multiaddr {
-	s1 := m.String()
-	s2 := o.String()
-	i := strings.LastIndex(s1, s2)
+	i := bytes.LastIndex(m, o)
 	if i < 0 {
 		return m
 	}
-	return Multiaddr(s1[:i])
+	return m[:i]
 }
 
 var ErrProtocolNotFound = fmt.Errorf("protocol not found in multiaddr")
