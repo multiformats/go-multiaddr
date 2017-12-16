@@ -4,37 +4,45 @@ import "fmt"
 
 // Split returns the sub-address portions of a multiaddr.
 func Split(m Multiaddr) []Multiaddr {
-	split, err := bytesSplit(m)
-	if err != nil {
-		panic(fmt.Errorf("invalid multiaddr %s", m.String()))
+	b := []byte(m)
+	var ret []Multiaddr
+	for len(b) > 0 {
+		code, n, err := ReadVarintCode(b)
+		if err != nil {
+			panic(fmt.Errorf("invalid multiaddr %s", m.String()))
+		}
+
+		p := ProtocolWithCode(code)
+		if p.Code == 0 {
+			panic(fmt.Errorf("invalid multiaddr %s", m.String()))
+		}
+
+		size, err := sizeForAddr(p, b[n:])
+		if err != nil {
+			panic(fmt.Errorf("invalid multiaddr %s", m.String()))
+		}
+
+		length := n + size
+		ret = append(ret, b[:length])
+		b = b[length:]
 	}
 
-	addrs := make([]Multiaddr, len(split))
-	for i, addr := range split {
-		addrs[i] = addr
-	}
-	return addrs
+	return ret
 }
 
 // Join returns a combination of addresses.
 func Join(ms ...Multiaddr) Multiaddr {
-
 	length := 0
-	bs := make([][]byte, len(ms))
-	for i, m := range ms {
-		bs[i] = m
-		length += len(bs[i])
+	for _, m := range ms {
+		length += len(m)
 	}
 
-	bidx := 0
-	b := make([]byte, length)
-	for _, mb := range bs {
-		for i := range mb {
-			b[bidx] = mb[i]
-			bidx++
-		}
+	offset := 0
+	out := make([]byte, length)
+	for _, m := range ms {
+		offset += copy(out[offset:], m)
 	}
-	return b
+	return out
 }
 
 // Cast re-casts a byte slice as a multiaddr. will panic if it fails to parse.
