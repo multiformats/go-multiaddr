@@ -26,7 +26,7 @@ func NewMultiaddr(s string) (a Multiaddr, err error) {
 }
 
 // NewMultiaddrBytes initializes a Multiaddr from a byte representation.
-// It validates it as an input string.
+// It validates it as an input string but *does not* copy it.
 func NewMultiaddrBytes(b []byte) (a Multiaddr, err error) {
 	defer func() {
 		if e := recover(); e != nil {
