@@ -8,9 +8,7 @@ import (
 )
 
 // multiaddr is the data structure representing a Multiaddr
-type multiaddr struct {
-	bytes []byte
-}
+type Multiaddr []byte
 
 // NewMultiaddr parses and validates an input string, returning a *Multiaddr
 func NewMultiaddr(s string) (a Multiaddr, err error) {
@@ -24,7 +22,7 @@ func NewMultiaddr(s string) (a Multiaddr, err error) {
 	if err != nil {
 		return nil, err
 	}
-	return &multiaddr{bytes: b}, nil
+	return b, nil
 }
 
 // NewMultiaddrBytes initializes a Multiaddr from a byte representation.
@@ -41,25 +39,24 @@ func NewMultiaddrBytes(b []byte) (a Multiaddr, err error) {
 		return nil, err
 	}
 
-	return &multiaddr{bytes: b}, nil
+	return Multiaddr(b), nil
 }
 
 // Equal tests whether two multiaddrs are equal
-func (m *multiaddr) Equal(m2 Multiaddr) bool {
-	return bytes.Equal(m.bytes, m2.Bytes())
+func (m Multiaddr) Equal(m2 Multiaddr) bool {
+	return bytes.Equal(m, m2)
 }
 
 // Bytes returns the []byte representation of this Multiaddr
-func (m *multiaddr) Bytes() []byte {
-	// consider returning copy to prevent changing underneath us?
-	cpy := make([]byte, len(m.bytes))
-	copy(cpy, m.bytes)
+func (m Multiaddr) Bytes() []byte {
+	cpy := make([]byte, len(m))
+	copy(cpy, m)
 	return cpy
 }
 
 // String returns the string representation of a Multiaddr
-func (m *multiaddr) String() string {
-	s, err := bytesToString(m.bytes)
+func (m Multiaddr) String() string {
+	s, err := bytesToString(m)
 	if err != nil {
 		panic("multiaddr failed to convert back to string. corrupted?")
 	}
@@ -68,9 +65,9 @@ func (m *multiaddr) String() string {
 
 // Protocols returns the list of protocols this Multiaddr has.
 // will panic in case we access bytes incorrectly.
-func (m *multiaddr) Protocols() []Protocol {
+func (m Multiaddr) Protocols() []Protocol {
 	ps := make([]Protocol, 0, 8)
-	b := m.bytes
+	b := m
 	for len(b) > 0 {
 		code, n, err := ReadVarintCode(b)
 		if err != nil {
@@ -97,26 +94,23 @@ func (m *multiaddr) Protocols() []Protocol {
 }
 
 // Encapsulate wraps a given Multiaddr, returning the resulting joined Multiaddr
-func (m *multiaddr) Encapsulate(o Multiaddr) Multiaddr {
-	mb := m.bytes
-	ob := o.Bytes()
-
-	b := make([]byte, len(mb)+len(ob))
-	copy(b, mb)
-	copy(b[len(mb):], ob)
-	return &multiaddr{bytes: b}
+func (m Multiaddr) Encapsulate(o Multiaddr) Multiaddr {
+	b := make([]byte, len(m)+len(o))
+	copy(b, m)
+	copy(b[len(m):], o)
+	return b
 }
 
 // Decapsulate unwraps Multiaddr up until the given Multiaddr is found.
-func (m *multiaddr) Decapsulate(o Multiaddr) Multiaddr {
+func (m Multiaddr) Decapsulate(o Multiaddr) Multiaddr {
 	s1 := m.String()
 	s2 := o.String()
 	i := strings.LastIndex(s1, s2)
 	if i < 0 {
 		// if multiaddr not contained, returns a copy.
-		cpy := make([]byte, len(m.bytes))
-		copy(cpy, m.bytes)
-		return &multiaddr{bytes: cpy}
+		cpy := make([]byte, len(m))
+		copy(cpy, m)
+		return cpy
 	}
 
 	ma, err := NewMultiaddr(s1[:i])
@@ -128,7 +122,7 @@ func (m *multiaddr) Decapsulate(o Multiaddr) Multiaddr {
 
 var ErrProtocolNotFound = fmt.Errorf("protocol not found in multiaddr")
 
-func (m *multiaddr) ValueForProtocol(code int) (string, error) {
+func (m Multiaddr) ValueForProtocol(code int) (string, error) {
 	for _, sub := range Split(m) {
 		p := sub.Protocols()[0]
 		if p.Code == code {
