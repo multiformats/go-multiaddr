@@ -107,17 +107,9 @@ func (m Multiaddr) Decapsulate(o Multiaddr) Multiaddr {
 	s2 := o.String()
 	i := strings.LastIndex(s1, s2)
 	if i < 0 {
-		// if multiaddr not contained, returns a copy.
-		cpy := make([]byte, len(m))
-		copy(cpy, m)
-		return cpy
+		return m
 	}
-
-	ma, err := NewMultiaddr(s1[:i])
-	if err != nil {
-		panic("Multiaddr.Decapsulate incorrect byte boundaries.")
-	}
-	return ma
+	return Multiaddr(s1[:i])
 }
 
 var ErrProtocolNotFound = fmt.Errorf("protocol not found in multiaddr")
