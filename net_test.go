@@ -314,6 +314,18 @@ func TestIPLoopback(t *testing.T) {
 		t.Error("IsIPLoopback failed (IP4Loopback)")
 	}
 
+	if !IsIPLoopback(newMultiaddr(t, "/ip4/127.1.80.9")) {
+		t.Error("IsIPLoopback failed (/ip4/127.1.80.9)")
+	}
+
+	if IsIPLoopback(newMultiaddr(t, "/ip4/112.123.11.1")) {
+		t.Error("IsIPLoopback false positive (/ip4/112.123.11.1)")
+	}
+
+	if IsIPLoopback(newMultiaddr(t, "/ip4/192.168.0.1/ip6/::1")) {
+		t.Error("IsIPLoopback false positive (/ip4/192.168.0.1/ip6/::1)")
+	}
+
 	if !IsIPLoopback(IP6Loopback) {
 		t.Error("IsIPLoopback failed (IP6Loopback)")
 	}
