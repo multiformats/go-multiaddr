@@ -51,22 +51,21 @@ func IsThinWaist(m ma.Multiaddr) bool {
 	}
 }
 
+var localPrefixes = [][]byte{
+	{ma.P_IP4, 127}, // 127.*
+	IP6LinkLocalLoopback.Bytes(),
+	IP6Loopback.Bytes(),
+}
+
 // IsIPLoopback returns whether a Multiaddr is a "Loopback" IP address
-// This means either /ip4/127.0.0.1 or /ip6/::1
-// TODO: differentiate IsIPLoopback and OverIPLoopback
+// This means either /ip4/127.*.*.*, /ip6/::1, or /ip6/fe80::1
 func IsIPLoopback(m ma.Multiaddr) bool {
 	b := m.Bytes()
-
-	// /ip4/127 prefix (_entire_ /8 is loopback...)
-	if bytes.HasPrefix(b, []byte{ma.P_IP4, 127}) {
-		return true
+	for _, prefix := range localPrefixes {
+		if bytes.HasPrefix(b, prefix) {
+			return true
+		}
 	}
-
-	// /ip6/::1
-	if !m.Decapsulate(IP6Loopback).Equal(m) || !m.Decapsulate(IP6LinkLocalLoopback).Equal(m) {
-		return true
-	}
-
 	return false
 }
 
