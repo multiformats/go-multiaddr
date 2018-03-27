@@ -113,24 +113,52 @@ func (m multiaddr) Encapsulate(o Multiaddr) Multiaddr {
 	return multiaddr(m.ByteString() + o.ByteString())
 }
 
-// Decapsultate removes a Multiaddr wrapping. For example:
-//
-//      /ip4/1.2.3.4/tcp/80 decapsulate /ip4/1.2.3.4 = /tcp/80
-//
-func (m multiaddr) Decapsulate(o Multiaddr) Multiaddr {
-	s1 := m.String()
-	s2 := o.String()
-	i := strings.LastIndex(s1, s2)
-	if i < 0 {
-		// Immutable!
-		return o
+func (m multiaddr) Split(s Multiaddr) (Multiaddr, Multiaddr) {
+	haystack := m.ByteString()
+	needle := s.ByteString()
+	length := len(needle)
+	offset := 0
+
+	if length == 0 {
+		return nil, nil
 	}
 
-	ma, err := NewMultiaddr(s1[:i])
-	if err != nil {
-		panic("Multiaddr.Decapsulate incorrect byte boundaries.")
+	b := m.Bytes()
+	for len(haystack) >= offset+length {
+		if haystack[offset:offset+length] == needle {
+			return multiaddr(haystack[:offset]), multiaddr(haystack[offset+length:])
+		}
+		code, n, err := ReadVarintCode(b[offset:])
+		if err != nil {
+			panic(err)
+		}
+
+		p := ProtocolWithCode(code)
+		if p.Code == 0 {
+			// this is a panic (and not returning err) because this should've been
+			// caught on constructing the Multiaddr
+			panic(fmt.Errorf("no protocol with code %d", code))
+		}
+		offset += n
+
+		size, err := sizeForAddr(p, b[offset:])
+		if err != nil {
+			panic(err)
+		}
+		offset += size
 	}
-	return ma
+	return nil, nil
+}
+
+// Decapsultate removes a Multiaddr wrapping. For example:
+//
+//      /ip4/1.2.3.4/tcp/80 decapsulate /tcp/80 = /ip4/1.2.3.4
+//
+func (m multiaddr) Decapsulate(o Multiaddr) Multiaddr {
+	if a, _ := m.Split(o); a != nil {
+		return a
+	}
+	return m
 }
 
 var ErrProtocolNotFound = fmt.Errorf("protocol not found in multiaddr")
