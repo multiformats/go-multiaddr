@@ -26,7 +26,7 @@ func stringToMultiaddr(s string) (multiaddr, error) {
 		if p.Code == 0 {
 			return "", fmt.Errorf("no protocol with name %s", sp[0])
 		}
-		b.Write(CodeToVarint(p.Code))
+		b.Write(p.VCode)
 		sp = sp[1:]
 
 		if p.Size == 0 { // no length.
