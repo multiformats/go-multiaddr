@@ -15,7 +15,6 @@ package multiaddr
 import (
 	"fmt"
 	"log"
-	"strings"
 )
 
 // Multiaddr is the data structure representing a Multiaddr
@@ -165,15 +164,37 @@ var ErrProtocolNotFound = fmt.Errorf("protocol not found in multiaddr")
 
 // ValueForProtocol returns the value (if any) following the specified protocol
 func (m multiaddr) ValueForProtocol(code int) (string, error) {
-	for _, sub := range Split(m) {
-		p := sub.Protocols()[0]
-		if p.Code == code {
-			if p.Size == 0 {
-				return "", nil
-			}
-			return strings.SplitN(sub.String(), "/", 3)[2], nil
-		}
+	target := ProtocolWithCode(code)
+	if target.Code == 0 {
+		return "", ErrProtocolNotFound
 	}
 
+	b := m.Bytes()
+	for offset := 0; offset < len(b); {
+		c, n, err := ReadVarintCode(b[offset:])
+		if err != nil {
+			panic(err)
+		}
+
+		p := ProtocolWithCode(c)
+		if p.Code == 0 {
+			// this is a panic (and not returning err) because this should've been
+			// caught on constructing the Multiaddr
+			panic(fmt.Errorf("no protocol with code %d", code))
+		}
+		offset += n
+
+		size, err := sizeForAddr(p, b[offset:])
+		if err != nil {
+			panic(err)
+		}
+		if code == c {
+			if target.Transcoder == nil {
+				return "", nil
+			}
+			return target.Transcoder.BytesToString(b[offset : offset+size])
+		}
+		offset += size
+	}
 	return "", ErrProtocolNotFound
 }
