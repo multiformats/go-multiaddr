@@ -121,20 +121,20 @@ func onionBtS(b []byte) (string, error) {
 	return addr + ":" + strconv.Itoa(int(port)), nil
 }
 
-var TranscoderIPFS = NewTranscoderFromFunctions(ipfsStB, ipfsBtS)
+var TranscoderP2P = NewTranscoderFromFunctions(p2pStB, p2pBtS)
 
-func ipfsStB(s string) ([]byte, error) {
+func p2pStB(s string) ([]byte, error) {
 	// the address is a varint prefixed multihash string representation
 	m, err := mh.FromB58String(s)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse ipfs addr: %s %s", s, err)
+		return nil, fmt.Errorf("failed to parse p2p addr: %s %s", s, err)
 	}
 	size := CodeToVarint(len(m))
 	b := append(size, m...)
 	return b, nil
 }
 
-func ipfsBtS(b []byte) (string, error) {
+func p2pBtS(b []byte) (string, error) {
 	// the address is a varint-prefixed multihash string representation
 	size, n, err := ReadVarintCode(b)
 	if err != nil {

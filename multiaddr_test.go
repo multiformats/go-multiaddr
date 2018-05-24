@@ -342,6 +342,7 @@ func TestGetValue(t *testing.T) {
 	assertValueForProto(t, a, P_TCP, "5555")
 	assertValueForProto(t, a, P_UDP, "1234")
 	assertValueForProto(t, a, P_IPFS, "QmbHVEEepCi7rn7VL7Exxpd2Ci9NNB6ifvqwhsrbRMgQFP")
+	assertValueForProto(t, a, P_P2P, "QmbHVEEepCi7rn7VL7Exxpd2Ci9NNB6ifvqwhsrbRMgQFP")
 
 	_, err := a.ValueForProtocol(P_IP6)
 	switch err {
