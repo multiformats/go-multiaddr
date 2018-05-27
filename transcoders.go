@@ -47,6 +47,7 @@ func (t twrp) ValidateBytes(b []byte) error {
 
 var TranscoderIP4 = NewTranscoderFromFunctions(ip4StB, ipBtS, nil)
 var TranscoderIP6 = NewTranscoderFromFunctions(ip6StB, ipBtS, nil)
+var TranscoderIP6Zone = NewTranscoderFromFunctions(ip6zoneStB, ip6zoneBtS, nil)
 
 func ip4StB(s string) ([]byte, error) {
 	i := net.ParseIP(s).To4()
@@ -54,6 +55,20 @@ func ip4StB(s string) ([]byte, error) {
 		return nil, fmt.Errorf("failed to parse ip4 addr: %s", s)
 	}
 	return i, nil
+}
+
+func ip6zoneStB(s string) ([]byte, error) {
+	if len(s) == 0 {
+		return nil, fmt.Errorf("empty ip6zone")
+	}
+	return []byte(s), nil
+}
+
+func ip6zoneBtS(b []byte) (string, error) {
+	if len(b) == 0 {
+		return "", fmt.Errorf("invalid length (should be > 0)")
+	}
+	return string(b), nil
 }
 
 func ip6StB(s string) ([]byte, error) {
