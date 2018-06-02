@@ -90,18 +90,25 @@ func TestFromUDP(t *testing.T) {
 
 func TestThinWaist(t *testing.T) {
 	addrs := map[string]bool{
-		"/ip4/127.0.0.1/udp/1234":              true,
-		"/ip4/127.0.0.1/tcp/1234":              true,
-		"/ip4/127.0.0.1/udp/1234/tcp/1234":     true,
-		"/ip4/127.0.0.1/tcp/12345/ip4/1.2.3.4": true,
-		"/ip6/::1/tcp/80":                      true,
-		"/ip6/::1/udp/80":                      true,
-		"/ip6/::1":                             true,
-		"/tcp/1234/ip4/1.2.3.4":                false,
-		"/tcp/1234":                            false,
-		"/tcp/1234/udp/1234":                   false,
-		"/ip4/1.2.3.4/ip4/2.3.4.5":             true,
-		"/ip6/::1/ip4/2.3.4.5":                 true,
+		"/ip4/127.0.0.1/udp/1234":                true,
+		"/ip4/127.0.0.1/tcp/1234":                true,
+		"/ip4/127.0.0.1/udp/1234/tcp/1234":       true,
+		"/ip4/127.0.0.1/tcp/12345/ip4/1.2.3.4":   true,
+		"/ip6/::1/tcp/80":                        true,
+		"/ip6/::1/udp/80":                        true,
+		"/ip6/::1":                               true,
+		"/ip6zone/hello/ip6/fe80::1/tcp/80":      true,
+		"/ip6zone/hello/ip6/fe80::1":             true,
+		"/tcp/1234/ip4/1.2.3.4":                  false,
+		"/tcp/1234":                              false,
+		"/tcp/1234/udp/1234":                     false,
+		"/ip4/1.2.3.4/ip4/2.3.4.5":               true,
+		"/ip6/fe80::1/ip4/2.3.4.5":               true,
+		"/ip6zone/hello/ip6/fe80::1/ip4/2.3.4.5": true,
+
+		// Invalid ip6zone usage:
+		"/ip6zone/hello":             false,
+		"/ip6zone/hello/ip4/1.1.1.1": false,
 	}
 
 	for a, res := range addrs {
@@ -120,7 +127,7 @@ func TestDialArgs(t *testing.T) {
 	test := func(e_maddr, e_nw, e_host string) {
 		m, err := ma.NewMultiaddr(e_maddr)
 		if err != nil {
-			t.Fatal("failed to construct", "/ip4/127.0.0.1/udp/1234", e_maddr)
+			t.Fatal("failed to construct", e_maddr)
 		}
 
 		nw, host, err := DialArgs(m)
@@ -137,14 +144,28 @@ func TestDialArgs(t *testing.T) {
 		}
 	}
 
+	test_error := func(e_maddr string) {
+		m, err := ma.NewMultiaddr(e_maddr)
+		if err != nil {
+			t.Fatal("failed to construct", e_maddr)
+		}
+
+		_, _, err = DialArgs(m)
+		if err == nil {
+			t.Fatal("expected DialArgs to fail on", e_maddr)
+		}
+	}
+
 	test("/ip4/127.0.0.1/udp/1234", "udp4", "127.0.0.1:1234")
 	test("/ip4/127.0.0.1/tcp/4321", "tcp4", "127.0.0.1:4321")
 	test("/ip6/::1/udp/1234", "udp6", "[::1]:1234")
 	test("/ip6/::1/tcp/4321", "tcp6", "[::1]:4321")
-	test("/ip6/::1", "ip6", "::1")                                     // Just an IP
-	test("/ip4/1.2.3.4", "ip4", "1.2.3.4")                             // Just an IP
-	test("/ip6zone/foo/ip6/::1/tcp/4321", "tcp6", "[::1%foo]:4321")    // zone
-	test("/ip6zone/foo/ip6/::1", "ip6", "::1%foo")                     // no TCP
-	test("/ip6zone/foo/ip6/::1/ip6zone/bar", "ip6", "::1%foo")         // IP over IP
-	test("/ip6zone/foo/ip4/127.0.0.1/ip6zone/bar", "ip4", "127.0.0.1") // Skip zones in IP
+	test("/ip6/::1", "ip6", "::1")                                  // Just an IP
+	test("/ip4/1.2.3.4", "ip4", "1.2.3.4")                          // Just an IP
+	test("/ip6zone/foo/ip6/::1/tcp/4321", "tcp6", "[::1%foo]:4321") // zone
+	test("/ip6zone/foo/ip6/::1/udp/4321", "udp6", "[::1%foo]:4321") // zone
+	test("/ip6zone/foo/ip6/::1", "ip6", "::1%foo")                  // no TCP
+	test_error("/ip6zone/foo/ip4/127.0.0.1")                        // IP4 doesn't take zone
+	test("/ip6zone/foo/ip6/::1/ip6zone/bar", "ip6", "::1%foo")      // IP over IP
+	test_error("/ip6zone/foo/ip6zone/bar/ip6/::1")                  // Only one zone per IP6
 }

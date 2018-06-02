@@ -27,6 +27,10 @@ var (
 // IsThinWaist returns whether a Multiaddr starts with "Thin Waist" Protocols.
 // This means: /{IP4, IP6}[/{TCP, UDP}]
 func IsThinWaist(m ma.Multiaddr) bool {
+	m = zoneless(m)
+	if m == nil {
+		return false
+	}
 	p := m.Protocols()
 
 	// nothing? not even a waist.
@@ -52,9 +56,14 @@ func IsThinWaist(m ma.Multiaddr) bool {
 }
 
 // IsIPLoopback returns whether a Multiaddr is a "Loopback" IP address
-// This means either /ip4/127.*.*.*, /ip6/::1, or /ip6/::ffff:127.*.*.*.*
+// This means either /ip4/127.*.*.*, /ip6/::1, or /ip6/::ffff:127.*.*.*.*,
+// or /ip6zone/<any value>/ip6/<one of the preceding ip6 values>
 func IsIPLoopback(m ma.Multiaddr) bool {
+	m = zoneless(m)
 	c, rest := ma.SplitFirst(m)
+	if c == nil {
+		return false
+	}
 	if rest != nil {
 		// Not *just* an IPv4 addr
 		return false
@@ -66,33 +75,47 @@ func IsIPLoopback(m ma.Multiaddr) bool {
 	return false
 }
 
-// IsIP6LinkLocal returns if a an IPv6 link-local multiaddress (with zero or
-// more leading zones). These addresses are non routable.
+// IsIP6LinkLocal returns whether a Multiaddr starts with an IPv6 link-local
+// multiaddress (with zero or one leading zone). These addresses are non
+// routable.
 func IsIP6LinkLocal(m ma.Multiaddr) bool {
-	matched := false
-	ma.ForEach(m, func(c ma.Component) bool {
-		// Too much.
-		if matched {
-			matched = false
-			return false
-		}
-
-		switch c.Protocol().Code {
-		case ma.P_IP6ZONE:
-			return true
-		case ma.P_IP6:
-			ip := net.IP(c.RawValue())
-			matched = ip.IsLinkLocalMulticast() || ip.IsLinkLocalUnicast()
-			return true
-		default:
-			return false
-		}
-	})
-	return matched
+	m = zoneless(m)
+	c, _ := ma.SplitFirst(m)
+	if c == nil || c.Protocol().Code != ma.P_IP6 {
+		return false
+	}
+	ip := net.IP(c.RawValue())
+	return ip.IsLinkLocalMulticast() || ip.IsLinkLocalUnicast()
 }
 
 // IsIPUnspecified returns whether a Multiaddr is am Unspecified IP address
 // This means either /ip4/0.0.0.0 or /ip6/::
 func IsIPUnspecified(m ma.Multiaddr) bool {
+	m = zoneless(m)
+	if m == nil {
+		return false
+	}
 	return IP4Unspecified.Equal(m) || IP6Unspecified.Equal(m)
+}
+
+// If m matches [zone,ip6,...], return [ip6,...]
+// else if m matches [], [zone], or [zone,...], return nil
+// else return m
+func zoneless(m ma.Multiaddr) ma.Multiaddr {
+	head, tail := ma.SplitFirst(m)
+	if head == nil {
+		return nil
+	}
+	if head.Protocol().Code == ma.P_IP6ZONE {
+		if tail == nil {
+			return nil
+		}
+		tailhead, _ := ma.SplitFirst(tail)
+		if tailhead.Protocol().Code != ma.P_IP6 {
+			return nil
+		}
+		return tail
+	} else {
+		return m
+	}
 }
