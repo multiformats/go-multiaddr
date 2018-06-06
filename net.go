@@ -153,10 +153,6 @@ func Dial(remote ma.Multiaddr) (Conn, error) {
 // it uses an embedded net.Listener, overriding net.Listener.Accept to
 // return a Conn and providing Multiaddr.
 type Listener interface {
-
-	// NetListener returns the embedded net.Listener. Use with caution.
-	NetListener() net.Listener
-
 	// Accept waits for and returns the next connection to the listener.
 	// Returns a Multiaddr friendly Conn
 	Accept() (Conn, error)
@@ -172,15 +168,27 @@ type Listener interface {
 	Addr() net.Addr
 }
 
+type netListenerAdapter struct {
+	Listener
+}
+
+func (nla *netListenerAdapter) Accept() (net.Conn, error) {
+	return nla.Listener.Accept()
+}
+
+// NetListener turns this Listener into a net.Listener.
+//
+// * Connections returned from Accept implement multiaddr-net Conn.
+// * Calling WrapNetListener on the net.Listener returned by this function will
+//   return the original (underlying) multiaddr-net Listener.
+func NetListener(l Listener) net.Listener {
+	return &netListenerAdapter{l}
+}
+
 // maListener implements Listener
 type maListener struct {
 	net.Listener
 	laddr ma.Multiaddr
-}
-
-// NetListener returns the embedded net.Listener. Use with caution.
-func (l *maListener) NetListener() net.Listener {
-	return l.Listener
 }
 
 // Accept waits for and returns the next connection to the listener.
@@ -237,6 +245,10 @@ func Listen(laddr ma.Multiaddr) (Listener, error) {
 
 // WrapNetListener wraps a net.Listener with a manet.Listener.
 func WrapNetListener(nl net.Listener) (Listener, error) {
+	if nla, ok := nl.(*netListenerAdapter); ok {
+		return nla.Listener, nil
+	}
+
 	laddr, err := FromNetAddr(nl.Addr())
 	if err != nil {
 		return nil, err

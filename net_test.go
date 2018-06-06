@@ -514,3 +514,57 @@ func TestInterfaceAddressesWorks(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func TestNetListener(t *testing.T) {
+	listener, err := net.Listen("tcp", "127.0.0.1:1234")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer listener.Close()
+	malist, err := WrapNetListener(listener)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !malist.Multiaddr().Equal(newMultiaddr(t, "/ip4/127.0.0.1/tcp/1234")) {
+		t.Fatal("unexpected multiaddr")
+	}
+
+	go func() {
+		c, err := Dial(malist.Multiaddr())
+		if err != nil {
+			t.Fatal("failed to dial")
+		}
+		if !c.RemoteMultiaddr().Equal(malist.Multiaddr()) {
+			t.Fatal("dialed wrong target")
+		}
+		c.Close()
+
+		c, err = Dial(malist.Multiaddr())
+		if err != nil {
+			t.Fatal("failed to dial")
+		}
+		c.Close()
+	}()
+
+	c, err := malist.Accept()
+	if err != nil {
+		t.Fatal(err)
+	}
+	c.Close()
+	netList := NetListener(malist)
+	malist2, err := WrapNetListener(netList)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if malist2 != malist {
+		t.Fatal("expected WrapNetListener(NetListener(malist)) == malist")
+	}
+	nc, err := netList.Accept()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !nc.(Conn).LocalMultiaddr().Equal(malist.Multiaddr()) {
+		t.Fatal("wrong multiaddr on conn")
+	}
+	nc.Close()
+}
