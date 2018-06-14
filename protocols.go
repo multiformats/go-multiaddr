@@ -12,7 +12,7 @@ type Protocol struct {
 	Size       int // a size of -1 indicates a length-prefixed variable size
 	Name       string
 	VCode      []byte
-	Path       bool // indicates a path protocol (eg unix, http)
+	Path       bool // indicates a path protocol (eg unix)
 	Transcoder Transcoder
 }
 

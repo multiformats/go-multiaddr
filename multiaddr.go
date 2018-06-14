@@ -1,18 +1,27 @@
+// Multiaddr is a cross-protocol, cross-platform format for representing
+// internet addresses. It emphasizes explicitness and self-description.
+// Learn more here: https://github.com/multiformats/multiaddr
+//
+// Multiaddrs have both a binary and string representation.
+//
+//     import ma "github.com/multiformats/go-multiaddr"
+//
+//     addr, err := ma.NewMultiaddr("/ip4/1.2.3.4/tcp/80")
+//     // err non-nil when parsing failed.
+//
+
 package multiaddr
 
 import (
-	"bytes"
 	"fmt"
 	"log"
-	"strings"
 )
 
-// multiaddr is the data structure representing a Multiaddr
-type multiaddr struct {
-	bytes []byte
-}
+// Multiaddr is the data structure representing a Multiaddr
+// Multiaddrs are immutable and safe to use as map keys.
+type multiaddr string
 
-// NewMultiaddr parses and validates an input string, returning a *Multiaddr
+// NewMultiaddr parses and validates an input string, returning a Multiaddr
 func NewMultiaddr(s string) (a Multiaddr, err error) {
 	defer func() {
 		if e := recover(); e != nil {
@@ -20,11 +29,7 @@ func NewMultiaddr(s string) (a Multiaddr, err error) {
 			err = fmt.Errorf("%v", e)
 		}
 	}()
-	b, err := stringToBytes(s)
-	if err != nil {
-		return nil, err
-	}
-	return &multiaddr{bytes: b}, nil
+	return stringToMultiaddr(s)
 }
 
 // NewMultiaddrBytes initializes a Multiaddr from a byte representation.
@@ -41,36 +46,39 @@ func NewMultiaddrBytes(b []byte) (a Multiaddr, err error) {
 		return nil, err
 	}
 
-	return &multiaddr{bytes: b}, nil
+	return multiaddr(b), nil
 }
 
-// Equal tests whether two multiaddrs are equal
-func (m *multiaddr) Equal(m2 Multiaddr) bool {
-	return bytes.Equal(m.bytes, m2.Bytes())
+// Equal returns whether two Multiaddrs are exactly equal
+func (m multiaddr) Equal(o Multiaddr) bool {
+	return m.ByteString() == o.ByteString()
 }
 
 // Bytes returns the []byte representation of this Multiaddr
-func (m *multiaddr) Bytes() []byte {
-	// consider returning copy to prevent changing underneath us?
-	cpy := make([]byte, len(m.bytes))
-	copy(cpy, m.bytes)
-	return cpy
+func (m multiaddr) ByteString() string {
+	return string(m)
 }
 
-// String returns the string representation of a Multiaddr
-func (m *multiaddr) String() string {
-	s, err := bytesToString(m.bytes)
+// Bytes returns the []byte representation of this Multiaddr
+func (m multiaddr) Bytes() []byte {
+	return []byte(m)
+}
+
+// String returns the string representation of this Multiaddr
+// (may panic if internal state is corrupted)
+func (m multiaddr) String() string {
+	s, err := bytesToString(m.Bytes())
 	if err != nil {
 		panic("multiaddr failed to convert back to string. corrupted?")
 	}
 	return s
 }
 
-// Protocols returns the list of protocols this Multiaddr has.
-// will panic in case we access bytes incorrectly.
-func (m *multiaddr) Protocols() []Protocol {
+// Protocols returns the list of Protocols this Multiaddr includes
+// will panic if protocol code incorrect (and bytes accessed incorrectly)
+func (m multiaddr) Protocols() []Protocol {
 	ps := make([]Protocol, 0, 8)
-	b := m.bytes
+	b := m.Bytes()
 	for len(b) > 0 {
 		code, n, err := ReadVarintCode(b)
 		if err != nil {
@@ -96,48 +104,97 @@ func (m *multiaddr) Protocols() []Protocol {
 	return ps
 }
 
-// Encapsulate wraps a given Multiaddr, returning the resulting joined Multiaddr
-func (m *multiaddr) Encapsulate(o Multiaddr) Multiaddr {
-	mb := m.bytes
-	ob := o.Bytes()
-
-	b := make([]byte, len(mb)+len(ob))
-	copy(b, mb)
-	copy(b[len(mb):], ob)
-	return &multiaddr{bytes: b}
+// Encapsulate wraps this Multiaddr around another. For example:
+//
+//      /ip4/1.2.3.4 encapsulate /tcp/80 = /ip4/1.2.3.4/tcp/80
+//
+func (m multiaddr) Encapsulate(o Multiaddr) Multiaddr {
+	return multiaddr(m.ByteString() + o.ByteString())
 }
 
-// Decapsulate unwraps Multiaddr up until the given Multiaddr is found.
-func (m *multiaddr) Decapsulate(o Multiaddr) Multiaddr {
-	s1 := m.String()
-	s2 := o.String()
-	i := strings.LastIndex(s1, s2)
-	if i < 0 {
-		// if multiaddr not contained, returns a copy.
-		cpy := make([]byte, len(m.bytes))
-		copy(cpy, m.bytes)
-		return &multiaddr{bytes: cpy}
+func (m multiaddr) Split(s Multiaddr) (Multiaddr, Multiaddr) {
+	haystack := m.ByteString()
+	needle := s.ByteString()
+	length := len(needle)
+	offset := 0
+
+	if length == 0 {
+		return nil, nil
 	}
 
-	ma, err := NewMultiaddr(s1[:i])
-	if err != nil {
-		panic("Multiaddr.Decapsulate incorrect byte boundaries.")
+	b := m.Bytes()
+	for len(haystack) >= offset+length {
+		if haystack[offset:offset+length] == needle {
+			return multiaddr(haystack[:offset]), multiaddr(haystack[offset+length:])
+		}
+		code, n, err := ReadVarintCode(b[offset:])
+		if err != nil {
+			panic(err)
+		}
+
+		p := ProtocolWithCode(code)
+		if p.Code == 0 {
+			// this is a panic (and not returning err) because this should've been
+			// caught on constructing the Multiaddr
+			panic(fmt.Errorf("no protocol with code %d", code))
+		}
+		offset += n
+
+		size, err := sizeForAddr(p, b[offset:])
+		if err != nil {
+			panic(err)
+		}
+		offset += size
 	}
-	return ma
+	return nil, nil
+}
+
+// Decapsultate removes a Multiaddr wrapping. For example:
+//
+//      /ip4/1.2.3.4/tcp/80 decapsulate /tcp/80 = /ip4/1.2.3.4
+//
+func (m multiaddr) Decapsulate(o Multiaddr) Multiaddr {
+	if a, _ := m.Split(o); a != nil {
+		return a
+	}
+	return m
 }
 
 var ErrProtocolNotFound = fmt.Errorf("protocol not found in multiaddr")
 
-func (m *multiaddr) ValueForProtocol(code int) (string, error) {
-	for _, sub := range Split(m) {
-		p := sub.Protocols()[0]
-		if p.Code == code {
-			if p.Size == 0 {
-				return "", nil
-			}
-			return strings.SplitN(sub.String(), "/", 3)[2], nil
-		}
+// ValueForProtocol returns the value (if any) following the specified protocol
+func (m multiaddr) ValueForProtocol(code int) (string, error) {
+	target := ProtocolWithCode(code)
+	if target.Code == 0 {
+		return "", ErrProtocolNotFound
 	}
 
+	b := m.Bytes()
+	for offset := 0; offset < len(b); {
+		c, n, err := ReadVarintCode(b[offset:])
+		if err != nil {
+			panic(err)
+		}
+
+		p := ProtocolWithCode(c)
+		if p.Code == 0 {
+			// this is a panic (and not returning err) because this should've been
+			// caught on constructing the Multiaddr
+			panic(fmt.Errorf("no protocol with code %d", code))
+		}
+		offset += n
+
+		size, err := sizeForAddr(p, b[offset:])
+		if err != nil {
+			panic(err)
+		}
+		if code == c {
+			if target.Transcoder == nil {
+				return "", nil
+			}
+			return target.Transcoder.BytesToString(b[offset : offset+size])
+		}
+		offset += size
+	}
 	return "", ErrProtocolNotFound
 }

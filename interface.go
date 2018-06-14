@@ -17,11 +17,16 @@ type Multiaddr interface {
 	// Equal returns whether two Multiaddrs are exactly equal
 	Equal(Multiaddr) bool
 
-	// Bytes returns the []byte representation of this Multiaddr
+	// Bytes returns the binary representation of this Multiaddr
 	Bytes() []byte
 
-	// String returns the string representation of this Multiaddr
-	// (may panic if internal state is corrupted)
+	// Return the binary representation of this multiaddr as an immutable
+	// string.
+	//
+	// Calling this function should be cheep, if not free.
+	ByteString() string
+
+	// String returns the string representation of this Multiaddr.
 	String() string
 
 	// Protocols returns the list of Protocols this Multiaddr includes
@@ -36,7 +41,7 @@ type Multiaddr interface {
 
 	// Decapsultate removes a Multiaddr wrapping. For example:
 	//
-	//      /ip4/1.2.3.4/tcp/80 decapsulate /ip4/1.2.3.4 = /tcp/80
+	//      /ip4/1.2.3.4/tcp/80 decapsulate /tcp/80 = /ip4/1.2.3.4
 	//
 	Decapsulate(Multiaddr) Multiaddr
 

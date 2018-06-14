@@ -6,16 +6,16 @@ import (
 	"strings"
 )
 
-func stringToBytes(s string) ([]byte, error) {
+func stringToMultiaddr(s string) (multiaddr, error) {
 
 	// consume trailing slashes
 	s = strings.TrimRight(s, "/")
 
-	b := new(bytes.Buffer)
+	var b bytes.Buffer
 	sp := strings.Split(s, "/")
 
 	if sp[0] != "" {
-		return nil, fmt.Errorf("invalid multiaddr, must begin with /")
+		return "", fmt.Errorf("invalid multiaddr, must begin with /")
 	}
 
 	// consume first empty elem
@@ -24,9 +24,9 @@ func stringToBytes(s string) ([]byte, error) {
 	for len(sp) > 0 {
 		p := ProtocolWithName(sp[0])
 		if p.Code == 0 {
-			return nil, fmt.Errorf("no protocol with name %s", sp[0])
+			return "", fmt.Errorf("no protocol with name %s", sp[0])
 		}
-		b.Write(CodeToVarint(p.Code))
+		b.Write(p.VCode)
 		sp = sp[1:]
 
 		if p.Size == 0 { // no length.
@@ -34,7 +34,7 @@ func stringToBytes(s string) ([]byte, error) {
 		}
 
 		if len(sp) < 1 {
-			return nil, fmt.Errorf("protocol requires address, none given: %s", p.Name)
+			return "", fmt.Errorf("protocol requires address, none given: %s", p.Name)
 		}
 
 		if p.Path {
@@ -44,17 +44,17 @@ func stringToBytes(s string) ([]byte, error) {
 		}
 
 		if p.Transcoder == nil {
-			return nil, fmt.Errorf("no transcoder for %s protocol", p.Name)
+			return "", fmt.Errorf("no transcoder for %s protocol", p.Name)
 		}
 		a, err := p.Transcoder.StringToBytes(sp[0])
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse %s: %s %s", p.Name, sp[0], err)
+			return "", fmt.Errorf("failed to parse %s: %s %s", p.Name, sp[0], err)
 		}
 		b.Write(a)
 		sp = sp[1:]
 	}
 
-	return b.Bytes(), nil
+	return multiaddr(b.Bytes()), nil
 }
 
 func validateBytes(b []byte) (err error) {
@@ -153,30 +153,4 @@ func sizeForAddr(p Protocol, b []byte) (int, error) {
 		}
 		return size + n, nil
 	}
-}
-
-func bytesSplit(b []byte) ([][]byte, error) {
-	var ret [][]byte
-	for len(b) > 0 {
-		code, n, err := ReadVarintCode(b)
-		if err != nil {
-			return nil, err
-		}
-
-		p := ProtocolWithCode(code)
-		if p.Code == 0 {
-			return nil, fmt.Errorf("no protocol with code %d", b[0])
-		}
-
-		size, err := sizeForAddr(p, b[n:])
-		if err != nil {
-			return nil, err
-		}
-
-		length := n + size
-		ret = append(ret, b[:length])
-		b = b[length:]
-	}
-
-	return ret, nil
 }
