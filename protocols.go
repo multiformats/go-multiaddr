@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"strings"
+	"math/bits"
 )
 
 // Protocol is a Multiaddr protocol description structure.
@@ -117,7 +118,7 @@ func ProtocolsWithString(s string) ([]Protocol, error) {
 
 // CodeToVarint converts an integer to a varint-encoded []byte
 func CodeToVarint(num int) []byte {
-	buf := make([]byte, (num/7)+1) // varint package is uint64
+	buf := make([]byte, bits.Len(uint(num))/7 + 1)
 	n := binary.PutUvarint(buf, uint64(num))
 	return buf[:n]
 }
