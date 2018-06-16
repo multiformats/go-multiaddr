@@ -49,7 +49,7 @@ func ip4StB(s string) ([]byte, error) {
 func ip6StB(s string) ([]byte, error) {
 	i := net.ParseIP(s).To16()
 	if i == nil {
-		return nil, fmt.Errorf("failed to parse ip4 addr: %s", s)
+		return nil, fmt.Errorf("failed to parse ip6 addr: %s", s)
 	}
 	return i, nil
 }
