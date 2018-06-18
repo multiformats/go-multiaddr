@@ -3,7 +3,6 @@ package multiaddr
 import (
 	"encoding/base32"
 	"encoding/binary"
-	"errors"
 	"fmt"
 	"net"
 	"strconv"
@@ -129,22 +128,10 @@ func p2pStB(s string) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse p2p addr: %s %s", s, err)
 	}
-	size := CodeToVarint(len(m))
-	b := append(size, m...)
-	return b, nil
+	return m, nil
 }
 
 func p2pBtS(b []byte) (string, error) {
-	// the address is a varint-prefixed multihash string representation
-	size, n, err := ReadVarintCode(b)
-	if err != nil {
-		return "", err
-	}
-
-	b = b[n:]
-	if len(b) != size {
-		return "", errors.New("inconsistent lengths")
-	}
 	m, err := mh.Cast(b)
 	if err != nil {
 		return "", err
@@ -155,27 +142,9 @@ func p2pBtS(b []byte) (string, error) {
 var TranscoderUnix = NewTranscoderFromFunctions(unixStB, unixBtS)
 
 func unixStB(s string) ([]byte, error) {
-	// the address is the whole remaining string, prefixed by a varint len
-	size := CodeToVarint(len(s))
-	b := append(size, []byte(s)...)
-	return b, nil
+	return []byte(s), nil
 }
 
 func unixBtS(b []byte) (string, error) {
-	// the address is a varint len prefixed string
-	size, n, err := ReadVarintCode(b)
-	if err != nil {
-		return "", err
-	}
-
-	b = b[n:]
-	if len(b) != size {
-		return "", errors.New("inconsistent lengths")
-	}
-	if size == 0 {
-		return "", errors.New("invalid length")
-	}
-	s := string(b)
-	s = s[1:] // remove starting slash
-	return s, nil
+	return string(b), nil
 }
