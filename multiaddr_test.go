@@ -433,3 +433,23 @@ func TestBinaryRepresentation(t *testing.T) {
 		t.Errorf("expected %x, got %x", expected, ma.Bytes())
 	}
 }
+
+func TestRoundTrip(t *testing.T) {
+	for _, s := range []string{
+		"/unix/a/b/c/d",
+		"/ip4/127.0.0.1/tcp/123",
+		"/ip4/127.0.0.1/udp/123",
+		"/ip4/127.0.0.1/udp/123/ip6/::",
+		"/ipfs/QmbHVEEepCi7rn7VL7Exxpd2Ci9NNB6ifvqwhsrbRMgQFP",
+		"/ipfs/QmbHVEEepCi7rn7VL7Exxpd2Ci9NNB6ifvqwhsrbRMgQFP/unix/a/b/c",
+	} {
+		ma, err := NewMultiaddr(s)
+		if err != nil {
+			t.Errorf("error when parsing %q: %s", s, err)
+			continue
+		}
+		if ma.String() != s {
+			t.Errorf("failed to round trip %q", s)
+		}
+	}
+}
