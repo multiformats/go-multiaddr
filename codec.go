@@ -88,6 +88,11 @@ func validateBytes(b []byte) (err error) {
 			return fmt.Errorf("invalid value for size")
 		}
 
+		err = p.Transcoder.ValidateBytes(b[:size])
+		if err != nil {
+			return err
+		}
+
 		b = b[size:]
 	}
 

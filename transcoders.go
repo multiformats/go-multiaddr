@@ -14,17 +14,21 @@ import (
 type Transcoder interface {
 	StringToBytes(string) ([]byte, error)
 	BytesToString([]byte) (string, error)
+	ValidateBytes([]byte) error
 }
 
-func NewTranscoderFromFunctions(s2b func(string) ([]byte, error),
-	b2s func([]byte) (string, error)) Transcoder {
-
-	return twrp{s2b, b2s}
+func NewTranscoderFromFunctions(
+	s2b func(string) ([]byte, error),
+	b2s func([]byte) (string, error),
+	val func([]byte) error,
+) Transcoder {
+	return twrp{s2b, b2s, val}
 }
 
 type twrp struct {
 	strtobyte func(string) ([]byte, error)
 	bytetostr func([]byte) (string, error)
+	validbyte func([]byte) error
 }
 
 func (t twrp) StringToBytes(s string) ([]byte, error) {
@@ -34,8 +38,15 @@ func (t twrp) BytesToString(b []byte) (string, error) {
 	return t.bytetostr(b)
 }
 
-var TranscoderIP4 = NewTranscoderFromFunctions(ip4StB, ipBtS)
-var TranscoderIP6 = NewTranscoderFromFunctions(ip6StB, ipBtS)
+func (t twrp) ValidateBytes(b []byte) error {
+	if t.validbyte == nil {
+		return nil
+	}
+	return t.validbyte(b)
+}
+
+var TranscoderIP4 = NewTranscoderFromFunctions(ip4StB, ipBtS, nil)
+var TranscoderIP6 = NewTranscoderFromFunctions(ip6StB, ipBtS, nil)
 
 func ip4StB(s string) ([]byte, error) {
 	i := net.ParseIP(s).To4()
@@ -57,7 +68,7 @@ func ipBtS(b []byte) (string, error) {
 	return net.IP(b).String(), nil
 }
 
-var TranscoderPort = NewTranscoderFromFunctions(portStB, portBtS)
+var TranscoderPort = NewTranscoderFromFunctions(portStB, portBtS, nil)
 
 func portStB(s string) ([]byte, error) {
 	i, err := strconv.Atoi(s)
@@ -77,7 +88,7 @@ func portBtS(b []byte) (string, error) {
 	return strconv.Itoa(int(i)), nil
 }
 
-var TranscoderOnion = NewTranscoderFromFunctions(onionStB, onionBtS)
+var TranscoderOnion = NewTranscoderFromFunctions(onionStB, onionBtS, nil)
 
 func onionStB(s string) ([]byte, error) {
 	addr := strings.Split(s, ":")
@@ -120,7 +131,7 @@ func onionBtS(b []byte) (string, error) {
 	return addr + ":" + strconv.Itoa(int(port)), nil
 }
 
-var TranscoderP2P = NewTranscoderFromFunctions(p2pStB, p2pBtS)
+var TranscoderP2P = NewTranscoderFromFunctions(p2pStB, p2pBtS, p2pVal)
 
 func p2pStB(s string) ([]byte, error) {
 	// the address is a varint prefixed multihash string representation
@@ -131,6 +142,11 @@ func p2pStB(s string) ([]byte, error) {
 	return m, nil
 }
 
+func p2pVal(b []byte) error {
+	_, err := mh.Cast(b)
+	return err
+}
+
 func p2pBtS(b []byte) (string, error) {
 	m, err := mh.Cast(b)
 	if err != nil {
@@ -139,7 +155,7 @@ func p2pBtS(b []byte) (string, error) {
 	return m.B58String(), nil
 }
 
-var TranscoderUnix = NewTranscoderFromFunctions(unixStB, unixBtS)
+var TranscoderUnix = NewTranscoderFromFunctions(unixStB, unixBtS, nil)
 
 func unixStB(s string) ([]byte, error) {
 	return []byte(s), nil
