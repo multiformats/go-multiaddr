@@ -478,3 +478,17 @@ func TestIPFSvP2P(t *testing.T) {
 		}
 	}
 }
+
+func TestInvalidP2PAddr(t *testing.T) {
+	badAddr := "a503221221c05877cbae039d70a5e600ea02c6f9f2942439285c9e344e26f8d280c850fad6"
+	bts, err := hex.DecodeString(badAddr)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ma, err := NewMultiaddrBytes(bts)
+	if err == nil {
+		t.Error("should have failed")
+		// Check for panic
+		_ = ma.String()
+	}
+}
