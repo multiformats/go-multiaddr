@@ -45,6 +45,8 @@ func TestConstructFails(t *testing.T) {
 		"/ip4/127.0.0.1/quic/1234",
 		"/ip4/127.0.0.1/ipfs",
 		"/ip4/127.0.0.1/ipfs/tcp",
+		"/ip4/127.0.0.1/p2p",
+		"/ip4/127.0.0.1/p2p/tcp",
 		"/unix",
 		"/ip4/1.2.3.4/tcp/80/unix",
 	}
@@ -74,12 +76,14 @@ func TestConstructSucceeds(t *testing.T) {
 		"/udp/65535",
 		"/tcp/65535",
 		"/ipfs/QmcgpsyWgH8Y8ajJz1Cu72KnS5uo2Aa2LpzU7kinSupNKC",
+		"/p2p/QmcgpsyWgH8Y8ajJz1Cu72KnS5uo2Aa2LpzU7kinSupNKC",
 		"/udp/1234/sctp/1234",
 		"/udp/1234/udt",
 		"/udp/1234/utp",
 		"/tcp/1234/http",
 		"/tcp/1234/https",
 		"/ipfs/QmcgpsyWgH8Y8ajJz1Cu72KnS5uo2Aa2LpzU7kinSupNKC/tcp/1234",
+		"/p2p/QmcgpsyWgH8Y8ajJz1Cu72KnS5uo2Aa2LpzU7kinSupNKC/tcp/1234",
 		"/ip4/127.0.0.1/udp/1234",
 		"/ip4/127.0.0.1/udp/0",
 		"/ip4/127.0.0.1/tcp/1234",
@@ -87,10 +91,13 @@ func TestConstructSucceeds(t *testing.T) {
 		"/ip4/127.0.0.1/udp/1234/quic",
 		"/ip4/127.0.0.1/ipfs/QmcgpsyWgH8Y8ajJz1Cu72KnS5uo2Aa2LpzU7kinSupNKC",
 		"/ip4/127.0.0.1/ipfs/QmcgpsyWgH8Y8ajJz1Cu72KnS5uo2Aa2LpzU7kinSupNKC/tcp/1234",
+		"/ip4/127.0.0.1/p2p/QmcgpsyWgH8Y8ajJz1Cu72KnS5uo2Aa2LpzU7kinSupNKC",
+		"/ip4/127.0.0.1/p2p/QmcgpsyWgH8Y8ajJz1Cu72KnS5uo2Aa2LpzU7kinSupNKC/tcp/1234",
 		"/unix/a/b/c/d/e",
 		"/unix/stdio",
 		"/ip4/1.2.3.4/tcp/80/unix/a/b/c/d/e/f",
 		"/ip4/127.0.0.1/ipfs/QmcgpsyWgH8Y8ajJz1Cu72KnS5uo2Aa2LpzU7kinSupNKC/tcp/1234/unix/stdio",
+		"/ip4/127.0.0.1/p2p/QmcgpsyWgH8Y8ajJz1Cu72KnS5uo2Aa2LpzU7kinSupNKC/tcp/1234/unix/stdio",
 	}
 
 	for _, a := range cases {
@@ -450,6 +457,24 @@ func TestRoundTrip(t *testing.T) {
 		}
 		if ma.String() != s {
 			t.Errorf("failed to round trip %q", s)
+		}
+	}
+}
+
+// XXX: Change this test when we switch to /p2p by default.
+func TestIPFSvP2P(t *testing.T) {
+	var (
+		p2pAddr  = "/p2p/QmbHVEEepCi7rn7VL7Exxpd2Ci9NNB6ifvqwhsrbRMgQFP"
+		ipfsAddr = "/ipfs/QmbHVEEepCi7rn7VL7Exxpd2Ci9NNB6ifvqwhsrbRMgQFP"
+	)
+
+	for _, s := range []string{p2pAddr, ipfsAddr} {
+		ma, err := NewMultiaddr(s)
+		if err != nil {
+			t.Errorf("error when parsing %q: %s", s, err)
+		}
+		if ma.String() != ipfsAddr {
+			t.Errorf("expected %q, got %q", ipfsAddr, ma.String())
 		}
 	}
 }
