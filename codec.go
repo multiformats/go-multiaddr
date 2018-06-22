@@ -26,7 +26,7 @@ func stringToBytes(s string) ([]byte, error) {
 		if p.Code == 0 {
 			return nil, fmt.Errorf("no protocol with name %s", sp[0])
 		}
-		b.Write(CodeToVarint(p.Code))
+		_, _ = b.Write(CodeToVarint(p.Code))
 		sp = sp[1:]
 
 		if p.Size == 0 { // no length.
@@ -51,7 +51,7 @@ func stringToBytes(s string) ([]byte, error) {
 			return nil, fmt.Errorf("failed to parse %s: %s %s", p.Name, sp[0], err)
 		}
 		if p.Size < 0 { // varint size.
-			b.Write(CodeToVarint(len(a)))
+			_, _ = b.Write(CodeToVarint(len(a)))
 		}
 		b.Write(a)
 		sp = sp[1:]
