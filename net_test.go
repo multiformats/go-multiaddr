@@ -407,12 +407,14 @@ func TestWrapNetConn(t *testing.T) {
 		defer wg.Done()
 		cB, err := listener.Accept()
 		checkErr(err, "failed to accept")
+		_ = cB.(halfOpen)
 		cB.Close()
 	}()
 
 	cA, err := net.Dial("tcp", listener.Addr().String())
 	checkErr(err, "failed to dial")
 	defer cA.Close()
+	_ = cA.(halfOpen)
 
 	lmaddr, err := FromNetAddr(cA.LocalAddr())
 	checkErr(err, "failed to get local addr")
@@ -421,6 +423,8 @@ func TestWrapNetConn(t *testing.T) {
 
 	mcA, err := WrapNetConn(cA)
 	checkErr(err, "failed to wrap conn")
+
+	_ = mcA.(halfOpen)
 
 	if mcA.LocalAddr().String() != cA.LocalAddr().String() {
 		t.Error("wrapped conn local addr differs")
