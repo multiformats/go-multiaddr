@@ -120,6 +120,12 @@ func SwapToP2pMultiaddrs() {
 }
 
 func AddProtocol(p Protocol) error {
+	if p.Size != 0 && p.Transcoder == nil {
+		return fmt.Errorf("protocols with arguments must define transcoders")
+	}
+	if p.Path && p.Size >= 0 {
+		return fmt.Errorf("path protocols must have variable-length sizes")
+	}
 	for _, pt := range Protocols {
 		if pt.Code == p.Code {
 			return fmt.Errorf("protocol code %d already taken by %q", p.Code, pt.Name)
