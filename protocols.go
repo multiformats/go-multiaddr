@@ -81,16 +81,18 @@ var (
 	protoUNIX  = Protocol{P_UNIX, LengthPrefixedVarSize, "unix", CodeToVarint(P_UNIX), true, TranscoderUnix}
 )
 
-var ProtocolsByName = map[string]Protocol{}
+var protocolsByName = map[string]Protocol{}
+var protocolsByCode = map[int]Protocol{}
 
 func init() {
 	for _, p := range Protocols {
-		ProtocolsByName[p.Name] = p
+		protocolsByName[p.Name] = p
+		protocolsByCode[p.Code] = p
 	}
 
 	// explicitly set both of these
-	ProtocolsByName["p2p"] = protoP2P
-	ProtocolsByName["ipfs"] = protoP2P
+	protocolsByName["p2p"] = protoP2P
+	protocolsByName["ipfs"] = protoP2P
 }
 
 // SwapToP2pMultiaddrs is a function to make the transition from /ipfs/...
@@ -115,44 +117,41 @@ func SwapToP2pMultiaddrs() {
 
 	protoP2P.Name = "p2p"
 
-	ProtocolsByName["ipfs"] = protoP2P
-	ProtocolsByName["p2p"] = protoP2P
+	protocolsByName["ipfs"] = protoP2P
+	protocolsByName["p2p"] = protoP2P
+	protocolsByCode[protoP2P.Code] = protoP2P
 }
 
 func AddProtocol(p Protocol) error {
+	if _, ok := protocolsByName[p.Name]; ok {
+		return fmt.Errorf("protocol by the name %q already exists", p.Name)
+	}
+
+	if _, ok := protocolsByCode[p.Code]; ok {
+		return fmt.Errorf("protocol code %d already taken by %q", p.Code, p.Code)
+	}
+
 	if p.Size != 0 && p.Transcoder == nil {
 		return fmt.Errorf("protocols with arguments must define transcoders")
 	}
 	if p.Path && p.Size >= 0 {
 		return fmt.Errorf("path protocols must have variable-length sizes")
 	}
-	for _, pt := range Protocols {
-		if pt.Code == p.Code {
-			return fmt.Errorf("protocol code %d already taken by %q", p.Code, pt.Name)
-		}
-		if pt.Name == p.Name {
-			return fmt.Errorf("protocol by the name %q already exists", p.Name)
-		}
-	}
 
 	Protocols = append(Protocols, p)
-	ProtocolsByName[p.Name] = p
+	protocolsByName[p.Name] = p
+	protocolsByCode[p.Code] = p
 	return nil
 }
 
 // ProtocolWithName returns the Protocol description with given string name.
 func ProtocolWithName(s string) Protocol {
-	return ProtocolsByName[s]
+	return protocolsByName[s]
 }
 
 // ProtocolWithCode returns the Protocol description with given protocol code.
 func ProtocolWithCode(c int) Protocol {
-	for _, p := range Protocols {
-		if p.Code == c {
-			return p
-		}
-	}
-	return Protocol{}
+	return protocolsByCode[c]
 }
 
 // ProtocolsWithString returns a slice of protocols matching given string.
