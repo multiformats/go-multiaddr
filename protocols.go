@@ -38,6 +38,8 @@ const (
 	P_HTTP  = 0x01E0
 	P_HTTPS = 0x01BB
 	P_ONION = 0x01BC
+	P_WS    = 0x01DD
+	P_WSS   = 0x01DE
 )
 
 // These are special sizes
@@ -61,6 +63,8 @@ var Protocols = []Protocol{
 	protoHTTPS,
 	protoP2P,
 	protoUNIX,
+	protoWS,
+	protoWSS,
 }
 
 var (
@@ -79,6 +83,8 @@ var (
 	protoHTTPS = Protocol{P_HTTPS, 0, "https", CodeToVarint(P_HTTPS), false, nil}
 	protoP2P   = Protocol{P_P2P, LengthPrefixedVarSize, "ipfs", CodeToVarint(P_P2P), false, TranscoderP2P}
 	protoUNIX  = Protocol{P_UNIX, LengthPrefixedVarSize, "unix", CodeToVarint(P_UNIX), true, TranscoderUnix}
+	protoWS    = Protocol{P_WS, 0, "ws", CodeToVarint(P_WS), false, nil}
+	protoWSS   = Protocol{P_WSS, 0, "wss", CodeToVarint(P_WSS), false, nil}
 )
 
 var ProtocolsByName = map[string]Protocol{}
