@@ -17,6 +17,8 @@ type Protocol struct {
 	Name string
 
 	// Code is the protocol's multicodec (a normal, non-varint number).
+	//
+	// -1 is reserved for the special "unknown" protocol.
 	Code int
 
 	// VCode is a precomputed varint encoded version of Code.

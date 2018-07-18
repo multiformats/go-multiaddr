@@ -3,6 +3,8 @@ package multiaddr
 import "fmt"
 
 // Split returns the sub-address portions of a multiaddr.
+//
+// Split stops when it hits a protocol that it doesn't understand.
 func Split(m Multiaddr) []Multiaddr {
 	split, err := bytesSplit(m.Bytes())
 	if err != nil {
