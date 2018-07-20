@@ -84,7 +84,7 @@ func (m *multiaddr) Protocols() []Protocol {
 			ps = append(ps, Protocol{
 				Name: "unknown",
 				Size: -1,
-				Code: 0,
+				Code: -1,
 			})
 			return ps
 		}
