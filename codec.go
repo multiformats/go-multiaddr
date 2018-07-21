@@ -155,12 +155,6 @@ func sizeForAddr(p Protocol, b []byte) (skip, size int, err error) {
 		return 0, (p.Size / 8), nil
 	case p.Size == 0:
 		return 0, 0, nil
-	case p.Path:
-		size, n, err := ReadVarintCode(b)
-		if err != nil {
-			return 0, 0, err
-		}
-		return n, size, nil
 	default:
 		size, n, err := ReadVarintCode(b)
 		if err != nil {
