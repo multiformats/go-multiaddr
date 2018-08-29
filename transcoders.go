@@ -139,7 +139,7 @@ func p2pStB(s string) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse p2p addr: %s %s", s, err)
 	}
-	return m, nil
+	return m.Bytes(), nil
 }
 
 func p2pVal(b []byte) error {
