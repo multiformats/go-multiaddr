@@ -1,6 +1,7 @@
 package multiaddr
 
 import (
+	"bytes"
 	"encoding/base32"
 	"encoding/binary"
 	"fmt"
@@ -47,7 +48,7 @@ func (t twrp) ValidateBytes(b []byte) error {
 
 var TranscoderIP4 = NewTranscoderFromFunctions(ip4StB, ipBtS, nil)
 var TranscoderIP6 = NewTranscoderFromFunctions(ip6StB, ipBtS, nil)
-var TranscoderIP6Zone = NewTranscoderFromFunctions(ip6zoneStB, ip6zoneBtS, nil)
+var TranscoderIP6Zone = NewTranscoderFromFunctions(ip6zoneStB, ip6zoneBtS, ip6zoneVal)
 
 func ip4StB(s string) ([]byte, error) {
 	i := net.ParseIP(s).To4()
@@ -69,6 +70,14 @@ func ip6zoneBtS(b []byte) (string, error) {
 		return "", fmt.Errorf("invalid length (should be > 0)")
 	}
 	return string(b), nil
+}
+
+func ip6zoneVal(b []byte) error {
+	// Not supported as this would break multiaddrs.
+	if bytes.IndexByte(b, '/') >= 0 {
+		return fmt.Errorf("IPv6 zone ID contains '/': %s", string(b))
+	}
+	return nil
 }
 
 func ip6StB(s string) ([]byte, error) {
