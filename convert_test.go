@@ -60,13 +60,13 @@ func testToNetAddr(t *testing.T, maddr, ntwk, addr string) {
 
 func TestFromIP4(t *testing.T) {
 	testConvert(t, "/ip4/10.20.30.40", func() (ma.Multiaddr, error) {
-		return FromIP(net.ParseIP("10.20.30.40"))
+		return FromNetAddr(&net.IPAddr{IP: net.ParseIP("10.20.30.40")})
 	})
 }
 
 func TestFromIP6(t *testing.T) {
 	testConvert(t, "/ip6/2001:4860:0:2001::68", func() (ma.Multiaddr, error) {
-		return FromIP(net.ParseIP("2001:4860:0:2001::68"))
+		return FromNetAddr(&net.IPAddr{IP: net.ParseIP("2001:4860:0:2001::68")})
 	})
 }
 
