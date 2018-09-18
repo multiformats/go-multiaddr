@@ -67,7 +67,9 @@ func (m *multiaddr) String() string {
 }
 
 // Protocols returns the list of protocols this Multiaddr has.
-// will panic in case we access bytes incorrectly.
+//
+// Will end with an "unknown" protocol if we hit any protocol codes that we
+// don't understand.
 func (m *multiaddr) Protocols() []Protocol {
 	ps := make([]Protocol, 0, 8)
 	b := m.bytes
@@ -79,9 +81,12 @@ func (m *multiaddr) Protocols() []Protocol {
 
 		p := ProtocolWithCode(code)
 		if p.Code == 0 {
-			// this is a panic (and not returning err) because this should've been
-			// caught on constructing the Multiaddr
-			panic(fmt.Errorf("no protocol with code %d", b[0]))
+			ps = append(ps, Protocol{
+				Name: "unknown",
+				Size: -1,
+				Code: -1,
+			})
+			return ps
 		}
 		ps = append(ps, p)
 		b = b[n:]

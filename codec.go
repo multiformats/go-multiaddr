@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"fmt"
 	"strings"
+
+	multibase "github.com/multiformats/go-multibase"
 )
 
 func stringToBytes(s string) ([]byte, error) {
@@ -22,6 +24,18 @@ func stringToBytes(s string) ([]byte, error) {
 	sp = sp[1:]
 
 	for len(sp) > 0 {
+		if sp[0] == "unknown" {
+			if len(sp) < 2 {
+				return nil, fmt.Errorf("unknown protocol requires an argument")
+			}
+			_, bts, err := multibase.Decode(sp[1])
+			if err != nil {
+				return nil, err
+			}
+			b.Write(bts)
+			sp = sp[2:]
+			continue
+		}
 		p := ProtocolWithName(sp[0])
 		if p.Code == 0 {
 			return nil, fmt.Errorf("no protocol with name %s", sp[0])
@@ -70,7 +84,7 @@ func validateBytes(b []byte) (err error) {
 		b = b[n:]
 		p := ProtocolWithCode(code)
 		if p.Code == 0 {
-			return fmt.Errorf("no protocol with code %d", code)
+			return nil
 		}
 
 		if p.Size == 0 {
@@ -108,11 +122,16 @@ func bytesToString(b []byte) (ret string, err error) {
 			return "", err
 		}
 
-		b = b[n:]
 		p := ProtocolWithCode(code)
 		if p.Code == 0 {
-			return "", fmt.Errorf("no protocol with code %d", code)
+			encoded, err := multibase.Encode(multibase.Base32, b)
+			if err != nil {
+				panic(err)
+			}
+			return s + "/unknown/" + encoded, nil
 		}
+		b = b[n:]
+
 		s += "/" + p.Name
 
 		if p.Size == 0 {
@@ -173,8 +192,10 @@ func bytesSplit(b []byte) ([][]byte, error) {
 		}
 
 		p := ProtocolWithCode(code)
+		// Unknown protocol. Finish.
 		if p.Code == 0 {
-			return nil, fmt.Errorf("no protocol with code %d", b[0])
+			ret = append(ret, b)
+			break
 		}
 
 		n2, size, err := sizeForAddr(p, b[n:])
