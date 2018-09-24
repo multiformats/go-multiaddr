@@ -23,6 +23,9 @@ func TestConstructFails(t *testing.T) {
 		"/ip4/::1",
 		"/ip4/fdpsofodsajfdoisa",
 		"/ip6",
+		"/ip6zone",
+		"/ip6zone/",
+		"/ip6zone//ip6/fe80::1",
 		"/udp",
 		"/tcp",
 		"/sctp",
@@ -65,6 +68,10 @@ func TestConstructSucceeds(t *testing.T) {
 		"/ip6/::1",
 		"/ip6/2601:9:4f81:9700:803e:ca65:66e8:c21",
 		"/ip6/2601:9:4f81:9700:803e:ca65:66e8:c21/udp/1234/quic",
+		"/ip6zone/x/ip6/fe80::1",
+		"/ip6zone/x%y/ip6/fe80::1",
+		"/ip6zone/x%y/ip6/::",
+		"/ip6zone/x/ip6/fe80::1/udp/1234/quic",
 		"/onion/timaq4ygg2iegci7:1234",
 		"/onion/timaq4ygg2iegci7:80/http",
 		"/udp/0",
@@ -490,5 +497,34 @@ func TestInvalidP2PAddr(t *testing.T) {
 		t.Error("should have failed")
 		// Check for panic
 		_ = ma.String()
+	}
+}
+
+func TestZone(t *testing.T) {
+	ip6String := "/ip6zone/eth0/ip6/::1"
+	ip6Bytes := []byte{
+		0x2a, 4,
+		'e', 't', 'h', '0',
+		0x29,
+		0, 0, 0, 0,
+		0, 0, 0, 0,
+		0, 0, 0, 0,
+		0, 0, 0, 1,
+	}
+
+	ma, err := NewMultiaddr(ip6String)
+	if err != nil {
+		t.Error(err)
+	}
+	if !bytes.Equal(ma.Bytes(), ip6Bytes) {
+		t.Errorf("expected %x, got %x", ip6Bytes, ma.Bytes())
+	}
+
+	ma2, err2 := NewMultiaddrBytes(ip6Bytes)
+	if err2 != nil {
+		t.Error(err)
+	}
+	if ma2.String() != ip6String {
+		t.Errorf("expected %s, got %s", ip6String, ma2.String())
 	}
 }
