@@ -451,6 +451,7 @@ func TestBinaryRepresentation(t *testing.T) {
 func TestRoundTrip(t *testing.T) {
 	for _, s := range []string{
 		"/unix/a/b/c/d",
+		"/ip6/::ffff:127.0.0.1/tcp/111",
 		"/ip4/127.0.0.1/tcp/123",
 		"/ip4/127.0.0.1/udp/123",
 		"/ip4/127.0.0.1/udp/123/ip6/::",
