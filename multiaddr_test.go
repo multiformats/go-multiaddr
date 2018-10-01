@@ -179,6 +179,7 @@ func TestStringToBytes(t *testing.T) {
 func TestBytesToString(t *testing.T) {
 
 	testString := func(s1 string, h string) {
+		t.Helper()
 		b, err := hex.DecodeString(h)
 		if err != nil {
 			t.Error("failed to decode hex", h)
