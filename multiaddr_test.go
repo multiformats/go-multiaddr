@@ -229,12 +229,6 @@ func TestBytesSplitAndJoin(t *testing.T) {
 			t.Errorf("joined components failed: %s != %s", m, joined)
 		}
 
-		// modifying underlying bytes is fine.
-		m2 := m.(*multiaddr)
-		for i := range m2.bytes {
-			m2.bytes[i] = 0
-		}
-
 		for i, a := range split {
 			if a.String() != res[i] {
 				t.Errorf("split component failed: %s != %s", a, res[i])

@@ -18,6 +18,8 @@ type Multiaddr interface {
 	Equal(Multiaddr) bool
 
 	// Bytes returns the []byte representation of this Multiaddr
+	//
+	// This function may expose immutable, internal state. Do not modify.
 	Bytes() []byte
 
 	// String returns the string representation of this Multiaddr
