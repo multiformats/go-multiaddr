@@ -4,15 +4,11 @@ import "fmt"
 
 // Split returns the sub-address portions of a multiaddr.
 func Split(m Multiaddr) []Multiaddr {
-	split, err := bytesSplit(m.Bytes())
-	if err != nil {
-		panic(fmt.Errorf("invalid multiaddr %s", m.String()))
-	}
-
-	addrs := make([]Multiaddr, len(split))
-	for i, addr := range split {
-		addrs[i] = multiaddr{bytes: addr}
-	}
+	var addrs []Multiaddr
+	ForEach(m, func(c Component) bool {
+		addrs = append(addrs, &c)
+		return true
+	})
 	return addrs
 }
 
