@@ -44,11 +44,11 @@ func Join(ms ...Multiaddr) Multiaddr {
 
 // Cast re-casts a byte slice as a multiaddr. will panic if it fails to parse.
 func Cast(b []byte) Multiaddr {
-	_, err := bytesToString(b)
+	m, err := NewMultiaddrBytes(b)
 	if err != nil {
 		panic(fmt.Errorf("multiaddr failed to parse: %s", err))
 	}
-	return multiaddr{bytes: b}
+	return m
 }
 
 // StringCast like Cast, but parses a string. Will also panic if it fails to parse.
