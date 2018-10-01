@@ -140,3 +140,17 @@ func (m multiaddr) ValueForProtocol(code int) (string, error) {
 
 	return "", ErrProtocolNotFound
 }
+
+func (m multiaddr) ForEach(cb func(c Component) bool) {
+	b := m.bytes
+	for len(b) > 0 {
+		n, c, err := readComponent(b)
+		if err != nil {
+			panic(err)
+		}
+		if !cb(&c) {
+			return
+		}
+		b = b[n:]
+	}
+}

@@ -43,5 +43,28 @@ type Multiaddr interface {
 	Decapsulate(Multiaddr) Multiaddr
 
 	// ValueForProtocol returns the value (if any) following the specified protocol
+	//
+	// Deprecated: protocols can appear multiple times in a single multiaddr
+	// so this method isn't particularly robust.
 	ValueForProtocol(code int) (string, error)
+
+	// ForEach walks over each component in this mulitaddr, stopping when
+	// the callback returns false.
+	ForEach(func(c Component) bool)
+}
+
+// Component is a single component of a multiaddr.
+type Component interface {
+	Multiaddr
+
+	// Protocol returns the component's protocol.
+	Protocol() Protocol
+
+	// Value returns this component's value, formatted as a string.
+	Value() string
+
+	// RawValue returns the raw (bytes) value of the component.
+	//
+	// This function may expose immutable, internal state. Do not modify.
+	RawValue() []byte
 }

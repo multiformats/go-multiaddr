@@ -524,3 +524,16 @@ func TestZone(t *testing.T) {
 		t.Errorf("expected %s, got %s", ip6String, ma2.String())
 	}
 }
+
+func TestComponent(t *testing.T) {
+	ma := StringCast("/ip4/127.0.0.1/udp/123")
+	components := Components(ma)
+
+	if components[0].Value() != "127.0.0.1" {
+		t.Error("component 0 has an invalid value")
+	}
+
+	if components[1].Value() != "123" {
+		t.Error("component 0 has an invalid value")
+	}
+}

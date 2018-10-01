@@ -4,15 +4,11 @@ import "fmt"
 
 // Split returns the sub-address portions of a multiaddr.
 func Split(m Multiaddr) []Multiaddr {
-	split, err := bytesSplit(m.Bytes())
-	if err != nil {
-		panic(fmt.Errorf("invalid multiaddr %s", m.String()))
-	}
-
-	addrs := make([]Multiaddr, len(split))
-	for i, addr := range split {
-		addrs[i] = multiaddr{bytes: addr}
-	}
+	var addrs []Multiaddr
+	m.ForEach(func(c Component) bool {
+		addrs = append(addrs, c)
+		return true
+	})
 	return addrs
 }
 
@@ -27,6 +23,42 @@ func Join(ms ...Multiaddr) Multiaddr {
 		return ms[0]
 	}
 
+	length := 0
+	bs := make([][]byte, len(ms))
+	for i, m := range ms {
+		bs[i] = m.Bytes()
+		length += len(bs[i])
+	}
+
+	bidx := 0
+	b := make([]byte, length)
+	for _, mb := range bs {
+		bidx += copy(b[bidx:], mb)
+	}
+	return multiaddr{bytes: b}
+}
+
+// Components returns each component in a multiaddr. It only exists because go
+// can't handle downcasting slices of interfaces (otherwise, we'd just have a
+// single Split).
+func Components(m Multiaddr) []Component {
+	var components []Component
+	m.ForEach(func(c Component) bool {
+		components = append(components, c)
+		return true
+	})
+	return components
+}
+
+// JoinComponents joins a set of components. It only exists because go can't
+// handle downcasting slices of interfaces.
+func JoinComponents(ms ...Component) Multiaddr {
+	switch len(ms) {
+	case 0:
+		return nil
+	case 1:
+		return ms[0]
+	}
 	length := 0
 	bs := make([][]byte, len(ms))
 	for i, m := range ms {
