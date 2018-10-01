@@ -18,6 +18,14 @@ func Split(m Multiaddr) []Multiaddr {
 
 // Join returns a combination of addresses.
 func Join(ms ...Multiaddr) Multiaddr {
+	switch len(ms) {
+	case 0:
+		// empty multiaddr, unfortunately, we have callers that rely on
+		// this contract.
+		return multiaddr{}
+	case 1:
+		return ms[0]
+	}
 
 	length := 0
 	bs := make([][]byte, len(ms))
@@ -29,10 +37,7 @@ func Join(ms ...Multiaddr) Multiaddr {
 	bidx := 0
 	b := make([]byte, length)
 	for _, mb := range bs {
-		for i := range mb {
-			b[bidx] = mb[i]
-			bidx++
-		}
+		bidx += copy(b[bidx:], mb)
 	}
 	return multiaddr{bytes: b}
 }
