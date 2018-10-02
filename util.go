@@ -54,3 +54,23 @@ func StringCast(s string) Multiaddr {
 	}
 	return m
 }
+
+func HasPrefix(addr, prefix Multiaddr) bool {
+	protos := addr.Protocols()
+	preprotos := prefix.Protocols()
+	if len(preprotos) > len(protos) {
+		return false
+	}
+	for i, _ := range preprotos {
+		if protos[i].Code != preprotos[i].Code {
+			return false
+		}
+		// XXX how does this pan out with no-value protocols? (/quic, etc.)
+		val, err := addr.ValueForProtocol(protos[i].Code)
+		preval, err2 := prefix.ValueForProtocol(preprotos[i].Code)
+		if err != nil || err2 != nil || val != preval {
+			return false
+		}
+	}
+	return true
+}
