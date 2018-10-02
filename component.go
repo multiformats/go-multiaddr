@@ -130,20 +130,3 @@ func newComponent(protocol Protocol, bvalue []byte) *Component {
 		offset:   offset,
 	}
 }
-
-// ForEach walks over the multiaddr, component by component.
-//
-// This function iterates over components *by value* to avoid allocating.
-func ForEach(m Multiaddr, cb func(c Component) bool) {
-	b := m.Bytes()
-	for len(b) > 0 {
-		n, c, err := readComponent(b)
-		if err != nil {
-			panic(err)
-		}
-		if !cb(c) {
-			return
-		}
-		b = b[n:]
-	}
-}
