@@ -11,7 +11,7 @@ func stringToBytes(s string) ([]byte, error) {
 	// consume trailing slashes
 	s = strings.TrimRight(s, "/")
 
-	b := new(bytes.Buffer)
+	var b bytes.Buffer
 	sp := strings.Split(s, "/")
 
 	if sp[0] != "" {
