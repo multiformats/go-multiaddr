@@ -43,5 +43,8 @@ type Multiaddr interface {
 	Decapsulate(Multiaddr) Multiaddr
 
 	// ValueForProtocol returns the value (if any) following the specified protocol
+	//
+	// Note: protocols can appear multiple times in a single multiaddr.
+	// Consider using `ForEach` to walk over the addr manually.
 	ValueForProtocol(code int) (string, error)
 }

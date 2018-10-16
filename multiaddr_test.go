@@ -376,7 +376,7 @@ func TestGetValue(t *testing.T) {
 
 	a = newMultiaddr(t, "/ip4/0.0.0.0/unix/a/b/c/d") // ending in a path one.
 	assertValueForProto(t, a, P_IP4, "0.0.0.0")
-	assertValueForProto(t, a, P_UNIX, "a/b/c/d")
+	assertValueForProto(t, a, P_UNIX, "/a/b/c/d")
 }
 
 func TestFuzzBytes(t *testing.T) {
