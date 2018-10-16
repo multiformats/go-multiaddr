@@ -306,7 +306,7 @@ func TestIPLoopback(t *testing.T) {
 		t.Error("IP6Loopback incorrect:", IP6Loopback)
 	}
 
-	if IP4MappedIP6Loopback.String() != "/ip6/127.0.0.1" {
+	if IP4MappedIP6Loopback.String() != "/ip6/::ffff:127.0.0.1" {
 		t.Error("IP4MappedIP6Loopback incorrect:", IP4MappedIP6Loopback)
 	}
 
