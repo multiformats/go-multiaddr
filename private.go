@@ -7,7 +7,6 @@ import (
 )
 
 // Private4 and Private6 are well-known private networks
-// These are exported to allow overriding for testing
 var Private4, Private6 []*net.IPNet
 var privateCIDR4 = []string{
 	// localhost
@@ -29,12 +28,32 @@ var privateCIDR6 = []string{
 	"fe80::/10",
 }
 
-func init() {
-	Private4 = parsePrivateCIDR(privateCIDR4)
-	Private6 = parsePrivateCIDR(privateCIDR6)
+// Unroutable4 and Unroutable6 are well known unroutable address ranges
+var Unroutable4, Unroutable6 []*net.IPNet
+var unroutableCIDR4 = []string{
+	"0.0.0.0/8",
+	"192.0.0.0/26",
+	"192.0.2.0/24",
+	"192.88.99.0/24",
+	"198.18.0.0/15",
+	"198.51.100.0/24",
+	"203.0.113.0/24",
+	"224.0.0.0/4",
+	"240.0.0.0/4",
+	"255.255.255.255/32",
+}
+var unroutableCIDR6 = []string{
+	"ff00::/8",
 }
 
-func parsePrivateCIDR(cidrs []string) []*net.IPNet {
+func init() {
+	Private4 = parseCIDR(privateCIDR4)
+	Private6 = parseCIDR(privateCIDR6)
+	Unroutable4 = parseCIDR(unroutableCIDR4)
+	Unroutable6 = parseCIDR(unroutableCIDR6)
+}
+
+func parseCIDR(cidrs []string) []*net.IPNet {
 	ipnets := make([]*net.IPNet, len(cidrs))
 	for i, cidr := range cidrs {
 		_, ipnet, err := net.ParseCIDR(cidr)
@@ -46,22 +65,22 @@ func parsePrivateCIDR(cidrs []string) []*net.IPNet {
 	return ipnets
 }
 
-// IsPublicAddr retruns true if the IP part of the multiaddr is not in a private network
+// IsPublicAddr retruns true if the IP part of the multiaddr is a publically routable address
 func IsPublicAddr(a ma.Multiaddr) bool {
 	ip, err := a.ValueForProtocol(ma.P_IP4)
 	if err == nil {
-		return !inAddrRange(ip, Private4)
+		return !inAddrRange(ip, Private4) && !inAddrRange(ip, Unroutable4)
 	}
 
 	ip, err = a.ValueForProtocol(ma.P_IP6)
 	if err == nil {
-		return !inAddrRange(ip, Private6)
+		return !inAddrRange(ip, Private6) && !inAddrRange(ip, Unroutable6)
 	}
 
 	return false
 }
 
-// IsPrivateAddr returns true if the IP part of the mutiadr is in a private network
+// IsPrivateAddr returns true if the IP part of the mutiaddr is in a private network
 func IsPrivateAddr(a ma.Multiaddr) bool {
 	ip, err := a.ValueForProtocol(ma.P_IP4)
 	if err == nil {
