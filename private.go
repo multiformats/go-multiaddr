@@ -61,6 +61,21 @@ func IsPublicAddr(a ma.Multiaddr) bool {
 	return false
 }
 
+// IsPrivateAddr returns true if the IP part of the mutiadr is in a private network
+func IsPrivateAddr(a ma.Multiaddr) bool {
+	ip, err := a.ValueForProtocol(ma.P_IP4)
+	if err == nil {
+		return inAddrRange(ip, Private4)
+	}
+
+	ip, err = a.ValueForProtocol(ma.P_IP6)
+	if err == nil {
+		return inAddrRange(ip, Private6)
+	}
+
+	return false
+}
+
 func inAddrRange(s string, ipnets []*net.IPNet) bool {
 	ip := net.ParseIP(s)
 	for _, ipnet := range ipnets {

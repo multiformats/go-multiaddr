@@ -16,6 +16,10 @@ func TestIsPublicAddr(t *testing.T) {
 		t.Fatal("192.168.1.1 is not a public address!")
 	}
 
+	if !IsPrivateAddr(a) {
+		t.Fatal("192.168.1.1 is a private address!")
+	}
+
 	a, err = ma.NewMultiaddr("/ip4/1.1.1.1/tcp/80")
 	if err != nil {
 		t.Fatal(err)
@@ -23,5 +27,9 @@ func TestIsPublicAddr(t *testing.T) {
 
 	if !IsPublicAddr(a) {
 		t.Fatal("1.1.1.1 is a public address!")
+	}
+
+	if IsPrivateAddr(a) {
+		t.Fatal("1.1.1.1 is not a private address!")
 	}
 }
