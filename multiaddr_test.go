@@ -179,6 +179,7 @@ func TestStringToBytes(t *testing.T) {
 func TestBytesToString(t *testing.T) {
 
 	testString := func(s1 string, h string) {
+		t.Helper()
 		b, err := hex.DecodeString(h)
 		if err != nil {
 			t.Error("failed to decode hex", h)
@@ -227,12 +228,6 @@ func TestBytesSplitAndJoin(t *testing.T) {
 		joined := Join(split...)
 		if !m.Equal(joined) {
 			t.Errorf("joined components failed: %s != %s", m, joined)
-		}
-
-		// modifying underlying bytes is fine.
-		m2 := m.(*multiaddr)
-		for i := range m2.bytes {
-			m2.bytes[i] = 0
 		}
 
 		for i, a := range split {

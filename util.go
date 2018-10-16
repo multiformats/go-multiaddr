@@ -11,13 +11,21 @@ func Split(m Multiaddr) []Multiaddr {
 
 	addrs := make([]Multiaddr, len(split))
 	for i, addr := range split {
-		addrs[i] = &multiaddr{bytes: addr}
+		addrs[i] = multiaddr{bytes: addr}
 	}
 	return addrs
 }
 
 // Join returns a combination of addresses.
 func Join(ms ...Multiaddr) Multiaddr {
+	switch len(ms) {
+	case 0:
+		// empty multiaddr, unfortunately, we have callers that rely on
+		// this contract.
+		return multiaddr{}
+	case 1:
+		return ms[0]
+	}
 
 	length := 0
 	bs := make([][]byte, len(ms))
@@ -29,21 +37,18 @@ func Join(ms ...Multiaddr) Multiaddr {
 	bidx := 0
 	b := make([]byte, length)
 	for _, mb := range bs {
-		for i := range mb {
-			b[bidx] = mb[i]
-			bidx++
-		}
+		bidx += copy(b[bidx:], mb)
 	}
-	return &multiaddr{bytes: b}
+	return multiaddr{bytes: b}
 }
 
 // Cast re-casts a byte slice as a multiaddr. will panic if it fails to parse.
 func Cast(b []byte) Multiaddr {
-	_, err := bytesToString(b)
+	m, err := NewMultiaddrBytes(b)
 	if err != nil {
 		panic(fmt.Errorf("multiaddr failed to parse: %s", err))
 	}
-	return &multiaddr{bytes: b}
+	return m
 }
 
 // StringCast like Cast, but parses a string. Will also panic if it fails to parse.

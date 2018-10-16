@@ -11,7 +11,7 @@ func stringToBytes(s string) ([]byte, error) {
 	// consume trailing slashes
 	s = strings.TrimRight(s, "/")
 
-	b := new(bytes.Buffer)
+	var b bytes.Buffer
 	sp := strings.Split(s, "/")
 
 	if sp[0] != "" {
@@ -43,9 +43,6 @@ func stringToBytes(s string) ([]byte, error) {
 			sp = []string{"/" + strings.Join(sp, "/")}
 		}
 
-		if p.Transcoder == nil {
-			return nil, fmt.Errorf("no transcoder for %s protocol", p.Name)
-		}
 		a, err := p.Transcoder.StringToBytes(sp[0])
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse %s: %s %s", p.Name, sp[0], err)
