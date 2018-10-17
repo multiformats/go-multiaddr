@@ -1,7 +1,7 @@
 package manet
 
 import (
-	"bytes"
+	"net"
 
 	ma "github.com/multiformats/go-multiaddr"
 )
@@ -23,14 +23,6 @@ var (
 	IP4Unspecified = ma.StringCast("/ip4/0.0.0.0")
 	IP6Unspecified = ma.StringCast("/ip6/::")
 )
-
-// Loopback multiaddr prefixes. Any multiaddr beginning with one of the
-// following byte sequences is considered a loopback multiaddr.
-var loopbackPrefixes = [][]byte{
-	{ma.P_IP4, 127}, // 127.*
-	{ma.P_IP6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff, 127}, // ::ffff:127.*
-	IP6Loopback.Bytes(), // ::1
-}
 
 // IsThinWaist returns whether a Multiaddr starts with "Thin Waist" Protocols.
 // This means: /{IP4, IP6}[/{TCP, UDP}]
@@ -62,22 +54,41 @@ func IsThinWaist(m ma.Multiaddr) bool {
 // IsIPLoopback returns whether a Multiaddr is a "Loopback" IP address
 // This means either /ip4/127.*.*.*, /ip6/::1, or /ip6/::ffff:127.*.*.*.*
 func IsIPLoopback(m ma.Multiaddr) bool {
-	b := m.Bytes()
-	for _, prefix := range loopbackPrefixes {
-		if bytes.HasPrefix(b, prefix) {
-			return true
-		}
+	c, rest := ma.SplitFirst(m)
+	if rest != nil {
+		// Not *just* an IPv4 addr
+		return false
+	}
+	switch c.Protocol().Code {
+	case ma.P_IP4, ma.P_IP6:
+		return net.IP(c.RawValue()).IsLoopback()
 	}
 	return false
 }
 
-// IsIP6LinkLocal returns if a multiaddress is an IPv6 local link. These
-// addresses are non routable. The prefix is technically
-// fe80::/10, but we test fe80::/16 for simplicity (no need to mask).
-// So far, no hardware interfaces exist long enough to use those 2 bits.
-// Send a PR if there is.
+// IsIP6LinkLocal returns if a an IPv6 link-local multiaddress (with zero or
+// more leading zones). These addresses are non routable.
 func IsIP6LinkLocal(m ma.Multiaddr) bool {
-	return bytes.HasPrefix(m.Bytes(), []byte{ma.P_IP6, 0xfe, 0x80})
+	matched := false
+	ma.ForEach(m, func(c ma.Component) bool {
+		// Too much.
+		if matched {
+			matched = false
+			return false
+		}
+
+		switch c.Protocol().Code {
+		case ma.P_IP6ZONE:
+			return true
+		case ma.P_IP6:
+			ip := net.IP(c.RawValue())
+			matched = ip.IsLinkLocalMulticast() || ip.IsLinkLocalUnicast()
+			return true
+		default:
+			return false
+		}
+	})
+	return matched
 }
 
 // IsIPUnspecified returns whether a Multiaddr is am Unspecified IP address

@@ -322,6 +322,10 @@ func TestIPLoopback(t *testing.T) {
 		t.Error("IsIPLoopback false positive (/ip4/112.123.11.1)")
 	}
 
+	if IsIPLoopback(newMultiaddr(t, "/ip4/127.0.0.1/ip4/127.0.0.1")) {
+		t.Error("IsIPLoopback false positive (/ip4/127.0.0.1/127.0.0.1)")
+	}
+
 	if IsIPLoopback(newMultiaddr(t, "/ip4/192.168.0.1/ip6/::1")) {
 		t.Error("IsIPLoopback false positive (/ip4/192.168.0.1/ip6/::1)")
 	}
@@ -363,7 +367,7 @@ func TestIPUnspecified(t *testing.T) {
 
 func TestIP6LinkLocal(t *testing.T) {
 	for a := 0; a < 65536; a++ {
-		isLinkLocal := (a == 0xfe80)
+		isLinkLocal := (a&0xffc0 == 0xfe80 || a&0xff0f == 0xff02)
 		m := newMultiaddr(t, fmt.Sprintf("/ip6/%x::1", a))
 		if IsIP6LinkLocal(m) != isLinkLocal {
 			t.Errorf("IsIP6LinkLocal failed (%s != %v)", m, isLinkLocal)
