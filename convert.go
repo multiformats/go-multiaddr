@@ -68,14 +68,16 @@ func parseBasicNetMaddr(maddr ma.Multiaddr) (net.Addr, error) {
 
 // FromIP converts a net.IP type to a Multiaddr.
 func FromIP(ip net.IP) (ma.Multiaddr, error) {
+	var proto string
 	switch {
 	case ip.To4() != nil:
-		return ma.NewMultiaddr("/ip4/" + ip.String())
+		proto = "ip4"
 	case ip.To16() != nil:
-		return ma.NewMultiaddr("/ip6/" + ip.String())
+		proto = "ip6"
 	default:
 		return nil, errIncorrectNetAddr
 	}
+	return ma.NewComponent(proto, ip.String())
 }
 
 // DialArgs is a convenience function returning arguments for use in net.Dial
