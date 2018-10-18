@@ -4,6 +4,9 @@ import "fmt"
 
 // Split returns the sub-address portions of a multiaddr.
 func Split(m Multiaddr) []Multiaddr {
+	if _, ok := m.(*Component); ok {
+		return []Multiaddr{m}
+	}
 	var addrs []Multiaddr
 	ForEach(m, func(c Component) bool {
 		addrs = append(addrs, &c)
@@ -58,6 +61,11 @@ func StringCast(s string) Multiaddr {
 
 // SplitFirst returns the first component and the rest of the multiaddr.
 func SplitFirst(m Multiaddr) (*Component, Multiaddr) {
+	// Shortcut if we already have a component
+	if c, ok := m.(*Component); ok {
+		return c, nil
+	}
+
 	b := m.Bytes()
 	if len(b) == 0 {
 		return nil, nil
@@ -74,6 +82,11 @@ func SplitFirst(m Multiaddr) (*Component, Multiaddr) {
 
 // SplitLast returns the rest of the multiaddr and the last component.
 func SplitLast(m Multiaddr) (Multiaddr, *Component) {
+	// Shortcut if we already have a component
+	if c, ok := m.(*Component); ok {
+		return nil, c
+	}
+
 	b := m.Bytes()
 	if len(b) == 0 {
 		return nil, nil
@@ -106,6 +119,13 @@ func SplitLast(m Multiaddr) (Multiaddr, *Component) {
 // component on which the callback first returns will be included in the
 // *second* multiaddr.
 func SplitFunc(m Multiaddr, cb func(Component) bool) (Multiaddr, Multiaddr) {
+	// Shortcut if we already have a component
+	if c, ok := m.(*Component); ok {
+		if cb(*c) {
+			return nil, m
+		}
+		return m, nil
+	}
 	b := m.Bytes()
 	if len(b) == 0 {
 		return nil, nil
@@ -140,6 +160,12 @@ func SplitFunc(m Multiaddr, cb func(Component) bool) (Multiaddr, Multiaddr) {
 //
 // This function iterates over components *by value* to avoid allocating.
 func ForEach(m Multiaddr, cb func(c Component) bool) {
+	// Shortcut if we already have a component
+	if c, ok := m.(*Component); ok {
+		cb(*c)
+		return
+	}
+
 	b := m.Bytes()
 	for len(b) > 0 {
 		n, c, err := readComponent(b)

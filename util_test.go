@@ -60,6 +60,48 @@ func TestSplitFirstLast(t *testing.T) {
 			t.Errorf("expected %s to be %s", rest, restExp)
 		}
 	}
+
+	c, err := NewComponent("ip4", "127.0.0.1")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ci, m := SplitFirst(c)
+	if !ci.Equal(c) || m != nil {
+		t.Error("split first on component failed")
+	}
+	m, ci = SplitLast(c)
+	if !ci.Equal(c) || m != nil {
+		t.Error("split last on component failed")
+	}
+	cis := Split(c)
+	if len(cis) != 1 || !cis[0].Equal(c) {
+		t.Error("split on component failed")
+	}
+	m1, m2 := SplitFunc(c, func(c Component) bool {
+		return true
+	})
+	if m1 != nil || !m2.Equal(c) {
+		t.Error("split func(true) on component failed")
+	}
+	m1, m2 = SplitFunc(c, func(c Component) bool {
+		return false
+	})
+	if !m1.Equal(c) || m2 != nil {
+		t.Error("split func(false) on component failed")
+	}
+
+	i := 0
+	ForEach(c, func(ci Component) bool {
+		if i != 0 {
+			t.Error("expected exactly one component")
+		}
+		i++
+		if !ci.Equal(c) {
+			t.Error("foreach on component failed")
+		}
+		return true
+	})
 }
 
 func TestSplitFunc(t *testing.T) {
