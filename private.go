@@ -67,36 +67,45 @@ func parseCIDR(cidrs []string) []*net.IPNet {
 
 // IsPublicAddr retruns true if the IP part of the multiaddr is a publicly routable address
 func IsPublicAddr(a ma.Multiaddr) bool {
-	ip, err := a.ValueForProtocol(ma.P_IP4)
-	if err == nil {
-		return !inAddrRange(ip, Private4) && !inAddrRange(ip, Unroutable4)
-	}
-
-	ip, err = a.ValueForProtocol(ma.P_IP6)
-	if err == nil {
-		return !inAddrRange(ip, Private6) && !inAddrRange(ip, Unroutable6)
-	}
-
-	return false
+	isPublic := false
+	ma.ForEach(a, func(c ma.Component) bool {
+		switch c.Protocol().Code {
+		case ma.P_IP6ZONE:
+			return true
+		default:
+			return false
+		case ma.P_IP4:
+			ip := net.IP(c.RawValue())
+			isPublic = !inAddrRange(ip, Private4) && !inAddrRange(ip, Unroutable4)
+		case ma.P_IP6:
+			ip := net.IP(c.RawValue())
+			isPublic = !inAddrRange(ip, Private6) && !inAddrRange(ip, Unroutable6)
+		}
+		return false
+	})
+	return isPublic
 }
 
 // IsPrivateAddr returns true if the IP part of the mutiaddr is in a private network
 func IsPrivateAddr(a ma.Multiaddr) bool {
-	ip, err := a.ValueForProtocol(ma.P_IP4)
-	if err == nil {
-		return inAddrRange(ip, Private4)
-	}
-
-	ip, err = a.ValueForProtocol(ma.P_IP6)
-	if err == nil {
-		return inAddrRange(ip, Private6)
-	}
-
-	return false
+	isPrivate := false
+	ma.ForEach(a, func(c ma.Component) bool {
+		switch c.Protocol().Code {
+		case ma.P_IP6ZONE:
+			return true
+		default:
+			return false
+		case ma.P_IP4:
+			isPrivate = inAddrRange(net.IP(c.RawValue()), Private4)
+		case ma.P_IP6:
+			isPrivate = inAddrRange(net.IP(c.RawValue()), Private6)
+		}
+		return false
+	})
+	return isPrivate
 }
 
-func inAddrRange(s string, ipnets []*net.IPNet) bool {
-	ip := net.ParseIP(s)
+func inAddrRange(ip net.IP, ipnets []*net.IPNet) bool {
 	for _, ipnet := range ipnets {
 		if ipnet.Contains(ip) {
 			return true
