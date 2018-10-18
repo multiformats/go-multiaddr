@@ -3,7 +3,6 @@ package manet
 import (
 	"fmt"
 	"net"
-	"strings"
 
 	ma "github.com/multiformats/go-multiaddr"
 )
@@ -68,43 +67,82 @@ func parseBasicNetMaddr(maddr ma.Multiaddr) (net.Addr, error) {
 
 // FromIP converts a net.IP type to a Multiaddr.
 func FromIP(ip net.IP) (ma.Multiaddr, error) {
+	var proto string
 	switch {
 	case ip.To4() != nil:
-		return ma.NewMultiaddr("/ip4/" + ip.String())
+		proto = "ip4"
 	case ip.To16() != nil:
-		return ma.NewMultiaddr("/ip6/" + ip.String())
+		proto = "ip6"
 	default:
 		return nil, errIncorrectNetAddr
 	}
+	return ma.NewComponent(proto, ip.String())
 }
 
 // DialArgs is a convenience function returning arguments for use in net.Dial
 func DialArgs(m ma.Multiaddr) (string, string, error) {
-	// TODO: find a 'good' way to eliminate the function.
-	// My preference is with a multiaddr.Format(...) function
-	if !IsThinWaist(m) {
+	var (
+		zone, network, ip, port string
+	)
+
+	ma.ForEach(m, func(c ma.Component) bool {
+		switch network {
+		case "":
+			switch c.Protocol().Code {
+			case ma.P_IP6ZONE:
+				zone = c.Value()
+				return true
+			case ma.P_IP6:
+				network = "ip6"
+				ip = c.Value()
+				return true
+			case ma.P_IP4:
+				network = "ip4"
+				ip = c.Value()
+				return true
+			}
+		case "ip4":
+			switch c.Protocol().Code {
+			case ma.P_UDP:
+				network = "udp4"
+			case ma.P_TCP:
+				network = "tcp4"
+			default:
+				return false
+			}
+			port = c.Value()
+		case "ip6":
+			switch c.Protocol().Code {
+			case ma.P_UDP:
+				network = "udp6"
+			case ma.P_TCP:
+				network = "tcp6"
+			default:
+				return false
+			}
+			port = c.Value()
+		}
+		// Done.
+		return false
+	})
+	switch network {
+	case "ip6":
+		if zone != "" {
+			ip += "%" + zone
+		}
+		fallthrough
+	case "ip4":
+		return network, ip, nil
+	case "tcp4", "udp4":
+		return network, ip + ":" + port, nil
+	case "tcp6", "udp6":
+		if zone != "" {
+			ip += "%" + zone
+		}
+		return network, "[" + ip + "]" + ":" + port, nil
+	default:
 		return "", "", fmt.Errorf("%s is not a 'thin waist' address", m)
 	}
-
-	str := m.String()
-	parts := strings.Split(str, "/")[1:]
-
-	if len(parts) == 2 { // only IP
-		return parts[0], parts[1], nil
-	}
-
-	network := parts[2]
-
-	var host string
-	switch parts[0] {
-	case "ip4":
-		network = network + "4"
-		host = strings.Join([]string{parts[1], parts[3]}, ":")
-	case "ip6":
-		network = network + "6"
-		host = fmt.Sprintf("[%s]:%s", parts[1], parts[3])
-	}
-	return network, host, nil
 }
 
 func parseTCPNetAddr(a net.Addr) (ma.Multiaddr, error) {

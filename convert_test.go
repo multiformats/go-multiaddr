@@ -141,4 +141,10 @@ func TestDialArgs(t *testing.T) {
 	test("/ip4/127.0.0.1/tcp/4321", "tcp4", "127.0.0.1:4321")
 	test("/ip6/::1/udp/1234", "udp6", "[::1]:1234")
 	test("/ip6/::1/tcp/4321", "tcp6", "[::1]:4321")
+	test("/ip6/::1", "ip6", "::1")                                     // Just an IP
+	test("/ip4/1.2.3.4", "ip4", "1.2.3.4")                             // Just an IP
+	test("/ip6zone/foo/ip6/::1/tcp/4321", "tcp6", "[::1%foo]:4321")    // zone
+	test("/ip6zone/foo/ip6/::1", "ip6", "::1%foo")                     // no TCP
+	test("/ip6zone/foo/ip6/::1/ip6zone/bar", "ip6", "::1%foo")         // IP over IP
+	test("/ip6zone/foo/ip4/127.0.0.1/ip6zone/bar", "ip4", "127.0.0.1") // Skip zones in IP
 }
