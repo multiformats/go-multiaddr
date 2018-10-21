@@ -65,24 +65,39 @@ func parseBasicNetMaddr(maddr ma.Multiaddr) (net.Addr, error) {
 	return nil, fmt.Errorf("network not supported: %s", network)
 }
 
-// FromIP converts a net.IP type to a Multiaddr.
-func FromIP(ip net.IP) (ma.Multiaddr, error) {
-	var proto string
+func FromIPAndZone(ip net.IP, zone string) (ma.Multiaddr, error) {
 	switch {
 	case ip.To4() != nil:
-		proto = "ip4"
+		return ma.NewComponent("ip4", ip.String())
 	case ip.To16() != nil:
-		proto = "ip6"
+		ip6, err := ma.NewComponent("ip6", ip.String())
+		if err != nil {
+			return nil, err
+		}
+		if zone == "" {
+			return ip6, nil
+		} else {
+			zone, err := ma.NewComponent("ip6zone", zone)
+			if err != nil {
+				return nil, err
+			}
+			return zone.Encapsulate(ip6), nil
+		}
 	default:
 		return nil, errIncorrectNetAddr
 	}
-	return ma.NewComponent(proto, ip.String())
+}
+
+// FromIP converts a net.IP type to a Multiaddr.
+func FromIP(ip net.IP) (ma.Multiaddr, error) {
+	return FromIPAndZone(ip, "")
 }
 
 // DialArgs is a convenience function returning arguments for use in net.Dial
 func DialArgs(m ma.Multiaddr) (string, string, error) {
 	var (
 		zone, network, ip, port string
+		err                     error
 	)
 
 	ma.ForEach(m, func(c ma.Component) bool {
@@ -90,6 +105,10 @@ func DialArgs(m ma.Multiaddr) (string, string, error) {
 		case "":
 			switch c.Protocol().Code {
 			case ma.P_IP6ZONE:
+				if zone != "" {
+					err = fmt.Errorf("%s has multiple zones", m)
+					return false
+				}
 				zone = c.Value()
 				return true
 			case ma.P_IP6:
@@ -97,6 +116,10 @@ func DialArgs(m ma.Multiaddr) (string, string, error) {
 				ip = c.Value()
 				return true
 			case ma.P_IP4:
+				if zone != "" {
+					err = fmt.Errorf("%s has ip4 with zone", m)
+					return false
+				}
 				network = "ip4"
 				ip = c.Value()
 				return true
@@ -125,6 +148,9 @@ func DialArgs(m ma.Multiaddr) (string, string, error) {
 		// Done.
 		return false
 	})
+	if err != nil {
+		return "", "", err
+	}
 	switch network {
 	case "ip6":
 		if zone != "" {
@@ -152,7 +178,7 @@ func parseTCPNetAddr(a net.Addr) (ma.Multiaddr, error) {
 	}
 
 	// Get IP Addr
-	ipm, err := FromIP(ac.IP)
+	ipm, err := FromIPAndZone(ac.IP, ac.Zone)
 	if err != nil {
 		return nil, errIncorrectNetAddr
 	}
@@ -174,7 +200,7 @@ func parseUDPNetAddr(a net.Addr) (ma.Multiaddr, error) {
 	}
 
 	// Get IP Addr
-	ipm, err := FromIP(ac.IP)
+	ipm, err := FromIPAndZone(ac.IP, ac.Zone)
 	if err != nil {
 		return nil, errIncorrectNetAddr
 	}
@@ -194,7 +220,7 @@ func parseIPNetAddr(a net.Addr) (ma.Multiaddr, error) {
 	if !ok {
 		return nil, errIncorrectNetAddr
 	}
-	return FromIP(ac.IP)
+	return FromIPAndZone(ac.IP, ac.Zone)
 }
 
 func parseIPPlusNetAddr(a net.Addr) (ma.Multiaddr, error) {
