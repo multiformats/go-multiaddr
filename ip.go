@@ -55,17 +55,13 @@ func IsThinWaist(m ma.Multiaddr) bool {
 	}
 }
 
-// IsIPLoopback returns whether a Multiaddr is a "Loopback" IP address
-// This means either /ip4/127.*.*.*, /ip6/::1, or /ip6/::ffff:127.*.*.*.*,
-// or /ip6zone/<any value>/ip6/<one of the preceding ip6 values>
+// IsIPLoopback returns whether a Multiaddr starts with a "Loopback" IP address
+// This means either /ip4/127.*.*.*/*, /ip6/::1/*, or /ip6/::ffff:127.*.*.*.*/*,
+// or /ip6zone/<any value>/ip6/<one of the preceding ip6 values>/*
 func IsIPLoopback(m ma.Multiaddr) bool {
 	m = zoneless(m)
-	c, rest := ma.SplitFirst(m)
+	c, _ := ma.SplitFirst(m)
 	if c == nil {
-		return false
-	}
-	if rest != nil {
-		// Not *just* an IPv4 addr
 		return false
 	}
 	switch c.Protocol().Code {
@@ -88,14 +84,15 @@ func IsIP6LinkLocal(m ma.Multiaddr) bool {
 	return ip.IsLinkLocalMulticast() || ip.IsLinkLocalUnicast()
 }
 
-// IsIPUnspecified returns whether a Multiaddr is am Unspecified IP address
-// This means either /ip4/0.0.0.0 or /ip6/::
+// IsIPUnspecified returns whether a Multiaddr starts with an Unspecified IP address
+// This means either /ip4/0.0.0.0/* or /ip6/::/*
 func IsIPUnspecified(m ma.Multiaddr) bool {
 	m = zoneless(m)
 	if m == nil {
 		return false
 	}
-	return IP4Unspecified.Equal(m) || IP6Unspecified.Equal(m)
+	c, _ := ma.SplitFirst(m)
+	return net.IP(c.RawValue()).IsUnspecified()
 }
 
 // If m matches [zone,ip6,...], return [ip6,...]
