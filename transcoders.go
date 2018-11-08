@@ -167,6 +167,94 @@ func onionBtS(b []byte) (string, error) {
 	return addr + ":" + strconv.Itoa(int(port)), nil
 }
 
+var TranscoderOnion3 = NewTranscoderFromFunctions(onion3StB, onion3BtS, nil)
+
+func onion3StB(s string) ([]byte, error) {
+	addr := strings.Split(s, ":")
+	if len(addr) != 2 {
+		return nil, fmt.Errorf("failed to parse onion addr: %s does not contain a port number.", s)
+	}
+
+	// onion address without the ".onion" substring
+	if len(addr[0]) != 56 {
+		return nil, fmt.Errorf("failed to parse onion addr: %s not a Tor onionv3 address. len == %d", s, len(addr[0]))
+	}
+	onionHostBytes, err := base32.StdEncoding.DecodeString(strings.ToUpper(addr[0]))
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode base32 onion addr: %s %s", s, err)
+	}
+
+	// onion port number
+	i, err := strconv.Atoi(addr[1])
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse onion addr: %s", err)
+	}
+	if i >= 65536 {
+		return nil, fmt.Errorf("failed to parse onion addr: %s", "port greater than 65536")
+	}
+	if i < 1 {
+		return nil, fmt.Errorf("failed to parse onion addr: %s", "port less than 1")
+	}
+
+	onionPortBytes := make([]byte, 2)
+	binary.BigEndian.PutUint16(onionPortBytes, uint16(i))
+	bytes := []byte{}
+	bytes = append(bytes, onionHostBytes[0:35]...)
+	bytes = append(bytes, onionPortBytes...)
+	return bytes, nil
+}
+
+func onion3BtS(b []byte) (string, error) {
+	addr := strings.ToLower(base32.StdEncoding.EncodeToString(b[0:35]))
+	port := binary.BigEndian.Uint16(b[35:37])
+	str := addr + ":" + strconv.Itoa(int(port))
+	return str, nil
+}
+
+var TranscoderGarlic = NewTranscoderFromFunctions(garlicStB, garlicBtS, nil)
+
+func garlicStB(s string) ([]byte, error) {
+	addr := strings.Split(s, ":")
+	if len(addr) != 2 {
+		return nil, fmt.Errorf("failed to parse garlic addr: %s does not contain a port number.", s)
+	}
+	// garlic address without the ".b32.i2p" substring, with padding
+	if len(addr[0]) != 52 {
+		return nil, fmt.Errorf("failed to parse garlic addr: %s not a i2p base32 address. len: %d", s, len(addr[0]))
+	}
+	garlicHostBytes := make([]byte, 32)
+	_, err := base32.NewEncoding("abcdefghijklmnopqrstuvwxyz234567").Decode(garlicHostBytes, []byte(addr[0]+"===="))
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode base32 garlic addr: %s %s %s", s, err, string(s[48]))
+	}
+
+	// garlic port number
+	i, err := strconv.Atoi(addr[1])
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse garlic addr: %s", err)
+	}
+	if i >= 65536 {
+		return nil, fmt.Errorf("failed to parse garlic addr: %s", "port greater than 65536")
+	}
+	if i < 1 {
+		return nil, fmt.Errorf("failed to parse garlic addr: %s", "port less than 1")
+	}
+
+	garlicPortBytes := make([]byte, 2)
+	binary.BigEndian.PutUint16(garlicPortBytes, uint16(i))
+	bytes := []byte{}
+	bytes = append(bytes, garlicHostBytes[0:32]...)
+	bytes = append(bytes, garlicPortBytes...)
+	return bytes, nil
+}
+
+func garlicBtS(b []byte) (string, error) {
+	addr := strings.Replace(strings.ToLower(base32.NewEncoding("abcdefghijklmnopqrstuvwxyz234567").EncodeToString(b[0:32])), "=", "", -1)
+	port := binary.BigEndian.Uint16(b[32:34])
+	str := addr + ":" + strconv.Itoa(int(port))
+	return str, nil
+}
+
 var TranscoderP2P = NewTranscoderFromFunctions(p2pStB, p2pBtS, p2pVal)
 
 func p2pStB(s string) ([]byte, error) {

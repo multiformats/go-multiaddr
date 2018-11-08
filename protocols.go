@@ -21,7 +21,11 @@ const (
 	P_IPFS    = 0x01A5 // alias for backwards compatability
 	P_HTTP    = 0x01E0
 	P_HTTPS   = 0x01BB
-	P_ONION   = 0x01BC
+	P_ONION   = 0x01BC // also for backwards compatibility
+	P_ONION2  = 0x01BC
+	P_ONION3  = 0x01BD
+	P_GARLICT = 0x01CA
+	P_GARLICU = 0x01CB
 )
 
 var (
@@ -80,12 +84,33 @@ var (
 		Size:       16,
 		Transcoder: TranscoderPort,
 	}
-	protoONION = Protocol{
+	protoONION2 = Protocol{
 		Name:       "onion",
-		Code:       P_ONION,
-		VCode:      CodeToVarint(P_ONION),
+		Code:       P_ONION2,
+		VCode:      CodeToVarint(P_ONION2),
 		Size:       96,
 		Transcoder: TranscoderOnion,
+	}
+	protoONION3 = Protocol{
+		Name:       "onion3",
+		Code:       P_ONION3,
+		VCode:      CodeToVarint(P_ONION3),
+		Size:       296,
+		Transcoder: TranscoderOnion3,
+	}
+	protoGARLICT = Protocol{
+		Name:       "garlict",
+		Code:       P_GARLICT,
+		VCode:      CodeToVarint(P_GARLICT),
+		Size:       272,
+		Transcoder: TranscoderGarlic,
+	}
+	protoGARLICU = Protocol{
+		Name:       "garlicu",
+		Code:       P_GARLICU,
+		VCode:      CodeToVarint(P_GARLICU),
+		Size:       272,
+		Transcoder: TranscoderGarlic,
 	}
 	protoUTP = Protocol{
 		Name:  "utp",
@@ -138,7 +163,10 @@ func init() {
 		protoIP6,
 		protoIP6ZONE,
 		protoSCTP,
-		protoONION,
+		protoONION2,
+		protoONION3,
+		protoGARLICT,
+		protoGARLICU,
 		protoUTP,
 		protoUDT,
 		protoQUIC,

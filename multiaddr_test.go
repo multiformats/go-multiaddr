@@ -38,6 +38,24 @@ func TestConstructFails(t *testing.T) {
 		"/onion/timaq4ygg2iegci7:-1",
 		"/onion/timaq4ygg2iegci7",
 		"/onion/timaq4ygg2iegci@:666",
+		"/onion3/9ww6ybal4bd7szmgncyruucpgfkqahzddi37ktceo3ah7ngmcopnpyyd:80",
+		"/onion3/vww6ybal4bd7szmgncyruucpgfkqahzddi37ktceo3ah7ngmcopnpyyd7:80",
+		"/onion3/vww6ybal4bd7szmgncyruucpgfkqahzddi37ktceo3ah7ngmcopnpyyd:0",
+		"/onion3/vww6ybal4bd7szmgncyruucpgfkqahzddi37ktceo3ah7ngmcopnpyyd:-1",
+		"/onion3/vww6ybal4bd7szmgncyruucpgfkqahzddi37ktceo3ah7ngmcopnpyyd",
+		"/onion3/vww6ybal4bd7szmgncyruucpgfkqahzddi37ktceo3ah7ngmcopnpyy@:666",
+		"/garlict/566niximlxdzpanmn4qouucvua3k7neniwss47li5r6ugoertzuq",
+		"/garlict/566niximlxdzpanmn4qouucvua3k7neniwss47li5r6ugoertzuq7:80",
+		"/garlict/566niximlxdzpanmn4qouucvua3k7neniwss47li5r6ugoertzuq:0",
+		"/garlict/566niximlxdzpanmn4qouucvua3k7neniwss47li5r6ugoertzuq:0",
+		"/garlict/566niximlxdzpanmn4qouucvua3k7neniwss47li5r6ugoertzuq:-1",
+		"/garlict/566niximlxdzpanmn4qouucvua3k7neniss47li5r6ugoertzuq@:666",
+		"/garlicu/566niximlxdzpanmn4qouucvua3k7neniwss47li5r6ugoertzuq",
+		"/garlicu/566niximlxdzpanmn4qouucvua3k7neniwss47li5r6ugoertzuq7:80",
+		"/garlicu/566niximlxdzpanmn4qouucvua3k7neniwss47li5r6ugoertzuq:0",
+		"/garlicu/566niximlxdzpanmn4qouucvua3k7neniwss47li5r6ugoertzuq:0",
+		"/garlicu/566niximlxdzpanmn4qouucvua3k7neniwss47li5r6ugoertzuq:-1",
+		"/garlicu/566niximlxdzpanmn4qouucvua3k7neniss47li5r6ugoertzuq@:666",
 		"/udp/1234/sctp",
 		"/udp/1234/udt/1234",
 		"/udp/1234/utp/1234",
@@ -74,6 +92,12 @@ func TestConstructSucceeds(t *testing.T) {
 		"/ip6zone/x/ip6/fe80::1/udp/1234/quic",
 		"/onion/timaq4ygg2iegci7:1234",
 		"/onion/timaq4ygg2iegci7:80/http",
+		"/onion3/vww6ybal4bd7szmgncyruucpgfkqahzddi37ktceo3ah7ngmcopnpyyd:1234",
+		"/onion3/vww6ybal4bd7szmgncyruucpgfkqahzddi37ktceo3ah7ngmcopnpyyd:80/http",
+		"/garlict/566niximlxdzpanmn4qouucvua3k7neniwss47li5r6ugoertzuq:1234",
+		"/garlict/566niximlxdzpanmn4qouucvua3k7neniwss47li5r6ugoertzuq:80/http",
+		"/garlicu/566niximlxdzpanmn4qouucvua3k7neniwss47li5r6ugoertzuq:1234",
+		"/garlicu/566niximlxdzpanmn4qouucvua3k7neniwss47li5r6ugoertzuq:80/http",
 		"/udp/0",
 		"/tcp/0",
 		"/sctp/0",
@@ -159,21 +183,25 @@ func TestStringToBytes(t *testing.T) {
 
 		b2, err := stringToBytes(s)
 		if err != nil {
-			t.Error("failed to convert", s)
+			t.Error("failed to convert", s, err)
 		}
-
 		if !bytes.Equal(b1, b2) {
 			t.Error("failed to convert", s, "to", b1, "got", b2)
 		}
 
 		if err := validateBytes(b2); err != nil {
-			t.Error(err)
+			t.Error(err, "len:", len(b2))
 		}
 	}
 
 	testString("/ip4/127.0.0.1/udp/1234", "047f000001910204d2")
 	testString("/ip4/127.0.0.1/tcp/4321", "047f0000010610e1")
 	testString("/ip4/127.0.0.1/udp/1234/ip4/127.0.0.1/tcp/4321", "047f000001910204d2047f0000010610e1")
+	testString("/onion/aaimaq4ygg2iegci:80", "bc030010c0439831b48218480050")
+	testString("/onion3/vww6ybal4bd7szmgncyruucpgfkqahzddi37ktceo3ah7ngmcopnpyyd:1234", "bd03adadec040be047f9658668b11a504f3155001f231a37f54c4476c07fb4cc139ed7e30304d2")
+	testString("/garlict/566niximlxdzpanmn4qouucvua3k7neniwss47li5r6ugoertzuq:1234", "ca03efbcd45d0c5dc79781ac6f20ea5055a036afb48d45a52e7d68ec7d4338919e6904d2")
+	testString("/garlicu/566niximlxdzpanmn4qouucvua3k7neniwss47li5r6ugoertzuq:1234", "cb03efbcd45d0c5dc79781ac6f20ea5055a036afb48d45a52e7d68ec7d4338919e6904d2")
+
 }
 
 func TestBytesToString(t *testing.T) {
@@ -203,6 +231,9 @@ func TestBytesToString(t *testing.T) {
 	testString("/ip4/127.0.0.1/tcp/4321", "047f0000010610e1")
 	testString("/ip4/127.0.0.1/udp/1234/ip4/127.0.0.1/tcp/4321", "047f000001910204d2047f0000010610e1")
 	testString("/onion/aaimaq4ygg2iegci:80", "bc030010c0439831b48218480050")
+	testString("/onion3/vww6ybal4bd7szmgncyruucpgfkqahzddi37ktceo3ah7ngmcopnpyyd:1234", "bd03adadec040be047f9658668b11a504f3155001f231a37f54c4476c07fb4cc139ed7e30304d2")
+	testString("/garlict/566niximlxdzpanmn4qouucvua3k7neniwss47li5r6ugoertzuq:1234", "ca03efbcd45d0c5dc79781ac6f20ea5055a036afb48d45a52e7d68ec7d4338919e6904d2")
+	testString("/garlicu/566niximlxdzpanmn4qouucvua3k7neniwss47li5r6ugoertzuq:1234", "cb03efbcd45d0c5dc79781ac6f20ea5055a036afb48d45a52e7d68ec7d4338919e6904d2")
 }
 
 func TestBytesSplitAndJoin(t *testing.T) {
