@@ -5,6 +5,7 @@ import (
 	"net"
 
 	ma "github.com/multiformats/go-multiaddr"
+	madns "github.com/multiformats/go-multiaddr-dns"
 )
 
 var errIncorrectNetAddr = fmt.Errorf("incorrect network addr conversion")
@@ -93,11 +94,14 @@ func FromIP(ip net.IP) (ma.Multiaddr, error) {
 	return FromIPAndZone(ip, "")
 }
 
-// DialArgs is a convenience function returning arguments for use in net.Dial
+// DialArgs is a convenience function that returns network and address as
+// expected by net.Dial. See https://godoc.org/net#Dial for an overview of
+// possible return values.
 func DialArgs(m ma.Multiaddr) (string, string, error) {
 	var (
 		zone, network, ip, port string
 		err                     error
+		hostname                bool
 	)
 
 	ma.ForEach(m, func(c ma.Component) bool {
@@ -121,6 +125,16 @@ func DialArgs(m ma.Multiaddr) (string, string, error) {
 					return false
 				}
 				network = "ip4"
+				ip = c.Value()
+				return true
+			case madns.Dns4Protocol.Code:
+				network = "ip4"
+				hostname = true
+				ip = c.Value()
+				return true
+			case madns.Dns6Protocol.Code:
+				network = "ip6"
+				hostname = true
 				ip = c.Value()
 				return true
 			}
@@ -151,6 +165,7 @@ func DialArgs(m ma.Multiaddr) (string, string, error) {
 	if err != nil {
 		return "", "", err
 	}
+
 	switch network {
 	case "ip6":
 		if zone != "" {
@@ -164,6 +179,9 @@ func DialArgs(m ma.Multiaddr) (string, string, error) {
 	case "tcp6", "udp6":
 		if zone != "" {
 			ip += "%" + zone
+		}
+		if hostname {
+			return network, ip + ":" + port, nil
 		}
 		return network, "[" + ip + "]" + ":" + port, nil
 	default:
