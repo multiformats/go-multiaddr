@@ -102,14 +102,14 @@ var (
 		Name:       "garlict",
 		Code:       P_GARLICT,
 		VCode:      CodeToVarint(P_GARLICT),
-		Size:       272,
+		Size:       3112,
 		Transcoder: TranscoderGarlic,
 	}
 	protoGARLICU = Protocol{
 		Name:       "garlicu",
 		Code:       P_GARLICU,
 		VCode:      CodeToVarint(P_GARLICU),
-		Size:       272,
+		Size:       3112,
 		Transcoder: TranscoderGarlic,
 	}
 	protoUTP = Protocol{
