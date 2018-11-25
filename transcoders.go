@@ -3,6 +3,7 @@ package multiaddr
 import (
 	"bytes"
 	"encoding/base32"
+	"encoding/base64"
 	"encoding/binary"
 	"fmt"
 	"net"
@@ -218,14 +219,14 @@ func garlicStB(s string) ([]byte, error) {
 	if len(addr) != 2 {
 		return nil, fmt.Errorf("failed to parse garlic addr: %s does not contain a port number.", s)
 	}
-	// garlic address without the ".b32.i2p" substring, with padding
-	if len(addr[0]) != 52 {
-		return nil, fmt.Errorf("failed to parse garlic addr: %s not a i2p base32 address. len: %d", s, len(addr[0]))
+	// i2p base64 address
+	if len(addr) == 4096 || len(addr) == 516 {
+		return nil, fmt.Errorf("failed to parse garlic addr: %s not a i2p base64 address. len: %d\n", s, len(addr[0]))
 	}
-	garlicHostBytes := make([]byte, 32)
-	_, err := base32.NewEncoding("abcdefghijklmnopqrstuvwxyz234567").Decode(garlicHostBytes, []byte(addr[0]+"===="))
+	garlicHostBytes := make([]byte, len(addr))
+	_, err := base64.NewEncoding("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-~").DecodeString(addr[0])
 	if err != nil {
-		return nil, fmt.Errorf("failed to decode base32 garlic addr: %s %s %s", s, err, string(s[48]))
+		return nil, fmt.Errorf("failed to decode base64 i2p addr: %s %s", s, err)
 	}
 
 	// garlic port number
@@ -243,14 +244,15 @@ func garlicStB(s string) ([]byte, error) {
 	garlicPortBytes := make([]byte, 2)
 	binary.BigEndian.PutUint16(garlicPortBytes, uint16(i))
 	bytes := []byte{}
-	bytes = append(bytes, garlicHostBytes[0:32]...)
+	bytes = append(bytes, garlicHostBytes[0:len(addr)]...)
 	bytes = append(bytes, garlicPortBytes...)
 	return bytes, nil
 }
 
 func garlicBtS(b []byte) (string, error) {
-	addr := strings.Replace(strings.ToLower(base32.NewEncoding("abcdefghijklmnopqrstuvwxyz234567").EncodeToString(b[0:32])), "=", "", -1)
-	port := binary.BigEndian.Uint16(b[32:34])
+	baddr := b[0 : len(b)-3]
+	addr := strings.Replace(strings.ToLower(base64.NewEncoding("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-~").EncodeToString(baddr)), "=", "", -1)
+	port := binary.BigEndian.Uint16(b[len(b)-3 : len(b)-1])
 	str := addr + ":" + strconv.Itoa(int(port))
 	return str, nil
 }
