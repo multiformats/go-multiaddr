@@ -1,7 +1,5 @@
 package multiaddr
 
-import "log"
-
 import (
 	"bytes"
 	"encoding/hex"
