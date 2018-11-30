@@ -1,8 +1,14 @@
 package multiaddr
 
-import "testing"
+import (
+	"encoding/binary"
+	"testing"
+)
 
-func expectVarint(t *testing.T, x, expected int) {
+func checkVarint(t *testing.T, x int) {
+	buf := make([]byte, binary.MaxVarintLen64)
+	expected := binary.PutUvarint(buf, uint64(x))
+
 	size := VarintSize(x)
 	if size != expected {
 		t.Fatalf("expected varintsize of %d to be %d, got %d", x, expected, size)
@@ -10,7 +16,8 @@ func expectVarint(t *testing.T, x, expected int) {
 }
 
 func TestVarintSize(t *testing.T) {
-	expectVarint(t, (1<<7)-1, 1)
-	expectVarint(t, 0, 1)
-	expectVarint(t, 1<<7, 2)
+	max := 1 << 16
+	for x := 0; x < max; x++ {
+		checkVarint(t, x)
+	}
 }
