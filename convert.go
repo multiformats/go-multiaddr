@@ -3,6 +3,7 @@ package manet
 import (
 	"fmt"
 	"net"
+	"path/filepath"
 
 	ma "github.com/multiformats/go-multiaddr"
 	madns "github.com/multiformats/go-multiaddr-dns"
@@ -61,6 +62,8 @@ func parseBasicNetMaddr(maddr ma.Multiaddr) (net.Addr, error) {
 		return net.ResolveUDPAddr(network, host)
 	case "ip", "ip4", "ip6":
 		return net.ResolveIPAddr(network, host)
+	case "unix":
+		return net.ResolveUnixAddr(network, host)
 	}
 
 	return nil, fmt.Errorf("network not supported: %s", network)
@@ -137,6 +140,10 @@ func DialArgs(m ma.Multiaddr) (string, string, error) {
 				hostname = true
 				ip = c.Value()
 				return true
+			case ma.P_UNIX:
+				network = "unix"
+				ip = c.Value()
+				return false
 			}
 		case "ip4":
 			switch c.Protocol().Code {
@@ -184,6 +191,8 @@ func DialArgs(m ma.Multiaddr) (string, string, error) {
 			return network, ip + ":" + port, nil
 		}
 		return network, "[" + ip + "]" + ":" + port, nil
+	case "unix":
+		return network, ip, nil
 	default:
 		return "", "", fmt.Errorf("%s is not a 'thin waist' address", m)
 	}
@@ -247,4 +256,13 @@ func parseIPPlusNetAddr(a net.Addr) (ma.Multiaddr, error) {
 		return nil, errIncorrectNetAddr
 	}
 	return FromIP(ac.IP)
+}
+
+func parseUnixNetAddr(a net.Addr) (ma.Multiaddr, error) {
+	ac, ok := a.(*net.UnixAddr)
+	if !ok {
+		return nil, errIncorrectNetAddr
+	}
+	cleaned := filepath.Clean(ac.Name)
+	return ma.NewComponent("unix", cleaned)
 }
