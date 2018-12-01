@@ -22,7 +22,6 @@ const (
 	P_HTTP     = 0x01E0
 	P_HTTPS    = 0x01BB
 	P_ONION    = 0x01BC // also for backwards compatibility
-	P_ONION2   = 0x01BC
 	P_ONION3   = 0x01BD
 	P_GARLIC64 = 0x01CA
 	P_GARLIC32 = 0x01CB
@@ -86,8 +85,8 @@ var (
 	}
 	protoONION2 = Protocol{
 		Name:       "onion",
-		Code:       P_ONION2,
-		VCode:      CodeToVarint(P_ONION2),
+		Code:       P_ONION,
+		VCode:      CodeToVarint(P_ONION),
 		Size:       96,
 		Transcoder: TranscoderOnion,
 	}
