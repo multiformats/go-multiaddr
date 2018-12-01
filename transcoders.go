@@ -213,48 +213,59 @@ func onion3BtS(b []byte) (string, error) {
 	return str, nil
 }
 
-var TranscoderGarlic = NewTranscoderFromFunctions(garlicStB, garlicBtS, nil)
+var TranscoderGarlic64 = NewTranscoderFromFunctions(garlic64StB, garlic64BtS, nil)
 
-func garlicStB(s string) ([]byte, error) {
-	addr := strings.Split(s, ":")
-	if len(addr) != 2 {
-		return nil, fmt.Errorf("failed to parse garlic addr: %s does not contain a port number.", s)
-	}
+// i2p uses an alternate character set for base64 addresses. This returns an appropriate encoder.
+func garlicBase64Encoding() *base64.Encoding {
+	return base64.NewEncoding("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-~")
+}
+
+func garlic64StB(s string) ([]byte, error) {
 	// i2p base64 address
-	if len(addr[0]) != 516 {
-		return nil, fmt.Errorf("failed to parse garlic addr: %s not an i2p base64 address. len: %d\n", s, len(addr[0]))
+	if len(s) != 516 {
+		return nil, fmt.Errorf("failed to parse garlic addr: %s not an i2p base64 address. len: %d\n", s, len(s))
 	}
-	garlicHostBytes, err := base64.NewEncoding("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-~").DecodeString(addr[0])
+	garlicHostBytes, err := garlicBase64Encoding().DecodeString(s)
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode base64 i2p addr: %s %s", s, err)
 	}
 
-	// garlic port number
-	i, err := strconv.Atoi(addr[1])
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse garlic addr: %s", err)
-	}
-	if i >= 65536 {
-		return nil, fmt.Errorf("failed to parse garlic addr: %s", "port greater than 65536")
-	}
-	if i < 1 {
-		return nil, fmt.Errorf("failed to parse garlic addr: %s", "port less than 1")
-	}
-
-	garlicPortBytes := make([]byte, 2)
-	binary.BigEndian.PutUint16(garlicPortBytes, uint16(i))
 	bytes := []byte{}
 	bytes = append(bytes, garlicHostBytes...)
-	bytes = append(bytes, garlicPortBytes...)
 
 	return bytes, nil
 }
 
-func garlicBtS(b []byte) (string, error) {
-	addr := base64.NewEncoding("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-~").EncodeToString(b[0:387])
-	port := binary.BigEndian.Uint16(b[387:389])
-	str := addr + ":" + strconv.Itoa(int(port))
-	return str, nil
+func garlic64BtS(b []byte) (string, error) {
+	addr := garlicBase64Encoding().EncodeToString(b[0:387])
+	return addr, nil
+}
+
+var TranscoderGarlic32 = NewTranscoderFromFunctions(garlic32StB, garlic32BtS, nil)
+
+func garlicBase32Encoding() *base32.Encoding {
+	return base32.NewEncoding("abcdefghijklmnopqrstuvwxyz234567")
+}
+
+func garlic32StB(s string) ([]byte, error) {
+	// garlic address without the ".b32.i2p" substring, with padding
+	if len(s) != 52 {
+		return nil, fmt.Errorf("failed to parse garlic addr: %s not a i2p base32 address. len: %d", s, len(s))
+	}
+	garlicHostBytes := make([]byte, 32)
+	_, err := garlicBase32Encoding().Decode(garlicHostBytes, []byte(s+"===="))
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode base32 garlic addr: %s %s", s, err)
+	}
+	bytes := []byte{}
+	bytes = append(bytes, garlicHostBytes[0:32]...)
+
+	return bytes, nil
+}
+
+func garlic32BtS(b []byte) (string, error) {
+	addr := strings.Replace(strings.ToLower(garlicBase32Encoding().EncodeToString(b[0:32])), "=", "", -1)
+	return addr, nil
 }
 
 var TranscoderP2P = NewTranscoderFromFunctions(p2pStB, p2pBtS, p2pVal)

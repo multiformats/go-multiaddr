@@ -6,26 +6,26 @@ package multiaddr
 // TODO: Use a single source of truth for all multicodecs instead of
 // distributing them like this...
 const (
-	P_IP4     = 0x0004
-	P_TCP     = 0x0006
-	P_UDP     = 0x0111
-	P_DCCP    = 0x0021
-	P_IP6     = 0x0029
-	P_IP6ZONE = 0x002A
-	P_QUIC    = 0x01CC
-	P_SCTP    = 0x0084
-	P_UDT     = 0x012D
-	P_UTP     = 0x012E
-	P_UNIX    = 0x0190
-	P_P2P     = 0x01A5
-	P_IPFS    = 0x01A5 // alias for backwards compatability
-	P_HTTP    = 0x01E0
-	P_HTTPS   = 0x01BB
-	P_ONION   = 0x01BC // also for backwards compatibility
-	P_ONION2  = 0x01BC
-	P_ONION3  = 0x01BD
-	P_GARLICT = 0x01CA
-	P_GARLICU = 0x01CB
+	P_IP4      = 0x0004
+	P_TCP      = 0x0006
+	P_UDP      = 0x0111
+	P_DCCP     = 0x0021
+	P_IP6      = 0x0029
+	P_IP6ZONE  = 0x002A
+	P_QUIC     = 0x01CC
+	P_SCTP     = 0x0084
+	P_UDT      = 0x012D
+	P_UTP      = 0x012E
+	P_UNIX     = 0x0190
+	P_P2P      = 0x01A5
+	P_IPFS     = 0x01A5 // alias for backwards compatability
+	P_HTTP     = 0x01E0
+	P_HTTPS    = 0x01BB
+	P_ONION    = 0x01BC // also for backwards compatibility
+	P_ONION2   = 0x01BC
+	P_ONION3   = 0x01BD
+	P_GARLIC64 = 0x01CA
+	P_GARLIC32 = 0x01CB
 )
 
 var (
@@ -98,19 +98,19 @@ var (
 		Size:       296,
 		Transcoder: TranscoderOnion3,
 	}
-	protoGARLICT = Protocol{
-		Name:       "garlict",
-		Code:       P_GARLICT,
-		VCode:      CodeToVarint(P_GARLICT),
-		Size:       3112,
-		Transcoder: TranscoderGarlic,
+	protoGARLIC64 = Protocol{
+		Name:       "garlic64",
+		Code:       P_GARLIC64,
+		VCode:      CodeToVarint(P_GARLIC64),
+		Size:       3096,
+		Transcoder: TranscoderGarlic64,
 	}
-	protoGARLICU = Protocol{
-		Name:       "garlicu",
-		Code:       P_GARLICU,
-		VCode:      CodeToVarint(P_GARLICU),
-		Size:       3112,
-		Transcoder: TranscoderGarlic,
+	protoGARLIC32 = Protocol{
+		Name:       "garlic32",
+		Code:       P_GARLIC32,
+		VCode:      CodeToVarint(P_GARLIC32),
+		Size:       256,
+		Transcoder: TranscoderGarlic32,
 	}
 	protoUTP = Protocol{
 		Name:  "utp",
@@ -165,8 +165,8 @@ func init() {
 		protoSCTP,
 		protoONION2,
 		protoONION3,
-		protoGARLICT,
-		protoGARLICU,
+		protoGARLIC64,
+		protoGARLIC32,
 		protoUTP,
 		protoUDT,
 		protoQUIC,
