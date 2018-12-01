@@ -241,33 +241,6 @@ func garlic64BtS(b []byte) (string, error) {
 	return addr, nil
 }
 
-var TranscoderGarlic32 = NewTranscoderFromFunctions(garlic32StB, garlic32BtS, nil)
-
-func garlicBase32Encoding() *base32.Encoding {
-	return base32.NewEncoding("abcdefghijklmnopqrstuvwxyz234567")
-}
-
-func garlic32StB(s string) ([]byte, error) {
-	// garlic address without the ".b32.i2p" substring, with padding
-	if len(s) != 52 {
-		return nil, fmt.Errorf("failed to parse garlic addr: %s not a i2p base32 address. len: %d", s, len(s))
-	}
-	garlicHostBytes := make([]byte, 32)
-	_, err := garlicBase32Encoding().Decode(garlicHostBytes, []byte(s+"===="))
-	if err != nil {
-		return nil, fmt.Errorf("failed to decode base32 garlic addr: %s %s", s, err)
-	}
-	bytes := []byte{}
-	bytes = append(bytes, garlicHostBytes[0:32]...)
-
-	return bytes, nil
-}
-
-func garlic32BtS(b []byte) (string, error) {
-	addr := strings.Replace(strings.ToLower(garlicBase32Encoding().EncodeToString(b[0:32])), "=", "", -1)
-	return addr, nil
-}
-
 var TranscoderP2P = NewTranscoderFromFunctions(p2pStB, p2pBtS, p2pVal)
 
 func p2pStB(s string) ([]byte, error) {
