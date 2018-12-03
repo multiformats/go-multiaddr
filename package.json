@@ -25,6 +25,6 @@
   "license": "",
   "name": "go-multiaddr-net",
   "releaseCmd": "git commit -a -m \"gx publish $VERSION\"",
-  "version": "1.6.6"
+  "version": "1.6.7"
 }
 
