@@ -3,9 +3,13 @@ package manet
 import (
 	"bytes"
 	"fmt"
+	"io/ioutil"
 	"net"
+	"os"
+	"path/filepath"
 	"sync"
 	"testing"
+	"time"
 
 	ma "github.com/multiformats/go-multiaddr"
 )
@@ -73,6 +77,62 @@ func TestDial(t *testing.T) {
 
 	cA.Close()
 	wg.Wait()
+}
+
+func TestUnixSockets(t *testing.T) {
+	dir, err := ioutil.TempDir(os.TempDir(), "manettest")
+	if err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(dir, "listen.sock")
+	maddr := newMultiaddr(t, "/unix/"+path)
+
+	listener, err := Listen(maddr)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	payload := []byte("hello")
+
+	// listen
+	done := make(chan struct{}, 1)
+	go func() {
+		conn, err := listener.Accept()
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer conn.Close()
+		buf := make([]byte, 1024)
+		n, err := conn.Read(buf)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if n != len(payload) {
+			t.Fatal("failed to read appropriate number of bytes")
+		}
+		if !bytes.Equal(buf[0:n], payload) {
+			t.Fatal("payload did not match")
+		}
+		done <- struct{}{}
+	}()
+
+	// dial
+	conn, err := Dial(maddr)
+	if err != nil {
+		t.Fatal(err)
+	}
+	n, err := conn.Write(payload)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if n != len(payload) {
+		t.Fatal("failed to write appropriate number of bytes")
+	}
+	select {
+	case <-done:
+	case <-time.After(1 * time.Second):
+		t.Fatal("timed out waiting for read")
+	}
 }
 
 func TestListen(t *testing.T) {
