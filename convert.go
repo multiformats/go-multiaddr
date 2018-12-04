@@ -99,7 +99,8 @@ func FromIP(ip net.IP) (ma.Multiaddr, error) {
 
 // DialArgs is a convenience function that returns network and address as
 // expected by net.Dial. See https://godoc.org/net#Dial for an overview of
-// possible return values (we do not support the unix* ones yet).
+// possible return values (we do not support the unixpacket ones yet). Unix
+// addresses do not, at present, compose.
 func DialArgs(m ma.Multiaddr) (string, string, error) {
 	var (
 		zone, network, ip, port string
