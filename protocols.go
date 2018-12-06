@@ -9,6 +9,7 @@ const (
 	P_IP4     = 0x0004
 	P_TCP     = 0x0006
 	P_UDP     = 0x0111
+	P_DTLS    = 0x0020
 	P_DCCP    = 0x0021
 	P_IP6     = 0x0029
 	P_IP6ZONE = 0x002A
@@ -48,6 +49,11 @@ var (
 		Size:       16,
 		Path:       false,
 		Transcoder: TranscoderPort,
+	}
+	protoDTLS = Protocol{
+		Name:  "dtls",
+		Code:  P_DTLS,
+		VCode: CodeToVarint(P_DTLS),
 	}
 	protoDCCP = Protocol{
 		Name:       "dccp",
@@ -134,6 +140,7 @@ func init() {
 		protoIP4,
 		protoTCP,
 		protoUDP,
+		protoDTLS,
 		protoDCCP,
 		protoIP6,
 		protoIP6ZONE,
