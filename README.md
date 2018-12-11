@@ -4,6 +4,7 @@
 [![](https://img.shields.io/badge/project-multiformats-blue.svg?style=flat-square)](https://github.com/multiformats/multiformats)
 [![](https://img.shields.io/badge/freenode-%23ipfs-blue.svg?style=flat-square)](https://webchat.freenode.net/?channels=%23ipfs)
 [![](https://img.shields.io/badge/readme%20style-standard-brightgreen.svg?style=flat-square)](https://github.com/RichardLitt/standard-readme)
+[![GoDoc](https://godoc.org/github.com/multiformats/go-multiaddr?status.svg)](https://godoc.org/github.com/multiformats/go-multiaddr)
 [![Travis CI](https://img.shields.io/travis/multiformats/go-multiaddr.svg?style=flat-square&branch=master)](https://travis-ci.org/multiformats/go-multiaddr)
 [![codecov.io](https://img.shields.io/codecov/c/github/multiformats/go-multiaddr.svg?style=flat-square&branch=master)](https://codecov.io/github/multiformats/go-multiaddr?branch=master)
 
