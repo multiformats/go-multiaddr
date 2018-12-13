@@ -100,7 +100,7 @@ var (
 		Name:       "garlic64",
 		Code:       P_GARLIC64,
 		VCode:      CodeToVarint(P_GARLIC64),
-		Size:       3096,
+		Size:       LengthPrefixedVarSize,
 		Transcoder: TranscoderGarlic64,
 	}
 	protoUTP = Protocol{
