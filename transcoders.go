@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"strings"
 
-	mh "github.com/multiformats/go-multihash"
+	mh "gx/ipfs/QmerPMzPk1mJVowm8KgmoknWa4yCYvvugMPsgWmDNUvDLW/go-multihash"
 )
 
 type Transcoder interface {
@@ -241,8 +241,8 @@ func garlic64BtS(b []byte) (string, error) {
 }
 
 func garlicValidate(b []byte) error {
-	if len(b) > 516 || len(b) < 616 {
-		return fmt.Errorf("failed to parse garlic addr: %s not an i2p base64 address. len: %d\n", b, len(b))
+	if len(b) < 386 {
+		return fmt.Errorf("failed to validate garlic addr: %s not an i2p base64 address. len: %d\n", b, len(b))
 	}
 	s, err := garlic64BtS(b)
 	if err != nil {
