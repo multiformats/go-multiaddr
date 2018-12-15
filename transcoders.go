@@ -242,7 +242,7 @@ func garlic64BtS(b []byte) (string, error) {
 
 func garlicValidate(b []byte) error {
 	if len(b) > 516 || len(b) < 616 {
-		fmt.Errorf("failed to parse garlic addr: %s not an i2p base64 address. len: %d\n", b, len(b))
+		return fmt.Errorf("failed to parse garlic addr: %s not an i2p base64 address. len: %d\n", b, len(b))
 	}
 	s, err := garlic64BtS(b)
 	if err != nil {
