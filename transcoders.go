@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"strings"
 
-	mh "gx/ipfs/QmerPMzPk1mJVowm8KgmoknWa4yCYvvugMPsgWmDNUvDLW/go-multihash"
+	mh "github.com/multiformats/go-multihash"
 )
 
 type Transcoder interface {
