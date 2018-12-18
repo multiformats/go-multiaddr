@@ -215,42 +215,32 @@ func onion3BtS(b []byte) (string, error) {
 var TranscoderGarlic64 = NewTranscoderFromFunctions(garlic64StB, garlic64BtS, garlicValidate)
 
 // i2p uses an alternate character set for base64 addresses. This returns an appropriate encoder.
-func garlicBase64Encoding() *base64.Encoding {
-	return base64.NewEncoding("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-~")
-}
+var garlicBase64Encoding = base64.NewEncoding("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-~")
 
 func garlic64StB(s string) ([]byte, error) {
 	// i2p base64 address
 	if len(s) < 516 || len(s) > 616 {
 		return nil, fmt.Errorf("failed to parse garlic addr: %s not an i2p base64 address. len: %d\n", s, len(s))
 	}
-	garlicHostBytes, err := garlicBase64Encoding().DecodeString(s)
+	garlicHostBytes, err := garlicBase64Encoding.DecodeString(s)
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode base64 i2p addr: %s %s", s, err)
 	}
 
-	bytes := []byte{}
-	bytes = append(bytes, garlicHostBytes...)
-
-	return bytes, nil
+	return garlicHostBytes, nil
 }
 
 func garlic64BtS(b []byte) (string, error) {
-	addr := garlicBase64Encoding().EncodeToString(b)
+    if len(b) < 386 {
+		return "", fmt.Errorf("failed to validate garlic addr: %s not an i2p base64 address. len: %d\n", b, len(b))
+	}
+	addr := garlicBase64Encoding.EncodeToString(b)
 	return addr, nil
 }
 
 func garlicValidate(b []byte) error {
 	if len(b) < 386 {
 		return fmt.Errorf("failed to validate garlic addr: %s not an i2p base64 address. len: %d\n", b, len(b))
-	}
-	s, err := garlic64BtS(b)
-	if err != nil {
-		return fmt.Errorf("failed to decode base64 i2p addr: %s %s", s, err)
-	}
-	_, err = garlicBase64Encoding().DecodeString(s)
-	if err != nil {
-		return fmt.Errorf("failed to decode base64 i2p addr: %s %s", s, err)
 	}
 	return nil
 }
