@@ -83,7 +83,7 @@ func validateBytes(b []byte) (err error) {
 		b = b[n:]
 
 		if len(b) < size || size < 0 {
-			return fmt.Errorf("invalid value for size")
+			return fmt.Errorf("invalid value for size %d", len(b))
 		}
 
 		err = p.Transcoder.ValidateBytes(b[:size])
@@ -126,7 +126,7 @@ func readComponent(b []byte) (int, Component, error) {
 	offset += n
 
 	if len(b[offset:]) < size || size < 0 {
-		return 0, Component{}, fmt.Errorf("invalid value for size")
+		return 0, Component{}, fmt.Errorf("invalid value for size %d", len(b[offset:]))
 	}
 
 	return offset + size, Component{
