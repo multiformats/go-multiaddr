@@ -231,7 +231,7 @@ func garlic64StB(s string) ([]byte, error) {
 }
 
 func garlic64BtS(b []byte) (string, error) {
-    if len(b) < 386 {
+	if len(b) < 386 {
 		return "", fmt.Errorf("failed to validate garlic addr: %s not an i2p base64 address. len: %d\n", b, len(b))
 	}
 	addr := garlicBase64Encoding.EncodeToString(b)
