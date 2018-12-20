@@ -7,6 +7,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"net"
+	"net/url"
 	"strconv"
 	"strings"
 
@@ -103,6 +104,29 @@ func ip6BtS(b []byte) (string, error) {
 
 func ip4BtS(b []byte) (string, error) {
 	return net.IP(b).String(), nil
+}
+
+var TranscoderDNS = NewTranscoderFromFunctions(urlStB, urlBtS, nil)
+
+func urlStB(s string) ([]byte, error) {
+	u, err := url.Parse(s)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse dns addr: %s", err)
+	}
+	b, err := u.MarshalBinary()
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal dns addr: %s", err)
+	}
+	return b, nil
+}
+
+func urlBtS(b []byte) (string, error) {
+	u := &url.URL{}
+	err := u.UnmarshalBinary(b)
+	if err != nil {
+		return "", fmt.Errorf("failed to unmarshal dns addr: %s", err)
+	}
+	return u.String(), nil
 }
 
 var TranscoderPort = NewTranscoderFromFunctions(portStB, portBtS, nil)
