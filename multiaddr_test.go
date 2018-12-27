@@ -68,6 +68,7 @@ func TestConstructFails(t *testing.T) {
 		"/ip4/127.0.0.1/p2p/tcp",
 		"/unix",
 		"/ip4/1.2.3.4/tcp/80/unix",
+		"/ip4/127.0.0.1/tcp/9090/http/p2p-webcrt-direct",
 	}
 
 	for _, a := range cases {
@@ -127,6 +128,7 @@ func TestConstructSucceeds(t *testing.T) {
 		"/ip4/1.2.3.4/tcp/80/unix/a/b/c/d/e/f",
 		"/ip4/127.0.0.1/ipfs/QmcgpsyWgH8Y8ajJz1Cu72KnS5uo2Aa2LpzU7kinSupNKC/tcp/1234/unix/stdio",
 		"/ip4/127.0.0.1/p2p/QmcgpsyWgH8Y8ajJz1Cu72KnS5uo2Aa2LpzU7kinSupNKC/tcp/1234/unix/stdio",
+		"/ip4/127.0.0.1/tcp/9090/http/p2p-webrtc-direct",
 	}
 
 	for _, a := range cases {
