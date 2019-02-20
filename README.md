@@ -104,10 +104,6 @@ proxyAgain := printerOverProxy.Decapsulate(printer)
 // /ip4/10.20.30.40/tcp/443
 ```
 
-## Maintainers
-
-Captain: [@whyrusleeping](https://github.com/whyrusleeping).
-
 ## Contribute
 
 Contributions welcome. Please check out [the issues](https://github.com/multiformats/go-multiaddr/issues).
