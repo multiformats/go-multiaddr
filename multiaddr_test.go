@@ -555,3 +555,108 @@ func TestZone(t *testing.T) {
 		t.Errorf("expected %s, got %s", ip6String, ma2.String())
 	}
 }
+
+func TestBinaryMarshaler(t *testing.T) {
+	addr := newMultiaddr(t, "/ip4/0.0.0.0/tcp/4001")
+	b, err := addr.MarshalBinary()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	addr2 := newMultiaddr(t, "")
+	if err = addr2.UnmarshalBinary(b); err != nil {
+		t.Fatal(err)
+	}
+	if !addr.Equal(addr2) {
+		t.Error("expected equal addresses in circular marshaling test")
+	}
+}
+
+func TestTextMarshaler(t *testing.T) {
+	addr := newMultiaddr(t, "/ip4/0.0.0.0/tcp/4001")
+	b, err := addr.MarshalText()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	addr2 := newMultiaddr(t, "")
+	if err = addr2.UnmarshalText(b); err != nil {
+		t.Fatal(err)
+	}
+	if !addr.Equal(addr2) {
+		t.Error("expected equal addresses in circular marshaling test")
+	}
+}
+
+func TestJSONMarshaler(t *testing.T) {
+	addr := newMultiaddr(t, "/ip4/0.0.0.0/tcp/4001")
+	b, err := addr.MarshalJSON()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	addr2 := newMultiaddr(t, "")
+	if err = addr2.UnmarshalJSON(b); err != nil {
+		t.Fatal(err)
+	}
+	if !addr.Equal(addr2) {
+		t.Error("expected equal addresses in circular marshaling test")
+	}
+}
+
+func TestComponentBinaryMarshaler(t *testing.T) {
+	comp, err := NewComponent("ip4", "0.0.0.0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	b, err := comp.MarshalBinary()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	comp2 := &Component{}
+	if err = comp2.UnmarshalBinary(b); err != nil {
+		t.Fatal(err)
+	}
+	if !comp.Equal(comp2) {
+		t.Error("expected equal components in circular marshaling test")
+	}
+}
+
+func TestComponentTextMarshaler(t *testing.T) {
+	comp, err := NewComponent("ip4", "0.0.0.0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	b, err := comp.MarshalText()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	comp2 := &Component{}
+	if err = comp2.UnmarshalText(b); err != nil {
+		t.Fatal(err)
+	}
+	if !comp.Equal(comp2) {
+		t.Error("expected equal components in circular marshaling test")
+	}
+}
+
+func TestComponentJSONMarshaler(t *testing.T) {
+	comp, err := NewComponent("ip4", "0.0.0.0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	b, err := comp.MarshalJSON()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	comp2 := &Component{}
+	if err = comp2.UnmarshalJSON(b); err != nil {
+		t.Fatal(err)
+	}
+	if !comp.Equal(comp2) {
+		t.Error("expected equal components in circular marshaling test")
+	}
+}
