@@ -2,9 +2,6 @@ package multiaddr
 
 // You **MUST** register your multicodecs with
 // https://github.com/multiformats/multicodec before adding them here.
-//
-// TODO: Use a single source of truth for all multicodecs instead of
-// distributing them like this...
 const (
 	P_IP4               = 0x0004
 	P_TCP               = 0x0006
