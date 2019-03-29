@@ -250,33 +250,52 @@ var TranscoderGarlic32 = NewTranscoderFromFunctions(garlic32StB, garlic32BtS, ga
 var garlicBase32Encoding = base32.NewEncoding("abcdefghijklmnopqrstuvwxyz234567")
 
 func garlic32StB(s string) ([]byte, error) {
-		// garlic address without the ".b32.i2p" substring, with padding
-	if len(s) != 52 || len(s) < 55 || len(s) > 63 {
-		return nil, fmt.Errorf("failed to parse garlic addr: %s not a i2p base32 address. len: %d", s, len(s))
+	// garlic address without the ".b32.i2p" substring
+	if len(s) < 55 {
+		if len(s) != 52 {
+			return nil, fmt.Errorf("failed to parse garlic addr: %s not a i2p base32 address. len: %d", s, len(s))
+		}
 	}
-	garlicHostBytes, err := garlicBase32Encoding.Decode(s)
+
+	padout := func(s2 string) string {
+		str := ""
+		for x := 0; x < 56; x++ {
+			if x < len(s) {
+				str += string(s[x])
+			} else {
+				str += "="
+			}
+		}
+		return str
+	}
+
+	garlicHostBytes, err := garlicBase32Encoding.DecodeString(padout(s))
 	if err != nil {
-		return nil, fmt.Errorf("failed to decode base32 garlic addr: %s %s", s, err)
+		return nil, fmt.Errorf("failed to decode base32 garlic addr: %s err %s len %v", s, err, len(s))
 	}
-	bytes := []byte{}
-	bytes = append(bytes, garlicHostBytes...)
-
- 	return bytes, nil
-
+	return garlicHostBytes, nil
 }
 
 func garlic32BtS(b []byte) (string, error) {
-	if len(b) != 32 || len(b) < 35 {
-		return "", fmt.Errorf("failed to validate garlic addr: %s not an i2p base32 address. len: %d\n", b, len(b))
+	if len(b) > 35 {
+		if len(b) < 32 {
+			return "", fmt.Errorf("failed to validate garlic addr: %s not an i2p base32 address. len: %d\n", b, len(b))
+		}
 	}
-    addr := strings.Replace(strings.ToLower(garlicBase32Encoding.EncodeToString(b)), "=", "", -1)
-	return addr, nil
+	unpad := func(s2 string) string {
+		return strings.Replace(s2, "=", "", -1)
+	}
+	return unpad(garlicBase32Encoding.EncodeToString(b)), nil
 }
 
 func garlic32Validate(b []byte) error {
-	if len(b) != 32 || len(b) < 35 {
-		return fmt.Errorf("failed to validate garlic addr: %s not an i2p base32 address. len: %d\n", b, len(b))
+	if len(b) > 35 {
+		if len(b) < 32 {
+			return fmt.Errorf("failed to validate garlic addr: %s not an i2p base32 address. len: %d\n", b, len(b))
+		}
 	}
+	str, _ := garlic32BtS(b)
+	fmt.Printf("%s, %d", str, len(b))
 	return nil
 }
 
