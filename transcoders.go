@@ -294,8 +294,6 @@ func garlic32Validate(b []byte) error {
 			return fmt.Errorf("failed to validate garlic addr: %s not an i2p base32 address. len: %d\n", b, len(b))
 		}
 	}
-	str, _ := garlic32BtS(b)
-	fmt.Printf("%s, %d", str, len(b))
 	return nil
 }
 
