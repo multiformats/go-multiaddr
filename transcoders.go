@@ -212,7 +212,7 @@ func onion3BtS(b []byte) (string, error) {
 	return str, nil
 }
 
-var TranscoderGarlic64 = NewTranscoderFromFunctions(garlic64StB, garlic64BtS, garlicValidate)
+var TranscoderGarlic64 = NewTranscoderFromFunctions(garlic64StB, garlic64BtS, garlic64Validate)
 
 // i2p uses an alternate character set for base64 addresses. This returns an appropriate encoder.
 var garlicBase64Encoding = base64.NewEncoding("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-~")
@@ -238,12 +238,49 @@ func garlic64BtS(b []byte) (string, error) {
 	return addr, nil
 }
 
-func garlicValidate(b []byte) error {
+func garlic64Validate(b []byte) error {
 	if len(b) < 386 {
 		return fmt.Errorf("failed to validate garlic addr: %s not an i2p base64 address. len: %d\n", b, len(b))
 	}
 	return nil
 }
+
+var TranscoderGarlic32 = NewTranscoderFromFunctions(garlic32StB, garlic32BtS, garlic32Validate)
+
+var garlicBase32Encoding = base32.NewEncoding("abcdefghijklmnopqrstuvwxyz234567")
+
+func garlic32StB(s string) ([]byte, error) {
+		// garlic address without the ".b32.i2p" substring, with padding
+	if len(s) != 52 || len(s) < 55 || len(s) > 63 {
+		return nil, fmt.Errorf("failed to parse garlic addr: %s not a i2p base32 address. len: %d", s, len(s))
+	}
+	garlicHostBytes := make([]byte, 37)
+	_, err := garlicBase32Encoding.Decode(garlicHostBytes, []byte(s))
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode base32 garlic addr: %s %s", s, err)
+	}
+	bytes := []byte{}
+	bytes = append(bytes, garlicHostBytes...)
+
+ 	return bytes, nil
+
+}
+
+func garlic32BtS(b []byte) (string, error) {
+	if len(b) < 33 || len(b) > 37 {
+		return "", fmt.Errorf("failed to validate garlic addr: %s not an i2p base64 address. len: %d\n", b, len(b))
+	}
+    addr := strings.Replace(strings.ToLower(garlicBase32Encoding.EncodeToString(b)), "=", "", -1)
+	return addr, nil
+}
+
+func garlic32Validate(b []byte) error {
+	if len(b) < 33 || len(b) > 37 {
+		return fmt.Errorf("failed to validate garlic addr: %s not an i2p base64 address. len: %d\n", b, len(b))
+	}
+	return nil
+}
+
 
 var TranscoderP2P = NewTranscoderFromFunctions(p2pStB, p2pBtS, p2pVal)
 
