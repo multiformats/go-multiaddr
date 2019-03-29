@@ -250,6 +250,7 @@ var TranscoderGarlic32 = NewTranscoderFromFunctions(garlic32StB, garlic32BtS, ga
 var garlicBase32Encoding = base32.NewEncoding("abcdefghijklmnopqrstuvwxyz234567")
 
 func garlic32StB(s string) ([]byte, error) {
+	s = strings.Replace(s, ".b32.i2p", "", -1)
 	// garlic address without the ".b32.i2p" substring
 	if len(s) < 55 {
 		if len(s) != 52 {
