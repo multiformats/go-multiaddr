@@ -20,8 +20,8 @@ const (
 	P_HTTPS             = 0x01BB
 	P_ONION             = 0x01BC // also for backwards compatibility
 	P_ONION3            = 0x01BD
-	P_GARLIC64          = 0x01CA
-	P_GARLIC32          = 0x01CB
+	P_GARLIC64          = 0x01BE
+	P_GARLIC32          = 0x01BF
 	P_P2P_WEBRTC_DIRECT = 0x0114
 )
 
