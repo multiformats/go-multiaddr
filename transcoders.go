@@ -283,9 +283,9 @@ func garlic32BtS(b []byte) (string, error) {
 func garlic32Validate(b []byte) error {
 	// an i2p base64 for an Encrypted Leaseset v2 will be at least 35 bytes
 	// long
-	if len(b) > 35 {
-		// other than that, they will be at least 32 bytes
-		if len(b) < 32 {
+	if len(b) < 35 {
+		// other than that, they will be exactly 32 bytes
+		if len(b) != 32 {
 			return fmt.Errorf("failed to validate garlic addr: %s not an i2p base32 address. len: %d\n", b, len(b))
 		}
 	}
