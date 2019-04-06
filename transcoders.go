@@ -266,7 +266,7 @@ func garlic32StB(s string) ([]byte, error) {
 		s += "="
 	}
 
-	garlicHostBytes, err := garlicBase32Encoding.DecodeString(string(s))
+	garlicHostBytes, err := garlicBase32Encoding.DecodeString(s)
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode base32 garlic addr: %s, err: %v len: %v",
 			s,
