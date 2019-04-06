@@ -218,7 +218,8 @@ var TranscoderGarlic64 = NewTranscoderFromFunctions(garlic64StB, garlic64BtS, ga
 var garlicBase64Encoding = base64.NewEncoding("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-~")
 
 func garlic64StB(s string) ([]byte, error) {
-	// i2p base64 address
+	// i2p base64 address will be between 516 and 616 characters long, depending on
+	// certificate type
 	if len(s) < 516 || len(s) > 616 {
 		return nil, fmt.Errorf("failed to parse garlic addr: %s not an i2p base64 address. len: %d\n", s, len(s))
 	}
@@ -231,14 +232,15 @@ func garlic64StB(s string) ([]byte, error) {
 }
 
 func garlic64BtS(b []byte) (string, error) {
-	if len(b) < 386 {
-		return "", fmt.Errorf("failed to validate garlic addr: %s not an i2p base64 address. len: %d\n", b, len(b))
+	if err := garlic64Validate(b); err != nil {
+		return "", err
 	}
 	addr := garlicBase64Encoding.EncodeToString(b)
 	return addr, nil
 }
 
 func garlic64Validate(b []byte) error {
+	// A garlic64 address will always be greater than 386 bytes long when encoded.
 	if len(b) < 386 {
 		return fmt.Errorf("failed to validate garlic addr: %s not an i2p base64 address. len: %d\n", b, len(b))
 	}
