@@ -212,13 +212,14 @@ func onion3BtS(b []byte) (string, error) {
 	return str, nil
 }
 
-var TranscoderGarlic64 = NewTranscoderFromFunctions(garlic64StB, garlic64BtS, garlicValidate)
+var TranscoderGarlic64 = NewTranscoderFromFunctions(garlic64StB, garlic64BtS, garlic64Validate)
 
 // i2p uses an alternate character set for base64 addresses. This returns an appropriate encoder.
 var garlicBase64Encoding = base64.NewEncoding("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-~")
 
 func garlic64StB(s string) ([]byte, error) {
-	// i2p base64 address
+	// i2p base64 address will be between 516 and 616 characters long, depending on
+	// certificate type
 	if len(s) < 516 || len(s) > 616 {
 		return nil, fmt.Errorf("failed to parse garlic addr: %s not an i2p base64 address. len: %d\n", s, len(s))
 	}
@@ -231,16 +232,54 @@ func garlic64StB(s string) ([]byte, error) {
 }
 
 func garlic64BtS(b []byte) (string, error) {
-	if len(b) < 386 {
-		return "", fmt.Errorf("failed to validate garlic addr: %s not an i2p base64 address. len: %d\n", b, len(b))
+	if err := garlic64Validate(b); err != nil {
+		return "", err
 	}
 	addr := garlicBase64Encoding.EncodeToString(b)
 	return addr, nil
 }
 
-func garlicValidate(b []byte) error {
+func garlic64Validate(b []byte) error {
+	// A garlic64 address will always be greater than 386 bytes long when encoded.
 	if len(b) < 386 {
 		return fmt.Errorf("failed to validate garlic addr: %s not an i2p base64 address. len: %d\n", b, len(b))
+	}
+	return nil
+}
+
+var TranscoderGarlic32 = NewTranscoderFromFunctions(garlic32StB, garlic32BtS, garlic32Validate)
+
+var garlicBase32Encoding = base32.NewEncoding("abcdefghijklmnopqrstuvwxyz234567")
+
+func garlic32StB(s string) ([]byte, error) {
+	// an i2p base32 address with a length of greater than 55 characters is
+	// using an Encrypted Leaseset v2. all other base32 addresses will always be
+	// exactly 52 characters
+	if len(s) < 55 && len(s) != 52 {
+		return nil, fmt.Errorf("failed to parse garlic addr: %s not a i2p base32 address. len: %d", s, len(s))
+	}
+	for len(s)%8 != 0 {
+		s += "="
+	}
+	garlicHostBytes, err := garlicBase32Encoding.DecodeString(s)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode base32 garlic addr: %s, err: %v len: %v", s, err, len(s))
+	}
+	return garlicHostBytes, nil
+}
+
+func garlic32BtS(b []byte) (string, error) {
+	if err := garlic32Validate(b); err != nil {
+		return "", err
+	}
+	return strings.TrimRight(garlicBase32Encoding.EncodeToString(b), "="), nil
+}
+
+func garlic32Validate(b []byte) error {
+	// an i2p base64 for an Encrypted Leaseset v2 will be at least 35 bytes
+	// long other than that, they will be exactly 32 bytes
+	if len(b) < 35 && len(b) != 32 {
+		return fmt.Errorf("failed to validate garlic addr: %s not an i2p base32 address. len: %d\n", b, len(b))
 	}
 	return nil
 }
