@@ -262,11 +262,18 @@ func garlic32StB(s string) ([]byte, error) {
 		}
 	}
 	//compute the length to pad the address to, usually 56 or 64
-	x := int((len(s)/8)+1) * 8
-	for len(s) < x {
-		s += "="
+	padout := func(s string) string {
+		if len(s)%8 == 0 {
+			return s
+		}
+		x := int((len(s)/8)+1) * 8
+		for len(s) < x {
+			s += "="
+		}
+		return s
 	}
-	garlicHostBytes, err := garlicBase32Encoding.DecodeString(s[0:56])
+
+	garlicHostBytes, err := garlicBase32Encoding.DecodeString(padout(s))
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode base32 garlic addr: %s, err: %v len: %v", s, err, len(s))
 	}
