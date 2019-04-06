@@ -261,18 +261,14 @@ func garlic32StB(s string) ([]byte, error) {
 			return nil, fmt.Errorf("failed to parse garlic addr: %s not a i2p base32 address. len: %d", s, len(s))
 		}
 	}
-
-	for len(s) < 56 {
+	//compute the length to pad the address to, usually 56 or 64
+	x := int((len(s)/8)+1) * 8
+	for len(s) < x {
 		s += "="
 	}
-
-	garlicHostBytes, err := garlicBase32Encoding.DecodeString(s)
+	garlicHostBytes, err := garlicBase32Encoding.DecodeString(s[0:56])
 	if err != nil {
-		return nil, fmt.Errorf("failed to decode base32 garlic addr: %s, err: %v len: %v",
-			s,
-			err,
-			len(s),
-		)
+		return nil, fmt.Errorf("failed to decode base32 garlic addr: %s, err: %v len: %v", s, err, len(s))
 	}
 	return garlicHostBytes, nil
 }
