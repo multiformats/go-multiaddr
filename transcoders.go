@@ -250,47 +250,45 @@ var TranscoderGarlic32 = NewTranscoderFromFunctions(garlic32StB, garlic32BtS, ga
 var garlicBase32Encoding = base32.NewEncoding("abcdefghijklmnopqrstuvwxyz234567")
 
 func garlic32StB(s string) ([]byte, error) {
-	s = strings.Replace(s, ".b32.i2p", "", -1)
+	//s = strings.Replace(s, ".b32.i2p", "", -1)
 	// garlic address without the ".b32.i2p" substring
+
+	// an i2p base32 address with a length of greater than 55 characters is
+	// using an Encrypted Leaseset v2.
 	if len(s) < 55 {
 		if len(s) != 52 {
+			// all other base32 addresses will always be exactly 52 characters
 			return nil, fmt.Errorf("failed to parse garlic addr: %s not a i2p base32 address. len: %d", s, len(s))
 		}
 	}
 
-	padout := func(s2 string) string {
-		str := ""
-		for x := 0; x < 56; x++ {
-			if x < len(s) {
-				str += string(s[x])
-			} else {
-				str += "="
-			}
-		}
-		return str
+	for len(s) < 56 {
+		s += "="
 	}
 
-	garlicHostBytes, err := garlicBase32Encoding.DecodeString(padout(s))
+	garlicHostBytes, err := garlicBase32Encoding.DecodeString(string(s))
 	if err != nil {
-		return nil, fmt.Errorf("failed to decode base32 garlic addr: %s err %s len %v", s, err, len(s))
+		return nil, fmt.Errorf("failed to decode base32 garlic addr: %s, err: %v len: %v",
+			s,
+			err,
+			len(s),
+		)
 	}
 	return garlicHostBytes, nil
 }
 
 func garlic32BtS(b []byte) (string, error) {
-	if len(b) > 35 {
-		if len(b) < 32 {
-			return "", fmt.Errorf("failed to validate garlic addr: %s not an i2p base32 address. len: %d\n", b, len(b))
-		}
+	if err := garlic32Validate(b); err != nil {
+		return "", err
 	}
-	unpad := func(s2 string) string {
-		return strings.Replace(s2, "=", "", -1)
-	}
-	return unpad(garlicBase32Encoding.EncodeToString(b)), nil
+	return strings.TrimRight(garlicBase32Encoding.EncodeToString(b), "="), nil
 }
 
 func garlic32Validate(b []byte) error {
+	// an i2p base64 for an Encrypted Leaseset v2 will be at least 35 bytes
+	// long
 	if len(b) > 35 {
+		// other than that, they will be at least 32 bytes
 		if len(b) < 32 {
 			return fmt.Errorf("failed to validate garlic addr: %s not an i2p base32 address. len: %d\n", b, len(b))
 		}
