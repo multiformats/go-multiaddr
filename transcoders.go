@@ -252,30 +252,16 @@ var TranscoderGarlic32 = NewTranscoderFromFunctions(garlic32StB, garlic32BtS, ga
 var garlicBase32Encoding = base32.NewEncoding("abcdefghijklmnopqrstuvwxyz234567")
 
 func garlic32StB(s string) ([]byte, error) {
-	//s = strings.Replace(s, ".b32.i2p", "", -1)
-	// garlic address without the ".b32.i2p" substring
-
 	// an i2p base32 address with a length of greater than 55 characters is
-	// using an Encrypted Leaseset v2.
-	if len(s) < 55 {
-		if len(s) != 52 {
-			// all other base32 addresses will always be exactly 52 characters
-			return nil, fmt.Errorf("failed to parse garlic addr: %s not a i2p base32 address. len: %d", s, len(s))
-		}
+	// using an Encrypted Leaseset v2. all other base32 addresses will always be
+	// exactly 52 characters
+	if len(s) < 55 && len(s) != 52 {
+		return nil, fmt.Errorf("failed to parse garlic addr: %s not a i2p base32 address. len: %d", s, len(s))
 	}
-	//compute the length to pad the address to, usually 56 or 64
-	padout := func(s string) string {
-		if len(s)%8 == 0 {
-			return s
-		}
-		x := int((len(s)/8)+1) * 8
-		for len(s) < x {
-			s += "="
-		}
-		return s
+	for len(s)%8 != 0 {
+		s += "="
 	}
-
-	garlicHostBytes, err := garlicBase32Encoding.DecodeString(padout(s))
+	garlicHostBytes, err := garlicBase32Encoding.DecodeString(s)
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode base32 garlic addr: %s, err: %v len: %v", s, err, len(s))
 	}
@@ -291,12 +277,9 @@ func garlic32BtS(b []byte) (string, error) {
 
 func garlic32Validate(b []byte) error {
 	// an i2p base64 for an Encrypted Leaseset v2 will be at least 35 bytes
-	// long
-	if len(b) < 35 {
-		// other than that, they will be exactly 32 bytes
-		if len(b) != 32 {
-			return fmt.Errorf("failed to validate garlic addr: %s not an i2p base32 address. len: %d\n", b, len(b))
-		}
+	// long other than that, they will be exactly 32 bytes
+	if len(b) < 35 && len(b) != 32 {
+		return fmt.Errorf("failed to validate garlic addr: %s not an i2p base32 address. len: %d\n", b, len(b))
 	}
 	return nil
 }
