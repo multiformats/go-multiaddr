@@ -13,15 +13,12 @@ publish:
 	gx-go rewrite --undo
 
 conformance: tmp/multiaddr
-	go get -d -v .
 	go build -o tmp/multiaddr/test/go-multiaddr ./multiaddr
 	cd tmp/multiaddr/test && MULTIADDR_BIN="./go-multiaddr" go test -v
 
 tmp/multiaddr:
 	mkdir -p tmp/
 	git clone https://github.com/multiformats/multiaddr tmp/multiaddr/
-	# TODO(lgierth): drop this once multiaddr test suite is merged
-	git --work-tree=tmp/multiaddr/ --git-dir=tmp/multiaddr/.git checkout feat/test
 
 clean:
 	rm -rf tmp/

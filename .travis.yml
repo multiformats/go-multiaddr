@@ -9,8 +9,8 @@ go:
 env:
   global:
     - GOTFLAGS="-race"
+    - GO111MODULE=on
   matrix:
-    - BUILD_DEPTYPE=gx
     - BUILD_DEPTYPE=gomod
 
 
@@ -24,7 +24,6 @@ script:
 
 cache:
   directories:
-    - $GOPATH/src/gx
     - $GOPATH/pkg/mod
     - /home/travis/.cache/go-build
 
