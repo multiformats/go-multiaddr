@@ -77,7 +77,7 @@ func SplitFirst(m Multiaddr) (*Component, Multiaddr) {
 	if len(b) == n {
 		return &c, nil
 	}
-	return &c, &multiaddr{b[n:]}
+	return &c, &multiaddr{bytes: b[n:]}
 }
 
 // SplitLast returns the rest of the multiaddr and the last component.
@@ -109,7 +109,7 @@ func SplitLast(m Multiaddr) (Multiaddr, *Component) {
 				// Only one component
 				return nil, &c
 			}
-			return &multiaddr{b[:offset]}, &c
+			return &multiaddr{bytes: b[:offset]}, &c
 		}
 		offset += n
 	}
@@ -152,7 +152,7 @@ func SplitFunc(m Multiaddr, cb func(Component) bool) (Multiaddr, Multiaddr) {
 	case len(b):
 		return m, nil
 	default:
-		return &multiaddr{b[:offset]}, &multiaddr{b[offset:]}
+		return &multiaddr{bytes: b[:offset]}, &multiaddr{bytes: b[offset:]}
 	}
 }
 

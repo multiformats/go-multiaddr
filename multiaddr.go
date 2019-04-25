@@ -6,11 +6,13 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"sync/atomic"
 )
 
 // multiaddr is the data structure representing a Multiaddr
 type multiaddr struct {
 	bytes []byte
+	str   atomic.Value
 }
 
 // NewMultiaddr parses and validates an input string, returning a *Multiaddr
@@ -59,11 +61,15 @@ func (m *multiaddr) Bytes() []byte {
 
 // String returns the string representation of a Multiaddr
 func (m *multiaddr) String() string {
-	s, err := bytesToString(m.bytes)
-	if err != nil {
-		panic(fmt.Errorf("multiaddr failed to convert back to string. corrupted? %s", err))
+	str := m.str.Load()
+	if str == nil {
+		var err error
+		if str, err = bytesToString(m.bytes); err != nil {
+			panic(fmt.Errorf("multiaddr failed to convert back to string. corrupted? %s", err))
+		}
+		m.str.Store(str)
 	}
-	return s
+	return str.(string)
 }
 
 func (m *multiaddr) MarshalBinary() ([]byte, error) {
