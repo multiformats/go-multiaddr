@@ -7,7 +7,6 @@ import (
 )
 
 func stringToBytes(s string) ([]byte, error) {
-
 	// consume trailing slashes
 	s = strings.TrimRight(s, "/")
 
@@ -15,7 +14,7 @@ func stringToBytes(s string) ([]byte, error) {
 	sp := strings.Split(s, "/")
 
 	if sp[0] != "" {
-		return nil, fmt.Errorf("invalid multiaddr, must begin with /")
+		return nil, fmt.Errorf("failed to parse multiaddr %q: must begin with /", s)
 	}
 
 	// consume first empty elem
@@ -25,7 +24,7 @@ func stringToBytes(s string) ([]byte, error) {
 		name := sp[0]
 		p := ProtocolWithName(name)
 		if p.Code == 0 {
-			return nil, fmt.Errorf("no protocol with name %s", sp[0])
+			return nil, fmt.Errorf("failed to parse multiaddr %q: unknown protocol %s", s, sp[0])
 		}
 		_, _ = b.Write(CodeToVarint(p.Code))
 		sp = sp[1:]
@@ -35,7 +34,7 @@ func stringToBytes(s string) ([]byte, error) {
 		}
 
 		if len(sp) < 1 {
-			return nil, fmt.Errorf("protocol requires address, none given: %s", name)
+			return nil, fmt.Errorf("failed to parse multiaddr %q: unexpected end of multiaddr", s)
 		}
 
 		if p.Path {
@@ -46,7 +45,7 @@ func stringToBytes(s string) ([]byte, error) {
 
 		a, err := p.Transcoder.StringToBytes(sp[0])
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse %s: %s %s", p.Name, sp[0], err)
+			return nil, fmt.Errorf("failed to parse multiaddr %q: invalid value %q for protocol %s: %s", s, sp[0], p.Name, err)
 		}
 		if p.Size < 0 { // varint size.
 			_, _ = b.Write(CodeToVarint(len(a)))
