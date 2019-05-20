@@ -74,12 +74,21 @@ func TestConstructFails(t *testing.T) {
 		"/unix",
 		"/ip4/1.2.3.4/tcp/80/unix",
 		"/ip4/127.0.0.1/tcp/9090/http/p2p-webcrt-direct",
+		"/",
+		"",
 	}
 
 	for _, a := range cases {
 		if _, err := NewMultiaddr(a); err == nil {
 			t.Errorf("should have failed: %s - %s", a, err)
 		}
+	}
+}
+
+func TestEmptyMultiaddr(t *testing.T) {
+	_, err := NewMultiaddrBytes([]byte{})
+	if err == nil {
+		t.Fatal("should have failed to parse empty multiaddr")
 	}
 }
 
