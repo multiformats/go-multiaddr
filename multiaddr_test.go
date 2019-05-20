@@ -74,12 +74,21 @@ func TestConstructFails(t *testing.T) {
 		"/unix",
 		"/ip4/1.2.3.4/tcp/80/unix",
 		"/ip4/127.0.0.1/tcp/9090/http/p2p-webcrt-direct",
+		"/",
+		"",
 	}
 
 	for _, a := range cases {
 		if _, err := NewMultiaddr(a); err == nil {
 			t.Errorf("should have failed: %s - %s", a, err)
 		}
+	}
+}
+
+func TestEmptyMultiaddr(t *testing.T) {
+	_, err := NewMultiaddrBytes([]byte{})
+	if err == nil {
+		t.Fatal("should have failed to parse empty multiaddr")
 	}
 }
 
@@ -377,8 +386,8 @@ func TestEncapsulate(t *testing.T) {
 
 	m4, _ := NewMultiaddr("/ip4/127.0.0.1")
 	d := c.Decapsulate(m4)
-	if s := d.String(); s != "" {
-		t.Error("decapsulate /ip4 failed.", "/", s)
+	if d != nil {
+		t.Error("decapsulate /ip4 failed: ", d)
 	}
 }
 
@@ -582,11 +591,11 @@ func TestBinaryMarshaler(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	addr2 := newMultiaddr(t, "")
+	var addr2 multiaddr
 	if err = addr2.UnmarshalBinary(b); err != nil {
 		t.Fatal(err)
 	}
-	if !addr.Equal(addr2) {
+	if !addr.Equal(&addr2) {
 		t.Error("expected equal addresses in circular marshaling test")
 	}
 }
@@ -598,11 +607,11 @@ func TestTextMarshaler(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	addr2 := newMultiaddr(t, "")
+	var addr2 multiaddr
 	if err = addr2.UnmarshalText(b); err != nil {
 		t.Fatal(err)
 	}
-	if !addr.Equal(addr2) {
+	if !addr.Equal(&addr2) {
 		t.Error("expected equal addresses in circular marshaling test")
 	}
 }
@@ -614,11 +623,11 @@ func TestJSONMarshaler(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	addr2 := newMultiaddr(t, "")
+	var addr2 multiaddr
 	if err = addr2.UnmarshalJSON(b); err != nil {
 		t.Fatal(err)
 	}
-	if !addr.Equal(addr2) {
+	if !addr.Equal(&addr2) {
 		t.Error("expected equal addresses in circular marshaling test")
 	}
 }
