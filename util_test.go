@@ -16,7 +16,6 @@ func TestSplitFirstLast(t *testing.T) {
 		[]string{ipStr, tcpStr, ipfsStr},
 		[]string{ipStr, tcpStr},
 		[]string{ipStr},
-		[]string{},
 	} {
 		addr := StringCast(strings.Join(x, ""))
 		head, tail := SplitFirst(addr)

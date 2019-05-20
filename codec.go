@@ -20,6 +20,10 @@ func stringToBytes(s string) ([]byte, error) {
 	// consume first empty elem
 	sp = sp[1:]
 
+	if len(sp) == 0 {
+		return nil, fmt.Errorf("failed to parse multiaddr %q: empty multiaddr", s)
+	}
+
 	for len(sp) > 0 {
 		name := sp[0]
 		p := ProtocolWithName(name)
@@ -58,6 +62,9 @@ func stringToBytes(s string) ([]byte, error) {
 }
 
 func validateBytes(b []byte) (err error) {
+	if len(b) == 0 {
+		return fmt.Errorf("empty multiaddr")
+	}
 	for len(b) > 0 {
 		code, n, err := ReadVarintCode(b)
 		if err != nil {
@@ -136,6 +143,9 @@ func readComponent(b []byte) (int, Component, error) {
 }
 
 func bytesToString(b []byte) (ret string, err error) {
+	if len(b) == 0 {
+		return "", fmt.Errorf("empty multiaddr")
+	}
 	var buf strings.Builder
 
 	for len(b) > 0 {
