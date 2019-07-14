@@ -374,6 +374,10 @@ func garlicExtractor(b []byte) [6]uint8 {
 }
 
 func garlicBridgeBtS(b []byte) (string, error) {
+	err := garlicBridgeValidate(b)
+	if err != nil {
+		return "", err
+	}
 	var rs string
 	for i, e := range garlicExtractor(b) {
 		rs += strconv.Itoa(int(e))
@@ -390,12 +394,6 @@ func garlicBridgeValidate(b []byte) error {
 	}
 	lv := garlicExtractor(b)
 
-	if lv[0] > 7 {
-		return fmt.Errorf("A garlic bridge can't have more than 7 hops, not %d, check upstream.", lv[0])
-	}
-	if lv[1] > 7 {
-		return fmt.Errorf("A garlic bridge can't have more than 7 hops, not %d, check downstream.", lv[1])
-	}
 	if lv[2] < 1 || lv[2] > 6 {
 		return fmt.Errorf("A garlic bridge must have 1 up to 6 tunnel, not %d, check upstream.", lv[2])
 	}
