@@ -323,8 +323,8 @@ func TestListenPacketAndDial(t *testing.T) {
 	wg.Add(1)
 
 	go func() {
-		if !pc.Multiaddr().Equal(maddr) {
-			t.Fatal("connection multiaddr not equal:", maddr, pc.Multiaddr())
+		if !pc.LocalMultiaddr().Equal(maddr) {
+			t.Fatal("connection multiaddr not equal:", maddr, pc.LocalMultiaddr())
 		}
 
 		buffer := make([]byte, 1024)
