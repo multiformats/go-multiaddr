@@ -109,8 +109,6 @@ type maEndpoints struct {
 	raddr ma.Multiaddr
 }
 
-var _ Conn = (*maConn)(nil)
-
 // LocalMultiaddr returns the local address associated with
 // this connection
 func (c *maEndpoints) LocalMultiaddr() ma.Multiaddr {
