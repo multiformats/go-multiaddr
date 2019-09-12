@@ -64,6 +64,20 @@ func TestFromIP4(t *testing.T) {
 	})
 }
 
+func TestFromUnix(t *testing.T) {
+	testConvert(t, "/unix/c:/foo/bar", func() (ma.Multiaddr, error) {
+		return FromNetAddr(&net.UnixAddr{Name: "/c:/foo/bar", Net: "unix"})
+	})
+	testConvert(t, "/unix/foo/bar", func() (ma.Multiaddr, error) {
+		return FromNetAddr(&net.UnixAddr{Name: "/foo/bar", Net: "unix"})
+	})
+}
+
+func TestToUnix(t *testing.T) {
+	testToNetAddr(t, "/unix/c:/foo/bar", "unix", "/c:/foo/bar")
+	testToNetAddr(t, "/unix/foo/bar", "unix", "/foo/bar")
+}
+
 func TestFromIP6(t *testing.T) {
 	testConvert(t, "/ip6/2001:4860:0:2001::68", func() (ma.Multiaddr, error) {
 		return FromNetAddr(&net.IPAddr{IP: net.ParseIP("2001:4860:0:2001::68")})
