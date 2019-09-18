@@ -30,7 +30,7 @@ func stringToBytes(s string) ([]byte, error) {
 		if p.Code == 0 {
 			return nil, fmt.Errorf("failed to parse multiaddr %q: unknown protocol %s", s, sp[0])
 		}
-		_, _ = b.Write(CodeToVarint(p.Code))
+		_, _ = b.Write(p.VCode)
 		sp = sp[1:]
 
 		if p.Size == 0 { // no length.
