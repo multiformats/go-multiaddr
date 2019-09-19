@@ -192,7 +192,7 @@ func DialArgs(m ma.Multiaddr) (string, string, error) {
 		}
 		return network, "[" + ip + "]" + ":" + port, nil
 	case "unix":
-		return network, ip, nil
+		return network, filepath.FromSlash(ip), nil
 	default:
 		return "", "", fmt.Errorf("%s is not a 'thin waist' address", m)
 	}
@@ -263,6 +263,6 @@ func parseUnixNetAddr(a net.Addr) (ma.Multiaddr, error) {
 	if !ok {
 		return nil, errIncorrectNetAddr
 	}
-	cleaned := filepath.Clean(ac.Name)
-	return ma.NewComponent("unix", cleaned)
+
+	return ma.NewComponent("unix", filepath.ToSlash(ac.Name))
 }
