@@ -5,6 +5,7 @@ package multiaddr
 const (
 	P_IP4               = 0x0004
 	P_TCP               = 0x0006
+	P_DNS               = 0x0035 // 4 or 6
 	P_DNS4              = 0x0036
 	P_DNS6              = 0x0037
 	P_DNSADDR           = 0x0038
@@ -46,6 +47,13 @@ var (
 		Size:       16,
 		Path:       false,
 		Transcoder: TranscoderPort,
+	}
+	protoDNS = Protocol{
+		Code:       P_DNS,
+		Size:       LengthPrefixedVarSize,
+		Name:       "dns",
+		VCode:      CodeToVarint(P_DNS),
+		Transcoder: TranscoderDns,
 	}
 	protoDNS4 = Protocol{
 		Code:       P_DNS4,
@@ -199,6 +207,7 @@ func init() {
 	for _, p := range []Protocol{
 		protoIP4,
 		protoTCP,
+		protoDNS,
 		protoDNS4,
 		protoDNS6,
 		protoDNSADDR,
