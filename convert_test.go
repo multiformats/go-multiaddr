@@ -66,21 +66,21 @@ func TestFromIP4(t *testing.T) {
 }
 
 func TestFromUnix(t *testing.T) {
-	path := "/c:/foo/bar"
+	path := "/C:/foo/bar"
 	if runtime.GOOS == "windows" {
-		path = "c:\foo\bar"
+		path = `C:\foo\bar`
 	}
-	testConvert(t, "/unix/c:/foo/bar", func() (ma.Multiaddr, error) {
+	testConvert(t, "/unix/C:/foo/bar", func() (ma.Multiaddr, error) {
 		return FromNetAddr(&net.UnixAddr{Name: path, Net: "unix"})
 	})
 }
 
 func TestToUnix(t *testing.T) {
-	path := "/c:/foo/bar"
+	path := "/C:/foo/bar"
 	if runtime.GOOS == "windows" {
-		path = "c:\foo\bar"
+		path = `C:\foo\bar`
 	}
-	testToNetAddr(t, "/unix/c:/foo/bar", "unix", path)
+	testToNetAddr(t, "/unix/C:/foo/bar", "unix", path)
 }
 
 func TestFromIP6(t *testing.T) {
