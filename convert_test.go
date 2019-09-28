@@ -2,6 +2,7 @@ package manet
 
 import (
 	"net"
+	"runtime"
 	"testing"
 
 	ma "github.com/multiformats/go-multiaddr"
@@ -65,17 +66,21 @@ func TestFromIP4(t *testing.T) {
 }
 
 func TestFromUnix(t *testing.T) {
+	path := "/c:/foo/bar"
+	if runtime.GOOS == "windows" {
+		path = "c:\foo\bar"
+	}
 	testConvert(t, "/unix/c:/foo/bar", func() (ma.Multiaddr, error) {
-		return FromNetAddr(&net.UnixAddr{Name: "/c:/foo/bar", Net: "unix"})
-	})
-	testConvert(t, "/unix/foo/bar", func() (ma.Multiaddr, error) {
-		return FromNetAddr(&net.UnixAddr{Name: "/foo/bar", Net: "unix"})
+		return FromNetAddr(&net.UnixAddr{Name: path, Net: "unix"})
 	})
 }
 
 func TestToUnix(t *testing.T) {
-	testToNetAddr(t, "/unix/c:/foo/bar", "unix", "/c:/foo/bar")
-	testToNetAddr(t, "/unix/foo/bar", "unix", "/foo/bar")
+	path := "/c:/foo/bar"
+	if runtime.GOOS == "windows" {
+		path = "c:\foo\bar"
+	}
+	testToNetAddr(t, "/unix/c:/foo/bar", "unix", path)
 }
 
 func TestFromIP6(t *testing.T) {

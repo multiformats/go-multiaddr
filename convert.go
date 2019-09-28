@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net"
 	"path/filepath"
+	"runtime"
+	"strings"
 
 	ma "github.com/multiformats/go-multiaddr"
 )
@@ -192,7 +194,11 @@ func DialArgs(m ma.Multiaddr) (string, string, error) {
 		}
 		return network, "[" + ip + "]" + ":" + port, nil
 	case "unix":
-		return network, filepath.FromSlash(ip), nil
+		if runtime.GOOS == "windows" {
+			// convert /c:/... to c:\...
+			ip = filepath.FromSlash(strings.TrimLeft(ip, "/"))
+		}
+		return network, ip, nil
 	default:
 		return "", "", fmt.Errorf("%s is not a 'thin waist' address", m)
 	}
@@ -264,5 +270,15 @@ func parseUnixNetAddr(a net.Addr) (ma.Multiaddr, error) {
 		return nil, errIncorrectNetAddr
 	}
 
-	return ma.NewComponent("unix", filepath.ToSlash(ac.Name))
+	path := ac.Name
+	if runtime.GOOS == "windows" {
+		// Convert c:\foobar\... to c:/foobar/...
+		path = filepath.ToSlash(path)
+	}
+	if len(path) == 0 || path[0] != '/' {
+		// convert "" and "c:/..." to "/..."
+		path = "/" + path
+	}
+
+	return ma.NewComponent("unix", path)
 }
