@@ -177,7 +177,7 @@ var (
 		VCode: CodeToVarint(P_HTTPS),
 	}
 	protoP2P = Protocol{
-		Name:       "ipfs",
+		Name:       "p2p",
 		Code:       P_P2P,
 		VCode:      CodeToVarint(P_P2P),
 		Size:       LengthPrefixedVarSize,
