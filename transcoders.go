@@ -7,6 +7,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"net"
+	"runtime"
 	"strconv"
 	"strings"
 
@@ -317,10 +318,21 @@ func p2pBtS(b []byte) (string, error) {
 var TranscoderUnix = NewTranscoderFromFunctions(unixStB, unixBtS, nil)
 
 func unixStB(s string) ([]byte, error) {
+	if runtime.GOOS == "windows" {
+		return []byte(strings.TrimLeft(s, "/")), nil
+	}
 	return []byte(s), nil
 }
 
 func unixBtS(b []byte) (string, error) {
+	if runtime.GOOS == "windows" {
+		if len(b) < 1 {
+			return "", nil
+		}
+		if b[0] == '/' {
+			return string(b[1:]), nil
+		}
+	}
 	return string(b), nil
 }
 
