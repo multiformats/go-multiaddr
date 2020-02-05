@@ -132,6 +132,11 @@ func DialArgs(m ma.Multiaddr) (string, string, error) {
 				network = "ip4"
 				ip = c.Value()
 				return true
+			case ma.P_DNS:
+				network = "ip"
+				hostname = true
+				ip = c.Value()
+				return true
 			case ma.P_DNS4:
 				network = "ip4"
 				hostname = true
@@ -147,6 +152,16 @@ func DialArgs(m ma.Multiaddr) (string, string, error) {
 				ip = c.Value()
 				return false
 			}
+		case "ip":
+			switch c.Protocol().Code {
+			case ma.P_UDP:
+				network = "udp"
+			case ma.P_TCP:
+				network = "tcp"
+			default:
+				return false
+			}
+			port = c.Value()
 		case "ip4":
 			switch c.Protocol().Code {
 			case ma.P_UDP:
@@ -175,6 +190,19 @@ func DialArgs(m ma.Multiaddr) (string, string, error) {
 		return "", "", err
 	}
 
+	// If we have a hostname (dns*), we don't want any fancy ipv6 formatting
+	// logic (zone, brackets, etc.).
+	if hostname {
+		switch network {
+		case "ip", "ip4", "ip6":
+			return network, ip, nil
+		case "tcp", "tcp4", "tcp6", "udp", "udp4", "udp6":
+			return network, ip + ":" + port, nil
+		}
+		// Hostname is only true when network is one of the above.
+		panic("unreachable")
+	}
+
 	switch network {
 	case "ip6":
 		if zone != "" {
@@ -188,9 +216,6 @@ func DialArgs(m ma.Multiaddr) (string, string, error) {
 	case "tcp6", "udp6":
 		if zone != "" {
 			ip += "%" + zone
-		}
-		if hostname {
-			return network, ip + ":" + port, nil
 		}
 		return network, "[" + ip + "]" + ":" + port, nil
 	case "unix":
