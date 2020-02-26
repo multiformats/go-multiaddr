@@ -51,11 +51,20 @@ func testToNetAddr(t *testing.T, maddr, ntwk, addr string) {
 	// should convert properly
 	switch ntwk {
 	case "tcp":
-		_ = naddr.(*net.TCPAddr)
+		taddr := naddr.(*net.TCPAddr)
+		if ip, err := ToIP(m); err != nil || !taddr.IP.Equal(ip) {
+			t.Fatalf("ToIP() and ToNetAddr diverged: %s != %s", taddr, ip)
+		}
 	case "udp":
-		_ = naddr.(*net.UDPAddr)
+		uaddr := naddr.(*net.UDPAddr)
+		if ip, err := ToIP(m); err != nil || !uaddr.IP.Equal(ip) {
+			t.Fatalf("ToIP() and ToNetAddr diverged: %s != %s", uaddr, ip)
+		}
 	case "ip":
-		_ = naddr.(*net.IPAddr)
+		ipaddr := naddr.(*net.IPAddr)
+		if ip, err := ToIP(m); err != nil || !ipaddr.IP.Equal(ip) {
+			t.Fatalf("ToIP() and ToNetAddr diverged: %s != %s", ipaddr, ip)
+		}
 	}
 }
 
