@@ -98,6 +98,25 @@ func FromIP(ip net.IP) (ma.Multiaddr, error) {
 	return FromIPAndZone(ip, "")
 }
 
+// ToIP converts a Multiaddr to a net.IP when possible
+func ToIP(addr ma.Multiaddr) (net.IP, error) {
+	n, err := ToNetAddr(addr)
+	if err != nil {
+		return nil, err
+	}
+
+	switch netAddr := n.(type) {
+	case *net.UDPAddr:
+		return netAddr.IP, nil
+	case *net.TCPAddr:
+		return netAddr.IP, nil
+	case *net.IPAddr:
+		return netAddr.IP, nil
+	default:
+		return nil, fmt.Errorf("non IP Multiaddr: %T", netAddr)
+	}
+}
+
 // DialArgs is a convenience function that returns network and address as
 // expected by net.Dial. See https://godoc.org/net#Dial for an overview of
 // possible return values (we do not support the unixpacket ones yet). Unix
