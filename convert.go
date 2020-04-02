@@ -100,20 +100,19 @@ func FromIP(ip net.IP) (ma.Multiaddr, error) {
 
 // ToIP converts a Multiaddr to a net.IP when possible
 func ToIP(addr ma.Multiaddr) (net.IP, error) {
-	n, err := ToNetAddr(addr)
+	_, network, ip, _, hostname, err := dialArgComponents(addr)
 	if err != nil {
 		return nil, err
 	}
 
-	switch netAddr := n.(type) {
-	case *net.UDPAddr:
-		return netAddr.IP, nil
-	case *net.TCPAddr:
-		return netAddr.IP, nil
-	case *net.IPAddr:
-		return netAddr.IP, nil
+	if hostname {
+		return nil, fmt.Errorf("non IP Multiaddr: %s %s", network, ip)
+	}
+	switch network {
+	case "ip", "ip4", "ip6", "tcp", "tcp4", "tcp6", "udp", "udp4", "udp6":
+		return net.ParseIP(ip), nil
 	default:
-		return nil, fmt.Errorf("non IP Multiaddr: %T", netAddr)
+		return nil, fmt.Errorf("non IP Multiaddr: %s %s", network, ip)
 	}
 }
 
@@ -122,12 +121,52 @@ func ToIP(addr ma.Multiaddr) (net.IP, error) {
 // possible return values (we do not support the unixpacket ones yet). Unix
 // addresses do not, at present, compose.
 func DialArgs(m ma.Multiaddr) (string, string, error) {
-	var (
-		zone, network, ip, port string
-		err                     error
-		hostname                bool
-	)
+	zone, network, ip, port, hostname, err := dialArgComponents(m)
+	if err != nil {
+		return "", "", err
+	}
 
+	// If we have a hostname (dns*), we don't want any fancy ipv6 formatting
+	// logic (zone, brackets, etc.).
+	if hostname {
+		switch network {
+		case "ip", "ip4", "ip6":
+			return network, ip, nil
+		case "tcp", "tcp4", "tcp6", "udp", "udp4", "udp6":
+			return network, ip + ":" + port, nil
+		}
+		// Hostname is only true when network is one of the above.
+		panic("unreachable")
+	}
+
+	switch network {
+	case "ip6":
+		if zone != "" {
+			ip += "%" + zone
+		}
+		fallthrough
+	case "ip4":
+		return network, ip, nil
+	case "tcp4", "udp4":
+		return network, ip + ":" + port, nil
+	case "tcp6", "udp6":
+		if zone != "" {
+			ip += "%" + zone
+		}
+		return network, "[" + ip + "]" + ":" + port, nil
+	case "unix":
+		if runtime.GOOS == "windows" {
+			// convert /c:/... to c:\...
+			ip = filepath.FromSlash(strings.TrimLeft(ip, "/"))
+		}
+		return network, ip, nil
+	default:
+		return "", "", fmt.Errorf("%s is not a 'thin waist' address", m)
+	}
+}
+
+// dialArgComponents extracts the raw pieces used in dialing a Multiaddr
+func dialArgComponents(m ma.Multiaddr) (zone, network, ip, port string, hostname bool, err error) {
 	ma.ForEach(m, func(c ma.Component) bool {
 		switch network {
 		case "":
@@ -205,47 +244,7 @@ func DialArgs(m ma.Multiaddr) (string, string, error) {
 		// Done.
 		return false
 	})
-	if err != nil {
-		return "", "", err
-	}
-
-	// If we have a hostname (dns*), we don't want any fancy ipv6 formatting
-	// logic (zone, brackets, etc.).
-	if hostname {
-		switch network {
-		case "ip", "ip4", "ip6":
-			return network, ip, nil
-		case "tcp", "tcp4", "tcp6", "udp", "udp4", "udp6":
-			return network, ip + ":" + port, nil
-		}
-		// Hostname is only true when network is one of the above.
-		panic("unreachable")
-	}
-
-	switch network {
-	case "ip6":
-		if zone != "" {
-			ip += "%" + zone
-		}
-		fallthrough
-	case "ip4":
-		return network, ip, nil
-	case "tcp4", "udp4":
-		return network, ip + ":" + port, nil
-	case "tcp6", "udp6":
-		if zone != "" {
-			ip += "%" + zone
-		}
-		return network, "[" + ip + "]" + ":" + port, nil
-	case "unix":
-		if runtime.GOOS == "windows" {
-			// convert /c:/... to c:\...
-			ip = filepath.FromSlash(strings.TrimLeft(ip, "/"))
-		}
-		return network, ip, nil
-	default:
-		return "", "", fmt.Errorf("%s is not a 'thin waist' address", m)
-	}
+	return
 }
 
 func parseTCPNetAddr(a net.Addr) (ma.Multiaddr, error) {
