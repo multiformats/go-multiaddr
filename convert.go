@@ -11,6 +11,7 @@ import (
 )
 
 var errIncorrectNetAddr = fmt.Errorf("incorrect network addr conversion")
+var errNotIP = fmt.Errorf("multiaddr does not start with an IP address")
 
 // FromNetAddr converts a net.Addr type to a Multiaddr.
 func FromNetAddr(a net.Addr) (ma.Multiaddr, error) {
@@ -100,20 +101,22 @@ func FromIP(ip net.IP) (ma.Multiaddr, error) {
 
 // ToIP converts a Multiaddr to a net.IP when possible
 func ToIP(addr ma.Multiaddr) (net.IP, error) {
-	_, network, ip, _, hostname, err := dialArgComponents(addr)
-	if err != nil {
-		return nil, err
+	var ip net.IP
+	ma.ForEach(addr, func(c ma.Component) bool {
+		switch c.Protocol().Code {
+		case ma.P_IP6ZONE:
+			// we can't return these anyways.
+			return true
+		case ma.P_IP6, ma.P_IP4:
+			ip = net.IP(c.RawValue())
+			return false
+		}
+		return false
+	})
+	if ip == nil {
+		return nil, errNotIP
 	}
-
-	if hostname {
-		return nil, fmt.Errorf("non IP Multiaddr: %s %s", network, ip)
-	}
-	switch network {
-	case "ip", "ip4", "ip6", "tcp", "tcp4", "tcp6", "udp", "udp4", "udp6":
-		return net.ParseIP(ip), nil
-	default:
-		return nil, fmt.Errorf("non IP Multiaddr: %s %s", network, ip)
-	}
+	return ip, nil
 }
 
 // DialArgs is a convenience function that returns network and address as
