@@ -67,8 +67,8 @@ func TestConstructFails(t *testing.T) {
 		"/ip4/127.0.0.1/tcp/jfodsajfidosajfoidsa",
 		"/ip4/127.0.0.1/tcp",
 		"/ip4/127.0.0.1/quic/1234",
-		"/ip4/127.0.0.1/ipfs",
-		"/ip4/127.0.0.1/ipfs/tcp",
+		"/ip4/127.0.0.1/btfs",
+		"/ip4/127.0.0.1/btfs/tcp",
 		"/ip4/127.0.0.1/p2p",
 		"/ip4/127.0.0.1/p2p/tcp",
 		"/unix",
@@ -125,28 +125,28 @@ func TestConstructSucceeds(t *testing.T) {
 		"/sctp/1234",
 		"/udp/65535",
 		"/tcp/65535",
-		"/ipfs/QmcgpsyWgH8Y8ajJz1Cu72KnS5uo2Aa2LpzU7kinSupNKC",
+		"/btfs/QmcgpsyWgH8Y8ajJz1Cu72KnS5uo2Aa2LpzU7kinSupNKC",
 		"/p2p/QmcgpsyWgH8Y8ajJz1Cu72KnS5uo2Aa2LpzU7kinSupNKC",
 		"/udp/1234/sctp/1234",
 		"/udp/1234/udt",
 		"/udp/1234/utp",
 		"/tcp/1234/http",
 		"/tcp/1234/https",
-		"/ipfs/QmcgpsyWgH8Y8ajJz1Cu72KnS5uo2Aa2LpzU7kinSupNKC/tcp/1234",
+		"/btfs/QmcgpsyWgH8Y8ajJz1Cu72KnS5uo2Aa2LpzU7kinSupNKC/tcp/1234",
 		"/p2p/QmcgpsyWgH8Y8ajJz1Cu72KnS5uo2Aa2LpzU7kinSupNKC/tcp/1234",
 		"/ip4/127.0.0.1/udp/1234",
 		"/ip4/127.0.0.1/udp/0",
 		"/ip4/127.0.0.1/tcp/1234",
 		"/ip4/127.0.0.1/tcp/1234/",
 		"/ip4/127.0.0.1/udp/1234/quic",
-		"/ip4/127.0.0.1/ipfs/QmcgpsyWgH8Y8ajJz1Cu72KnS5uo2Aa2LpzU7kinSupNKC",
-		"/ip4/127.0.0.1/ipfs/QmcgpsyWgH8Y8ajJz1Cu72KnS5uo2Aa2LpzU7kinSupNKC/tcp/1234",
+		"/ip4/127.0.0.1/btfs/QmcgpsyWgH8Y8ajJz1Cu72KnS5uo2Aa2LpzU7kinSupNKC",
+		"/ip4/127.0.0.1/btfs/QmcgpsyWgH8Y8ajJz1Cu72KnS5uo2Aa2LpzU7kinSupNKC/tcp/1234",
 		"/ip4/127.0.0.1/p2p/QmcgpsyWgH8Y8ajJz1Cu72KnS5uo2Aa2LpzU7kinSupNKC",
 		"/ip4/127.0.0.1/p2p/QmcgpsyWgH8Y8ajJz1Cu72KnS5uo2Aa2LpzU7kinSupNKC/tcp/1234",
 		"/unix/a/b/c/d/e",
 		"/unix/stdio",
 		"/ip4/1.2.3.4/tcp/80/unix/a/b/c/d/e/f",
-		"/ip4/127.0.0.1/ipfs/QmcgpsyWgH8Y8ajJz1Cu72KnS5uo2Aa2LpzU7kinSupNKC/tcp/1234/unix/stdio",
+		"/ip4/127.0.0.1/btfs/QmcgpsyWgH8Y8ajJz1Cu72KnS5uo2Aa2LpzU7kinSupNKC/tcp/1234/unix/stdio",
 		"/ip4/127.0.0.1/p2p/QmcgpsyWgH8Y8ajJz1Cu72KnS5uo2Aa2LpzU7kinSupNKC/tcp/1234/unix/stdio",
 		"/ip4/127.0.0.1/tcp/9090/http/p2p-webrtc-direct",
 		"/ip4/127.0.0.1/tcp/127/ws",
@@ -408,7 +408,7 @@ func assertValueForProto(t *testing.T, a Multiaddr, p int, exp string) {
 }
 
 func TestGetValue(t *testing.T) {
-	a := newMultiaddr(t, "/ip4/127.0.0.1/utp/tcp/5555/udp/1234/utp/ipfs/QmbHVEEepCi7rn7VL7Exxpd2Ci9NNB6ifvqwhsrbRMgQFP")
+	a := newMultiaddr(t, "/ip4/127.0.0.1/utp/tcp/5555/udp/1234/utp/btfs/QmbHVEEepCi7rn7VL7Exxpd2Ci9NNB6ifvqwhsrbRMgQFP")
 	assertValueForProto(t, a, P_IP4, "127.0.0.1")
 	assertValueForProto(t, a, P_UTP, "")
 	assertValueForProto(t, a, P_TCP, "5555")
@@ -461,7 +461,7 @@ func TestFuzzBytes(t *testing.T) {
 }
 
 func randMaddrString() string {
-	good_corpus := []string{"tcp", "ip", "udp", "ipfs", "0.0.0.0", "127.0.0.1", "12345", "QmbHVEEepCi7rn7VL7Exxpd2Ci9NNB6ifvqwhsrbRMgQFP"}
+	good_corpus := []string{"tcp", "ip", "udp", "btfs", "0.0.0.0", "127.0.0.1", "12345", "QmbHVEEepCi7rn7VL7Exxpd2Ci9NNB6ifvqwhsrbRMgQFP"}
 
 	size := rand.Intn(256)
 	parts := make([]string, 0, size)
@@ -530,10 +530,10 @@ func TestRoundTrip(t *testing.T) {
 func TestIPFSvP2P(t *testing.T) {
 	var (
 		p2pAddr  = "/p2p/QmbHVEEepCi7rn7VL7Exxpd2Ci9NNB6ifvqwhsrbRMgQFP"
-		ipfsAddr = "/ipfs/QmbHVEEepCi7rn7VL7Exxpd2Ci9NNB6ifvqwhsrbRMgQFP"
+		btfsAddr = "/btfs/QmbHVEEepCi7rn7VL7Exxpd2Ci9NNB6ifvqwhsrbRMgQFP"
 	)
 
-	for _, s := range []string{p2pAddr, ipfsAddr} {
+	for _, s := range []string{p2pAddr, btfsAddr} {
 		ma, err := NewMultiaddr(s)
 		if err != nil {
 			t.Errorf("error when parsing %q: %s", s, err)

@@ -245,5 +245,5 @@ func init() {
 
 	// explicitly set both of these
 	protocolsByName["p2p"] = protoP2P
-	protocolsByName["ipfs"] = protoP2P
+	protocolsByName["btfs"] = protoP2P
 }
