@@ -9,11 +9,11 @@ func TestSplitFirstLast(t *testing.T) {
 	ipStr := "/ip4/0.0.0.0"
 	tcpStr := "/tcp/123"
 	quicStr := "/quic"
-	ipfsStr := "/ipfs/QmPSQnBKM9g7BaUcZCvswUJVscQ1ipjmwxN5PXCjkp9EQ7"
+	btfsStr := "/btfs/QmPSQnBKM9g7BaUcZCvswUJVscQ1ipjmwxN5PXCjkp9EQ7"
 
 	for _, x := range [][]string{
-		[]string{ipStr, tcpStr, quicStr, ipfsStr},
-		[]string{ipStr, tcpStr, ipfsStr},
+		[]string{ipStr, tcpStr, quicStr, btfsStr},
+		[]string{ipStr, tcpStr, btfsStr},
 		[]string{ipStr, tcpStr},
 		[]string{ipStr},
 	} {
@@ -107,11 +107,11 @@ func TestSplitFunc(t *testing.T) {
 	ipStr := "/ip4/0.0.0.0"
 	tcpStr := "/tcp/123"
 	quicStr := "/quic"
-	ipfsStr := "/ipfs/QmPSQnBKM9g7BaUcZCvswUJVscQ1ipjmwxN5PXCjkp9EQ7"
+	btfsStr := "/btfs/QmPSQnBKM9g7BaUcZCvswUJVscQ1ipjmwxN5PXCjkp9EQ7"
 
 	for _, x := range [][]string{
-		[]string{ipStr, tcpStr, quicStr, ipfsStr},
-		[]string{ipStr, tcpStr, ipfsStr},
+		[]string{ipStr, tcpStr, quicStr, btfsStr},
+		[]string{ipStr, tcpStr, btfsStr},
 		[]string{ipStr, tcpStr},
 		[]string{ipStr},
 	} {
