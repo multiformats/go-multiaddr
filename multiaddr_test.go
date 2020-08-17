@@ -7,6 +7,9 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/ipfs/go-cid"
+	mh "github.com/multiformats/go-multihash"
 )
 
 func newMultiaddr(t *testing.T, a string) Multiaddr {
@@ -126,14 +129,22 @@ func TestConstructSucceeds(t *testing.T) {
 		"/udp/65535",
 		"/tcp/65535",
 		"/ipfs/QmcgpsyWgH8Y8ajJz1Cu72KnS5uo2Aa2LpzU7kinSupNKC",
+		"/ipfs/k2k4r8oqamigqdo6o7hsbfwd45y70oyynp98usk7zmyfrzpqxh1pohl7",
 		"/p2p/QmcgpsyWgH8Y8ajJz1Cu72KnS5uo2Aa2LpzU7kinSupNKC",
+		"/p2p/k2k4r8oqamigqdo6o7hsbfwd45y70oyynp98usk7zmyfrzpqxh1pohl7",
+		"/p2p/bafzbeigvf25ytwc3akrijfecaotc74udrhcxzh2cx3we5qqnw5vgrei4bm",
+		"/p2p/12D3KooWCryG7Mon9orvQxcS1rYZjotPgpwoJNHHKcLLfE4Hf5mV",
+		"/p2p/k51qzi5uqu5dhb6l8spkdx7yxafegfkee5by8h7lmjh2ehc2sgg34z7c15vzqs",
+		"/p2p/bafzaajaiaejcalj543iwv2d7pkjt7ykvefrkfu7qjfi6sduakhso4lay6abn2d5u",
 		"/udp/1234/sctp/1234",
 		"/udp/1234/udt",
 		"/udp/1234/utp",
 		"/tcp/1234/http",
 		"/tcp/1234/https",
 		"/ipfs/QmcgpsyWgH8Y8ajJz1Cu72KnS5uo2Aa2LpzU7kinSupNKC/tcp/1234",
+		"/ipfs/k2k4r8oqamigqdo6o7hsbfwd45y70oyynp98usk7zmyfrzpqxh1pohl7/tcp/1234",
 		"/p2p/QmcgpsyWgH8Y8ajJz1Cu72KnS5uo2Aa2LpzU7kinSupNKC/tcp/1234",
+		"/p2p/k2k4r8oqamigqdo6o7hsbfwd45y70oyynp98usk7zmyfrzpqxh1pohl7/tcp/1234",
 		"/ip4/127.0.0.1/udp/1234",
 		"/ip4/127.0.0.1/udp/0",
 		"/ip4/127.0.0.1/tcp/1234",
@@ -141,13 +152,19 @@ func TestConstructSucceeds(t *testing.T) {
 		"/ip4/127.0.0.1/udp/1234/quic",
 		"/ip4/127.0.0.1/ipfs/QmcgpsyWgH8Y8ajJz1Cu72KnS5uo2Aa2LpzU7kinSupNKC",
 		"/ip4/127.0.0.1/ipfs/QmcgpsyWgH8Y8ajJz1Cu72KnS5uo2Aa2LpzU7kinSupNKC/tcp/1234",
+		"/ip4/127.0.0.1/ipfs/k2k4r8oqamigqdo6o7hsbfwd45y70oyynp98usk7zmyfrzpqxh1pohl7",
+		"/ip4/127.0.0.1/ipfs/k2k4r8oqamigqdo6o7hsbfwd45y70oyynp98usk7zmyfrzpqxh1pohl7/tcp/1234",
 		"/ip4/127.0.0.1/p2p/QmcgpsyWgH8Y8ajJz1Cu72KnS5uo2Aa2LpzU7kinSupNKC",
 		"/ip4/127.0.0.1/p2p/QmcgpsyWgH8Y8ajJz1Cu72KnS5uo2Aa2LpzU7kinSupNKC/tcp/1234",
+		"/ip4/127.0.0.1/p2p/k2k4r8oqamigqdo6o7hsbfwd45y70oyynp98usk7zmyfrzpqxh1pohl7",
+		"/ip4/127.0.0.1/p2p/k2k4r8oqamigqdo6o7hsbfwd45y70oyynp98usk7zmyfrzpqxh1pohl7/tcp/1234",
 		"/unix/a/b/c/d/e",
 		"/unix/stdio",
 		"/ip4/1.2.3.4/tcp/80/unix/a/b/c/d/e/f",
 		"/ip4/127.0.0.1/ipfs/QmcgpsyWgH8Y8ajJz1Cu72KnS5uo2Aa2LpzU7kinSupNKC/tcp/1234/unix/stdio",
+		"/ip4/127.0.0.1/ipfs/k2k4r8oqamigqdo6o7hsbfwd45y70oyynp98usk7zmyfrzpqxh1pohl7/tcp/1234/unix/stdio",
 		"/ip4/127.0.0.1/p2p/QmcgpsyWgH8Y8ajJz1Cu72KnS5uo2Aa2LpzU7kinSupNKC/tcp/1234/unix/stdio",
+		"/ip4/127.0.0.1/p2p/k2k4r8oqamigqdo6o7hsbfwd45y70oyynp98usk7zmyfrzpqxh1pohl7/tcp/1234/unix/stdio",
 		"/ip4/127.0.0.1/tcp/9090/http/p2p-webrtc-direct",
 		"/ip4/127.0.0.1/tcp/127/ws",
 		"/ip4/127.0.0.1/tcp/127/ws",
@@ -544,7 +561,7 @@ func TestIPFSvP2P(t *testing.T) {
 	}
 }
 
-func TestInvalidP2PAddr(t *testing.T) {
+func TestInvalidP2PAddrBytes(t *testing.T) {
 	badAddr := "a503221221c05877cbae039d70a5e600ea02c6f9f2942439285c9e344e26f8d280c850fad6"
 	bts, err := hex.DecodeString(badAddr)
 	if err != nil {
@@ -555,6 +572,31 @@ func TestInvalidP2PAddr(t *testing.T) {
 		t.Error("should have failed")
 		// Check for panic
 		_ = ma.String()
+	}
+}
+
+func TestInvalidP2PAddrString(t *testing.T) {
+	hashedData, err := mh.Sum([]byte("test"), mh.SHA2_256, -1)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// using MD5 since it's not a valid data codec
+	unknownCodecCID := cid.NewCidV1(mh.MD5, hashedData).String()
+
+	badStringAddrs := []string{
+		"/p2p/k2k4r8oqamigqdo6o7hsbfwd45y70oyynp98usk7zmyfrzpqxh1pohl-", // invalid multibase encoding
+		"/p2p/?unknownmultibase", // invalid multibase encoding
+		"/p2p/k2jmtxwoe2phm1hbqp0e7nufqf6umvuu2e9qd7ana7h411a0haqj6i2z", // non-libp2p-key codec
+		"/p2p/" + unknownCodecCID, // impossible codec
+	}
+	for _, a := range badStringAddrs {
+		ma, err := NewMultiaddr(a)
+		if err == nil {
+			t.Error("should have failed")
+			// Check for panic
+			_ = ma.String()
+		}
 	}
 }
 
