@@ -2,6 +2,8 @@ This package allows us to depend on other modules, to _force_ these other
 modules to upgrade to some minimum version. This allows us to express "co
 dependency" requirements in cases where this module doesn't strictly speaking
 _depend_ on another module, but conflicts with some version of that module.
+We are using this here to depend on deprecated modules that have been
+merged into this package. 
 
 In practice, this means:
 
