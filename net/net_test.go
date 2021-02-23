@@ -232,23 +232,28 @@ func TestListenAddrs(t *testing.T) {
 	test("/ip4/127.0.0.1/tcp/4324", "", true)
 	test("/ip4/127.0.0.1/udp/4325", "", false)
 	test("/ip4/127.0.0.1/udp/4326/udt", "", false)
-	test("/ip4/0.0.0.0/tcp/4324", "", true)
-	test("/ip4/0.0.0.0/udp/4325", "", false)
-	test("/ip4/0.0.0.0/udp/4326/udt", "", false)
 
-	test("/ip6/::1/tcp/4324", "", true)
-	test("/ip6/::1/udp/4325", "", false)
-	test("/ip6/::1/udp/4326/udt", "", false)
-	test("/ip6/::/tcp/4324", "", true)
-	test("/ip6/::/udp/4325", "", false)
-	test("/ip6/::/udp/4326/udt", "", false)
+	if len(os.Getenv("CI")) > 0 {
+		test("/ip4/0.0.0.0/tcp/4324", "", true)
+		test("/ip4/0.0.0.0/udp/4325", "", false)
+		test("/ip4/0.0.0.0/udp/4326/udt", "", false)
 
-	/* "An implementation should also support the concept of a "default"
-	 * zone for each scope.  And, when supported, the index value zero
-	 * at each scope SHOULD be reserved to mean "use the default zone"."
-	 * -- rfc4007. So, this _should_ work everywhere(?). */
-	test("/ip6zone/0/ip6/::1/tcp/4324", "/ip6/::1/tcp/4324", true)
-	test("/ip6zone/0/ip6/::1/udp/4324", "", false)
+		test("/ip6/::1/tcp/4324", "", true)
+		test("/ip6/::1/udp/4325", "", false)
+		test("/ip6/::1/udp/4326/udt", "", false)
+		test("/ip6/::/tcp/4324", "", true)
+		test("/ip6/::/udp/4325", "", false)
+		test("/ip6/::/udp/4326/udt", "", false)
+
+		/* "An implementation should also support the concept of a "default"
+		 * zone for each scope.  And, when supported, the index value zero
+		 * at each scope SHOULD be reserved to mean "use the default zone"."
+		 * -- rfc4007. So, this _should_ work everywhere(?). */
+		test("/ip6zone/0/ip6/::1/tcp/4324", "/ip6/::1/tcp/4324", true)
+		test("/ip6zone/0/ip6/::1/udp/4324", "", false)
+	} else {
+		t.Skip("all tests only run on CI")
+	}
 }
 
 func TestListenAndDial(t *testing.T) {
