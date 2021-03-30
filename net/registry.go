@@ -31,7 +31,6 @@ func init() {
 // It is used to keep a list of supported network address codecs (protocols
 // which addresses can be converted to and from multiaddresses).
 type CodecMap struct {
-	codecs       map[string]*NetCodec
 	addrParsers  map[string]FromNetAddrFunc
 	maddrParsers map[string]ToNetAddrFunc
 	lk           sync.Mutex
