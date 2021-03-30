@@ -36,19 +36,19 @@ Options:
 
 	addrStr := flag.Args()[0]
 	var addr maddr.Multiaddr
-	var err error
+	var merr error
 	if strings.HasPrefix(addrStr, "0x") {
 		addrBytes, err := hex.DecodeString(addrStr[2:])
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "parse error: %s\n", err)
 			os.Exit(1)
 		}
-		addr, err = maddr.NewMultiaddrBytes(addrBytes)
+		addr, merr = maddr.NewMultiaddrBytes(addrBytes)
 	} else {
-		addr, err = maddr.NewMultiaddr(addrStr)
+		addr, merr = maddr.NewMultiaddr(addrStr)
 	}
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "parse error: %s\n", err)
+	if merr != nil {
+		fmt.Fprintf(os.Stderr, "parse error: %s\n", merr)
 		os.Exit(1)
 	}
 
