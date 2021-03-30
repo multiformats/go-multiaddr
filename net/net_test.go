@@ -32,10 +32,9 @@ func TestDial(t *testing.T) {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
-
 		cB, err := listener.Accept()
 		if err != nil {
-			t.Fatal("failed to accept")
+			t.Error("failed to accept")
 		}
 
 		// echo out
@@ -99,19 +98,19 @@ func TestUnixSockets(t *testing.T) {
 	go func() {
 		conn, err := listener.Accept()
 		if err != nil {
-			t.Fatal(err)
+			t.Error(err)
 		}
 		defer conn.Close()
 		buf := make([]byte, 1024)
 		n, err := conn.Read(buf)
 		if err != nil {
-			t.Fatal(err)
+			t.Error(err)
 		}
 		if n != len(payload) {
-			t.Fatal("failed to read appropriate number of bytes")
+			t.Error("failed to read appropriate number of bytes")
 		}
 		if !bytes.Equal(buf[0:n], payload) {
-			t.Fatal("payload did not match")
+			t.Error("payload did not match")
 		}
 		done <- struct{}{}
 	}()
@@ -146,14 +145,13 @@ func TestListen(t *testing.T) {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
-
 		cB, err := listener.Accept()
 		if err != nil {
-			t.Fatal("failed to accept")
+			t.Error("failed to accept")
 		}
 
 		if !cB.LocalMultiaddr().Equal(maddr) {
-			t.Fatal("local multiaddr not equal:", maddr, cB.LocalMultiaddr())
+			t.Error("local multiaddr not equal:", maddr, cB.LocalMultiaddr())
 		}
 
 		// echo out
@@ -267,14 +265,13 @@ func TestListenAndDial(t *testing.T) {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
-
 		cB, err := listener.Accept()
 		if err != nil {
-			t.Fatal("failed to accept")
+			t.Error("failed to accept")
 		}
 
 		if !cB.LocalMultiaddr().Equal(maddr) {
-			t.Fatal("local multiaddr not equal:", maddr, cB.LocalMultiaddr())
+			t.Error("local multiaddr not equal:", maddr, cB.LocalMultiaddr())
 		}
 
 		// echo out
@@ -329,13 +326,13 @@ func TestListenPacketAndDial(t *testing.T) {
 
 	go func() {
 		if !pc.LocalMultiaddr().Equal(maddr) {
-			t.Fatal("connection multiaddr not equal:", maddr, pc.LocalMultiaddr())
+			t.Error("connection multiaddr not equal:", maddr, pc.LocalMultiaddr())
 		}
 
 		buffer := make([]byte, 1024)
 		_, addr, err := pc.ReadFrom(buffer)
 		if err != nil {
-			t.Fatal("failed to read into buffer", err)
+			t.Error("failed to read into buffer", err)
 		}
 		pc.WriteTo(buffer, addr)
 
@@ -633,16 +630,16 @@ func TestNetListener(t *testing.T) {
 	go func() {
 		c, err := Dial(malist.Multiaddr())
 		if err != nil {
-			t.Fatal("failed to dial")
+			t.Error("failed to dial")
 		}
 		if !c.RemoteMultiaddr().Equal(malist.Multiaddr()) {
-			t.Fatal("dialed wrong target")
+			t.Error("dialed wrong target")
 		}
 		c.Close()
 
 		c, err = Dial(malist.Multiaddr())
 		if err != nil {
-			t.Fatal("failed to dial")
+			t.Error("failed to dial")
 		}
 		c.Close()
 	}()
