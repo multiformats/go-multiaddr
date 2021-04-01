@@ -346,12 +346,12 @@ func TestProtocols(t *testing.T) {
 func TestProtocolsWithString(t *testing.T) {
 	pwn := ProtocolWithName
 	good := map[string][]Protocol{
-		"/ip4":                    []Protocol{pwn("ip4")},
-		"/ip4/tcp":                []Protocol{pwn("ip4"), pwn("tcp")},
-		"ip4/tcp/udp/ip6":         []Protocol{pwn("ip4"), pwn("tcp"), pwn("udp"), pwn("ip6")},
-		"////////ip4/tcp":         []Protocol{pwn("ip4"), pwn("tcp")},
-		"ip4/udp/////////":        []Protocol{pwn("ip4"), pwn("udp")},
-		"////////ip4/tcp////////": []Protocol{pwn("ip4"), pwn("tcp")},
+		"/ip4":                    {pwn("ip4")},
+		"/ip4/tcp":                {pwn("ip4"), pwn("tcp")},
+		"ip4/tcp/udp/ip6":         {pwn("ip4"), pwn("tcp"), pwn("udp"), pwn("ip6")},
+		"////////ip4/tcp":         {pwn("ip4"), pwn("tcp")},
+		"ip4/udp/////////":        {pwn("ip4"), pwn("udp")},
+		"////////ip4/tcp////////": {pwn("ip4"), pwn("tcp")},
 	}
 
 	for s, ps1 := range good {
