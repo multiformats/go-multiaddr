@@ -12,10 +12,10 @@ func TestSplitFirstLast(t *testing.T) {
 	ipfsStr := "/ipfs/QmPSQnBKM9g7BaUcZCvswUJVscQ1ipjmwxN5PXCjkp9EQ7"
 
 	for _, x := range [][]string{
-		[]string{ipStr, tcpStr, quicStr, ipfsStr},
-		[]string{ipStr, tcpStr, ipfsStr},
-		[]string{ipStr, tcpStr},
-		[]string{ipStr},
+		{ipStr, tcpStr, quicStr, ipfsStr},
+		{ipStr, tcpStr, ipfsStr},
+		{ipStr, tcpStr},
+		{ipStr},
 	} {
 		addr := StringCast(strings.Join(x, ""))
 		head, tail := SplitFirst(addr)
@@ -110,10 +110,10 @@ func TestSplitFunc(t *testing.T) {
 	ipfsStr := "/ipfs/QmPSQnBKM9g7BaUcZCvswUJVscQ1ipjmwxN5PXCjkp9EQ7"
 
 	for _, x := range [][]string{
-		[]string{ipStr, tcpStr, quicStr, ipfsStr},
-		[]string{ipStr, tcpStr, ipfsStr},
-		[]string{ipStr, tcpStr},
-		[]string{ipStr},
+		{ipStr, tcpStr, quicStr, ipfsStr},
+		{ipStr, tcpStr, ipfsStr},
+		{ipStr, tcpStr},
+		{ipStr},
 	} {
 		addr := StringCast(strings.Join(x, ""))
 		for i, cs := range x {
