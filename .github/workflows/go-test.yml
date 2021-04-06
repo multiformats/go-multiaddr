@@ -31,14 +31,8 @@ jobs:
       - name: Run tests with race detector
         if: ${{ matrix.os == 'ubuntu' }} # speed things up. Windows and OSX VMs are slow
         run: go test -v -race ./...
-      - name: Check if codecov.yml exists # only upload to Codecov if there's a codecov.yml
-        id: check_codecov
-        uses: andstor/file-existence-action@87d74d4732ddb824259d80c8a508c0124bf1c673 # v1.0.1
-        with:
-          files: "codecov.yml"
       - name: Upload coverage to Codecov
-        if: steps.check_codecov.outputs.files_exists == 'true'
-        uses: codecov/codecov-action@e156083f13aff6830c92fc5faa23505779fbf649 # v1.2.1
+        uses: codecov/codecov-action@fcebab03f26c7530a22baa63f06b3e0515f0c7cd # v1.3.1
         with:
           file: coverage.txt
           env_vars: OS=${{ matrix.os }}, GO=${{ matrix.go }}
