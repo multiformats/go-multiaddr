@@ -21,6 +21,14 @@ jobs:
           go mod tidy
           diff go.mod go.mod.orig
           diff go.sum go.sum.orig
+      - name: gofmt
+        if: ${{ success() || failure() }} # run this step even if the previous one failed
+        run: |
+          out=$(gofmt -s -l .)
+          if [[ -n "$out" ]]; then
+            echo $out | awk '{print "::error file=" $0 ",line=0,col=0::File is not gofmt-ed."}'
+            exit 1
+          fi
       - name: go vet
         if: ${{ success() || failure() }} # run this step even if the previous one failed
         run: go vet ./...
