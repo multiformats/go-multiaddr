@@ -140,7 +140,7 @@ func TestConstructSucceeds(t *testing.T) {
 		"/udp/1234/udt",
 		"/udp/1234/utp",
 		"/tcp/1234/http",
-		"/tcp/1234/http/tls",
+		"/tcp/1234/tls/http",
 		"/tcp/1234/https",
 		"/ipfs/QmcgpsyWgH8Y8ajJz1Cu72KnS5uo2Aa2LpzU7kinSupNKC/tcp/1234",
 		"/ipfs/k2k4r8oqamigqdo6o7hsbfwd45y70oyynp98usk7zmyfrzpqxh1pohl7/tcp/1234",
@@ -169,7 +169,7 @@ func TestConstructSucceeds(t *testing.T) {
 		"/ip4/127.0.0.1/tcp/9090/http/p2p-webrtc-direct",
 		"/ip4/127.0.0.1/tcp/127/ws",
 		"/ip4/127.0.0.1/tcp/127/ws",
-		"/ip4/127.0.0.1/tcp/127/ws/tls",
+		"/ip4/127.0.0.1/tcp/127/tls/ws",
 		"/ip4/127.0.0.1/tcp/127/wss",
 		"/ip4/127.0.0.1/tcp/127/wss",
 	}
