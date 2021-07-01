@@ -29,6 +29,7 @@ const (
 	P_GARLIC32          = 0x01BF
 	P_P2P_WEBRTC_DIRECT = 0x0114
 	P_TLS               = 0x01c0
+	P_NOISE             = 0x01c6
 	P_WS                = 0x01DD
 	P_WSS               = 0x01DE // deprecated alias for /tls/ws
 )
@@ -202,7 +203,11 @@ var (
 		Name:  "tls",
 		Code:  P_TLS,
 		VCode: CodeToVarint(P_TLS),
-		Size:  0,
+	}
+	protoNOISE = Protocol{
+		Name:  "noise",
+		Code:  P_NOISE,
+		VCode: CodeToVarint(P_NOISE),
 	}
 	protoWS = Protocol{
 		Name:  "ws",
@@ -243,6 +248,7 @@ func init() {
 		protoUNIX,
 		protoP2P_WEBRTC_DIRECT,
 		protoTLS,
+		protoNOISE,
 		protoWS,
 		protoWSS,
 	} {

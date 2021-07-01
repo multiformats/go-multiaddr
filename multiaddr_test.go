@@ -169,7 +169,9 @@ func TestConstructSucceeds(t *testing.T) {
 		"/ip4/127.0.0.1/tcp/9090/http/p2p-webrtc-direct",
 		"/ip4/127.0.0.1/tcp/127/ws",
 		"/ip4/127.0.0.1/tcp/127/ws",
+		"/ip4/127.0.0.1/tcp/127/tls",
 		"/ip4/127.0.0.1/tcp/127/tls/ws",
+		"/ip4/127.0.0.1/tcp/127/noise",
 		"/ip4/127.0.0.1/tcp/127/wss",
 		"/ip4/127.0.0.1/tcp/127/wss",
 	}
