@@ -140,6 +140,7 @@ func TestConstructSucceeds(t *testing.T) {
 		"/udp/1234/udt",
 		"/udp/1234/utp",
 		"/tcp/1234/http",
+		"/tcp/1234/tls/http",
 		"/tcp/1234/https",
 		"/ipfs/QmcgpsyWgH8Y8ajJz1Cu72KnS5uo2Aa2LpzU7kinSupNKC/tcp/1234",
 		"/ipfs/k2k4r8oqamigqdo6o7hsbfwd45y70oyynp98usk7zmyfrzpqxh1pohl7/tcp/1234",
@@ -168,6 +169,7 @@ func TestConstructSucceeds(t *testing.T) {
 		"/ip4/127.0.0.1/tcp/9090/http/p2p-webrtc-direct",
 		"/ip4/127.0.0.1/tcp/127/ws",
 		"/ip4/127.0.0.1/tcp/127/ws",
+		"/ip4/127.0.0.1/tcp/127/tls/ws",
 		"/ip4/127.0.0.1/tcp/127/wss",
 		"/ip4/127.0.0.1/tcp/127/wss",
 	}
@@ -425,9 +427,10 @@ func assertValueForProto(t *testing.T, a Multiaddr, p int, exp string) {
 }
 
 func TestGetValue(t *testing.T) {
-	a := newMultiaddr(t, "/ip4/127.0.0.1/utp/tcp/5555/udp/1234/utp/ipfs/QmbHVEEepCi7rn7VL7Exxpd2Ci9NNB6ifvqwhsrbRMgQFP")
+	a := newMultiaddr(t, "/ip4/127.0.0.1/utp/tcp/5555/udp/1234/tls/utp/ipfs/QmbHVEEepCi7rn7VL7Exxpd2Ci9NNB6ifvqwhsrbRMgQFP")
 	assertValueForProto(t, a, P_IP4, "127.0.0.1")
 	assertValueForProto(t, a, P_UTP, "")
+	assertValueForProto(t, a, P_TLS, "")
 	assertValueForProto(t, a, P_TCP, "5555")
 	assertValueForProto(t, a, P_UDP, "1234")
 	assertValueForProto(t, a, P_IPFS, "QmbHVEEepCi7rn7VL7Exxpd2Ci9NNB6ifvqwhsrbRMgQFP")
@@ -528,6 +531,7 @@ func TestRoundTrip(t *testing.T) {
 		"/unix/a/b/c/d",
 		"/ip6/::ffff:127.0.0.1/tcp/111",
 		"/ip4/127.0.0.1/tcp/123",
+		"/ip4/127.0.0.1/tcp/123/tls",
 		"/ip4/127.0.0.1/udp/123",
 		"/ip4/127.0.0.1/udp/123/ip6/::",
 		"/p2p/QmbHVEEepCi7rn7VL7Exxpd2Ci9NNB6ifvqwhsrbRMgQFP",
@@ -630,7 +634,7 @@ func TestZone(t *testing.T) {
 }
 
 func TestBinaryMarshaler(t *testing.T) {
-	addr := newMultiaddr(t, "/ip4/0.0.0.0/tcp/4001")
+	addr := newMultiaddr(t, "/ip4/0.0.0.0/tcp/4001/tls")
 	b, err := addr.MarshalBinary()
 	if err != nil {
 		t.Fatal(err)
@@ -646,7 +650,7 @@ func TestBinaryMarshaler(t *testing.T) {
 }
 
 func TestTextMarshaler(t *testing.T) {
-	addr := newMultiaddr(t, "/ip4/0.0.0.0/tcp/4001")
+	addr := newMultiaddr(t, "/ip4/0.0.0.0/tcp/4001/tls")
 	b, err := addr.MarshalText()
 	if err != nil {
 		t.Fatal(err)
@@ -662,7 +666,7 @@ func TestTextMarshaler(t *testing.T) {
 }
 
 func TestJSONMarshaler(t *testing.T) {
-	addr := newMultiaddr(t, "/ip4/0.0.0.0/tcp/4001")
+	addr := newMultiaddr(t, "/ip4/0.0.0.0/tcp/4001/tls")
 	b, err := addr.MarshalJSON()
 	if err != nil {
 		t.Fatal(err)
