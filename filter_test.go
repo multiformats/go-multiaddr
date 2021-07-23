@@ -15,10 +15,10 @@ func TestFilterListing(t *testing.T) {
 	}
 	for cidr := range expected {
 		_, ipnet, _ := net.ParseCIDR(cidr)
-		f.AddDialFilter(ipnet)
+		f.AddFilter(*ipnet, ActionDeny)
 	}
 
-	for _, filter := range f.Filters() {
+	for _, filter := range f.FiltersForAction(ActionDeny) {
 		cidr := filter.String()
 		if expected[cidr] {
 			delete(expected, cidr)
@@ -35,8 +35,8 @@ func TestFilterBlocking(t *testing.T) {
 	f := NewFilters()
 
 	_, ipnet, _ := net.ParseCIDR("0.1.2.3/24")
-	f.AddDialFilter(ipnet)
-	filters := f.Filters()
+	f.AddFilter(*ipnet, ActionDeny)
+	filters := f.FiltersForAction(ActionDeny)
 	if len(filters) != 1 {
 		t.Fatal("Expected only 1 filter")
 	}
@@ -45,7 +45,7 @@ func TestFilterBlocking(t *testing.T) {
 		t.Fatal("Expected filter with DENY action")
 	}
 
-	if !f.RemoveLiteral(*filters[0]) {
+	if !f.RemoveLiteral(filters[0]) {
 		t.Error("expected true value from RemoveLiteral")
 	}
 
@@ -56,7 +56,7 @@ func TestFilterBlocking(t *testing.T) {
 		"fc00::1/128",
 	} {
 		_, ipnet, _ := net.ParseCIDR(cidr)
-		f.AddDialFilter(ipnet)
+		f.AddFilter(*ipnet, ActionDeny)
 	}
 
 	// These addresses should all be blocked
@@ -170,7 +170,7 @@ func TestFiltersRemoveRules(t *testing.T) {
 
 	// Test removing the filter. It'll remove multiple, so make a dupe &
 	// a complement
-	f.AddDialFilter(ipnet)
+	f.AddFilter(*ipnet, ActionDeny)
 
 	// Show that they all apply, these are now blacklisted & should fail
 	for _, addr := range ips {
