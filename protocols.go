@@ -16,6 +16,7 @@ const (
 	P_QUIC              = 0x01CC
 	P_SCTP              = 0x0084
 	P_CIRCUIT           = 0x0122
+	P_CIRCUIT_INNER     = 0x0123
 	P_UDT               = 0x012D
 	P_UTP               = 0x012E
 	P_UNIX              = 0x0190
@@ -118,14 +119,16 @@ var (
 		Size:       16,
 		Transcoder: TranscoderPort,
 	}
-
 	protoCIRCUIT = Protocol{
 		Code:  P_CIRCUIT,
-		Size:  0,
 		Name:  "p2p-circuit",
 		VCode: CodeToVarint(P_CIRCUIT),
 	}
-
+	protoCIRCUITINNER = Protocol{
+		Code:  P_CIRCUIT_INNER,
+		Name:  "p2p-circuit-inner",
+		VCode: CodeToVarint(P_CIRCUIT_INNER),
+	}
 	protoONION2 = Protocol{
 		Name:       "onion",
 		Code:       P_ONION,
@@ -235,6 +238,7 @@ func init() {
 		protoIP6ZONE,
 		protoSCTP,
 		protoCIRCUIT,
+		protoCIRCUITINNER,
 		protoONION2,
 		protoONION3,
 		protoGARLIC64,
