@@ -184,3 +184,14 @@ func (m *multiaddr) ValueForProtocol(code int) (value string, err error) {
 	})
 	return
 }
+
+func ContainsSecurityProtocol(addr Multiaddr) bool {
+	var contains bool
+	ForEach(addr, func(c Component) bool {
+		if code := c.Protocol().Code; code == P_TLS || code == P_NOISE {
+			contains = true
+		}
+		return true
+	})
+	return contains
+}

@@ -739,3 +739,33 @@ func TestComponentJSONMarshaler(t *testing.T) {
 		t.Error("expected equal components in circular marshaling test")
 	}
 }
+
+func TestContainsSecurity(t *testing.T) {
+	does := []string{
+		"/ip4/127.0.0.1/tcp/80/tls",
+		"/ip6/::1/tcp/4321/noise",
+	}
+	for _, s := range does {
+		addr, err := NewMultiaddr(s)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !ContainsSecurityProtocol(addr) {
+			t.Fatalf("expected %s to be recognized as a security protocol", s)
+		}
+	}
+	doesnt := []string{
+		"/ip4/127.0.0.1/tcp/80",
+		"/ip6/::1/tcp/4321",
+		"/ip4/127.0.0.1/udp/443/quic",
+	}
+	for _, s := range doesnt {
+		addr, err := NewMultiaddr(s)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if ContainsSecurityProtocol(addr) {
+			t.Fatalf("didn't expect %s to be recognized as a security protocol", s)
+		}
+	}
+}
