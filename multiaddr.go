@@ -189,14 +189,14 @@ func (m *multiaddr) ValueForProtocol(code int) (value string, err error) {
 // If all filters return true, the address is kept.
 func FilterAddrs(a []Multiaddr, filters ...func(Multiaddr) bool) []Multiaddr {
 	b := make([]Multiaddr, 0, len(a))
+addrloop:
 	for _, addr := range a {
-		good := true
 		for _, filter := range filters {
-			good = good && filter(addr)
+			if !filter(addr) {
+				continue addrloop
+			}
 		}
-		if good {
-			b = append(b, addr)
-		}
+		b = append(b, addr)
 	}
 	return b
 }
