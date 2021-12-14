@@ -41,7 +41,7 @@ func ResolveUnspecifiedAddresses(unspecAddrs, ifaceAddrs []ma.Multiaddr) ([]ma.M
 	// todo optimize: only fetch these if we have a "any" addr.
 	if len(ifaceAddrs) < 1 {
 		var err error
-		ifaceAddrs, err = InterfaceAddresses()
+		ifaceAddrs, err = interfaceAddresses()
 		if err != nil {
 			return nil, err
 		}
@@ -63,10 +63,10 @@ func ResolveUnspecifiedAddresses(unspecAddrs, ifaceAddrs []ma.Multiaddr) ([]ma.M
 	return outputAddrs, nil
 }
 
-// InterfaceAddresses returns a list of addresses associated with local machine
+// interfaceAddresses returns a list of addresses associated with local machine
 // Note: we do not return link local addresses. IP loopback is ok, because we
 // may be connecting to other nodes in the same machine.
-func InterfaceAddresses() ([]ma.Multiaddr, error) {
+func interfaceAddresses() ([]ma.Multiaddr, error) {
 	maddrs, err := InterfaceMultiaddrs()
 	if err != nil {
 		return nil, err
