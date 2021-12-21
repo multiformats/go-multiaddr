@@ -55,21 +55,3 @@ func TestResolvingAddrs(t *testing.T) {
 		t.Fatal("should have failed")
 	}
 }
-
-func TestAddrOverNonLocalIP(t *testing.T) {
-	bad := []ma.Multiaddr{
-		newMultiaddr(t, "/ip6/fe80::1/tcp/1234"),   // link local
-		newMultiaddr(t, "/ip6/fe80::100/tcp/1234"), // link local
-	}
-	good := []ma.Multiaddr{
-		newMultiaddr(t, "/ip4/127.0.0.1/tcp/1234"),
-		newMultiaddr(t, "/ip6/::1/tcp/1234"),
-		newMultiaddr(t, "/ip4/1.2.3.4/udp/1234/utp"),
-	}
-	for _, addr := range bad {
-		require.Falsef(t, IsIpv6LinkLocal(addr), "%s is a link local addr", addr)
-	}
-	for _, addr := range good {
-		require.Truef(t, IsIpv6LinkLocal(addr), "%s is not a link local addr", addr)
-	}
-}

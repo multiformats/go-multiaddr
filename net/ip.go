@@ -95,18 +95,6 @@ func IsIPUnspecified(m ma.Multiaddr) bool {
 	return net.IP(c.RawValue()).IsUnspecified()
 }
 
-// IsIpv6LinkLocal returns whether the addr uses a non-local ip link
-func IsIpv6LinkLocal(a ma.Multiaddr) bool {
-	split := ma.Split(a)
-	if len(split) < 1 {
-		return false
-	}
-	if IsIP6LinkLocal(split[0]) {
-		return false
-	}
-	return true
-}
-
 // If m matches [zone,ip6,...], return [ip6,...]
 // else if m matches [], [zone], or [zone,...], return nil
 // else return m
