@@ -67,9 +67,9 @@ func TestAddrOverNonLocalIP(t *testing.T) {
 		newMultiaddr(t, "/ip4/1.2.3.4/udp/1234/utp"),
 	}
 	for _, addr := range bad {
-		require.Falsef(t, AddrOverNonLocalIP(addr), "%s is a link local addr", addr)
+		require.Falsef(t, IsIpv6LinkLocal(addr), "%s is a link local addr", addr)
 	}
 	for _, addr := range good {
-		require.Truef(t, AddrOverNonLocalIP(addr), "%s is not a link local addr", addr)
+		require.Truef(t, IsIpv6LinkLocal(addr), "%s is not a link local addr", addr)
 	}
 }

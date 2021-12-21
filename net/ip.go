@@ -95,8 +95,8 @@ func IsIPUnspecified(m ma.Multiaddr) bool {
 	return net.IP(c.RawValue()).IsUnspecified()
 }
 
-// AddrOverNonLocalIP returns whether the addr uses a non-local ip link
-func AddrOverNonLocalIP(a ma.Multiaddr) bool {
+// IsIpv6LinkLocal returns whether the addr uses a non-local ip link
+func IsIpv6LinkLocal(a ma.Multiaddr) bool {
 	split := ma.Split(a)
 	if len(split) < 1 {
 		return false
