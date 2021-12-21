@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/ipfs/go-cid"
 	mh "github.com/multiformats/go-multihash"
 )
@@ -226,7 +228,7 @@ func TestStringToBytes(t *testing.T) {
 			t.Error("failed to decode hex", h)
 		}
 
-		//t.Log("196", h, []byte(b1))
+		// t.Log("196", h, []byte(b1))
 
 		b2, err := stringToBytes(s)
 		if err != nil {
@@ -738,4 +740,25 @@ func TestComponentJSONMarshaler(t *testing.T) {
 	if !comp.Equal(comp2) {
 		t.Error("expected equal components in circular marshaling test")
 	}
+}
+
+func TestFilterAddrs(t *testing.T) {
+	bad := []Multiaddr{
+		newMultiaddr(t, "/ip6/fe80::1/tcp/1234"),
+		newMultiaddr(t, "/ip6/fe80::100/tcp/1234"),
+	}
+	good := []Multiaddr{
+		newMultiaddr(t, "/ip4/127.0.0.1/tcp/1234"),
+		newMultiaddr(t, "/ip4/1.1.1.1/tcp/999"),
+		newMultiaddr(t, "/ip4/1.2.3.4/udp/1234/utp"),
+	}
+	goodAndBad := append(good, bad...)
+
+	filter := func(addr Multiaddr) bool {
+		return addr.Protocols()[0].Code == P_IP4
+	}
+
+	require.Empty(t, FilterAddrs(bad, filter))
+	require.ElementsMatch(t, FilterAddrs(good, filter), good)
+	require.ElementsMatch(t, FilterAddrs(goodAndBad, filter), good)
 }
