@@ -12,6 +12,7 @@ import (
 	"time"
 
 	ma "github.com/multiformats/go-multiaddr"
+	"github.com/stretchr/testify/require"
 )
 
 func newMultiaddr(t *testing.T, m string) ma.Multiaddr {
@@ -449,7 +450,7 @@ func TestIPUnspecified(t *testing.T) {
 
 func TestIP6LinkLocal(t *testing.T) {
 	for a := 0; a < 65536; a++ {
-		isLinkLocal := (a&0xffc0 == 0xfe80 || a&0xff0f == 0xff02)
+		isLinkLocal := a&0xffc0 == 0xfe80 || a&0xff0f == 0xff02
 		m := newMultiaddr(t, fmt.Sprintf("/ip6/%x::1", a))
 		if IsIP6LinkLocal(m) != isLinkLocal {
 			t.Errorf("IsIP6LinkLocal failed (%s != %v)", m, isLinkLocal)
@@ -458,6 +459,22 @@ func TestIP6LinkLocal(t *testing.T) {
 
 	if !IsIP6LinkLocal(newMultiaddr(t, "/ip6zone/hello/ip6/fe80::9999")) {
 		t.Error("IsIP6LinkLocal failed (/ip6/fe80::9999)")
+	}
+
+	bad := []ma.Multiaddr{
+		newMultiaddr(t, "/ip6/fe80::1/tcp/1234"),   // link local
+		newMultiaddr(t, "/ip6/fe80::100/tcp/1234"), // link local
+	}
+	good := []ma.Multiaddr{
+		newMultiaddr(t, "/ip4/127.0.0.1/tcp/1234"),
+		newMultiaddr(t, "/ip6/::1/tcp/1234"),
+		newMultiaddr(t, "/ip4/1.2.3.4/udp/1234/utp"),
+	}
+	for _, addr := range bad {
+		require.True(t, IsIP6LinkLocal(addr), "%s is a link local addr", addr)
+	}
+	for _, addr := range good {
+		require.False(t, IsIP6LinkLocal(addr), "%s is not a link local addr", addr)
 	}
 }
 

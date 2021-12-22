@@ -74,7 +74,7 @@ func interfaceAddresses() ([]ma.Multiaddr, error) {
 
 	var out []ma.Multiaddr
 	for _, a := range maddrs {
-		if !IsIpv6LinkLocal(a) {
+		if IsIP6LinkLocal(a) {
 			continue
 		}
 		out = append(out, a)
