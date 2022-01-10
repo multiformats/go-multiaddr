@@ -762,3 +762,16 @@ func TestFilterAddrs(t *testing.T) {
 	require.ElementsMatch(t, FilterAddrs(good, filter), good)
 	require.ElementsMatch(t, FilterAddrs(goodAndBad, filter), good)
 }
+
+func TestContains(t *testing.T) {
+	a1 := newMultiaddr(t, "/ip4/127.0.0.1/tcp/1234")
+	a2 := newMultiaddr(t, "/ip4/1.1.1.1/tcp/999")
+	a3 := newMultiaddr(t, "/ip4/1.2.3.4/udp/443/quic")
+	addrs := []Multiaddr{a1, a2, a3}
+
+	require.True(t, Contains(addrs, a1))
+	require.True(t, Contains(addrs, a2))
+	require.True(t, Contains(addrs, a3))
+	require.False(t, Contains(addrs, newMultiaddr(t, "/ip4/4.3.2.1/udp/1234/utp")))
+	require.False(t, Contains(nil, a1))
+}
