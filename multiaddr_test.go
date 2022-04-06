@@ -157,6 +157,7 @@ func TestConstructSucceeds(t *testing.T) {
 		"/ip4/127.0.0.1/tcp/1234",
 		"/ip4/127.0.0.1/tcp/1234/",
 		"/ip4/127.0.0.1/udp/1234/quic",
+		"/ip4/127.0.0.1/udp/1234/quic/webtransport",
 		"/ip4/127.0.0.1/ipfs/QmcgpsyWgH8Y8ajJz1Cu72KnS5uo2Aa2LpzU7kinSupNKC",
 		"/ip4/127.0.0.1/ipfs/QmcgpsyWgH8Y8ajJz1Cu72KnS5uo2Aa2LpzU7kinSupNKC/tcp/1234",
 		"/ip4/127.0.0.1/ipfs/k2k4r8oqamigqdo6o7hsbfwd45y70oyynp98usk7zmyfrzpqxh1pohl7",
