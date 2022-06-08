@@ -13,6 +13,7 @@ const (
 	P_DCCP              = 0x0021
 	P_IP6               = 0x0029
 	P_IP6ZONE           = 0x002A
+	P_IPCIDR            = 0x002B
 	P_QUIC              = 0x01CC
 	P_SCTP              = 0x0084
 	P_CIRCUIT           = 0x0122
@@ -102,6 +103,13 @@ var (
 		VCode:      CodeToVarint(P_IP6),
 		Size:       128,
 		Transcoder: TranscoderIP6,
+	}
+	protoIPCIDR = Protocol{
+		Name:       "ipcidr",
+		Code:       P_IPCIDR,
+		VCode:      CodeToVarint(P_IPCIDR),
+		Size:       8,
+		Transcoder: TranscoderIPCIDR,
 	}
 	// these require varint
 	protoIP6ZONE = Protocol{
@@ -239,6 +247,7 @@ func init() {
 		protoDCCP,
 		protoIP6,
 		protoIP6ZONE,
+		protoIPCIDR,
 		protoSCTP,
 		protoCIRCUIT,
 		protoONION2,

@@ -101,9 +101,11 @@ func TestConstructSucceeds(t *testing.T) {
 	cases := []string{
 		"/ip4/1.2.3.4",
 		"/ip4/0.0.0.0",
+		"/ip4/192.0.2.0/ipcidr/24",
 		"/ip6/::1",
 		"/ip6/2601:9:4f81:9700:803e:ca65:66e8:c21",
 		"/ip6/2601:9:4f81:9700:803e:ca65:66e8:c21/udp/1234/quic",
+		"/ip6/2001:db8::/ipcidr/32",
 		"/ip6zone/x/ip6/fe80::1",
 		"/ip6zone/x%y/ip6/fe80::1",
 		"/ip6zone/x%y/ip6/::",
