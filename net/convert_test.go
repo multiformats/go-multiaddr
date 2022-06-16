@@ -213,6 +213,7 @@ func TestMultiaddrToIPNet(t *testing.T) {
 
 	testCases := []testCase{
 		{
+			name:      "basic",
 			ma:        "/ip4/1.2.3.0/ipcidr/24",
 			ips:       []string{"1.2.3.4", "1.2.3.9", "2.1.1.1"},
 			contained: []bool{true, true, false},
@@ -235,6 +236,30 @@ func TestMultiaddrToIPNet(t *testing.T) {
 				if ipnet.Contains(ip) != tc.contained[i] {
 					t.Fatalf("Contains check failed. Expected %v got %v", tc.contained[i], ipnet.Contains(ip))
 				}
+			}
+		})
+	}
+}
+
+func TestFailMultiaddrToIPNet(t *testing.T) {
+	type testCase struct {
+		name string
+		ma   string
+	}
+
+	testCases := []testCase{
+		{name: "missing ip addr", ma: "/ipcidr/24"},
+		{name: "wrong mask", ma: "/ip4/1.2.3.0/ipcidr/128"},
+		{name: "wrong mask", ma: "/ip6/::/ipcidr/255"},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			ma := ma.StringCast(tc.ma)
+
+			_, err := MultiaddrToIPNet(ma)
+			if err == nil {
+				t.Fatalf("Expected error when parsing: %s", tc.ma)
 			}
 		})
 	}

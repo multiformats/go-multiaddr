@@ -54,15 +54,19 @@ func (t twrp) ValidateBytes(b []byte) error {
 var TranscoderIP4 = NewTranscoderFromFunctions(ip4StB, ip4BtS, nil)
 var TranscoderIP6 = NewTranscoderFromFunctions(ip6StB, ip6BtS, nil)
 var TranscoderIP6Zone = NewTranscoderFromFunctions(ip6zoneStB, ip6zoneBtS, ip6zoneVal)
-var TranscoderIPCIDR = NewTranscoderFromFunctions(func(s string) ([]byte, error) {
+var TranscoderIPCIDR = NewTranscoderFromFunctions(ipcidrStB, ipcidrBtS, nil)
+
+func ipcidrBtS(b []byte) (string, error) {
+	return strconv.Itoa(int(b[0])), nil
+}
+
+func ipcidrStB(s string) ([]byte, error) {
 	ipMask, err := strconv.ParseUint(s, 10, 8)
 	if err != nil {
 		return nil, err
 	}
 	return []byte{byte(uint8(ipMask))}, nil
-}, func(b []byte) (string, error) {
-	return strconv.Itoa(int(b[0])), nil
-}, nil)
+}
 
 func ip4StB(s string) ([]byte, error) {
 	i := net.ParseIP(s).To4()

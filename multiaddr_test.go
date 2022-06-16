@@ -27,6 +27,8 @@ func TestConstructFails(t *testing.T) {
 		"/ip4",
 		"/ip4/::1",
 		"/ip4/fdpsofodsajfdoisa",
+		"/ip4/::/ipcidr/256",
+		"/ip6/::/ipcidr/1026",
 		"/ip6",
 		"/ip6zone",
 		"/ip6zone/",
