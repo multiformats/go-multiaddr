@@ -5,7 +5,6 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/multiformats/go-multiaddr"
 	ma "github.com/multiformats/go-multiaddr"
 )
 
@@ -222,7 +221,7 @@ func TestMultiaddrToIPNet(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			ma := multiaddr.StringCast(tc.ma)
+			ma := ma.StringCast(tc.ma)
 
 			ipnet, err := MultiaddrToIPNet(ma)
 			if err != nil {
