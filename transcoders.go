@@ -57,6 +57,9 @@ var TranscoderIP6Zone = NewTranscoderFromFunctions(ip6zoneStB, ip6zoneBtS, ip6zo
 var TranscoderIPCIDR = NewTranscoderFromFunctions(ipcidrStB, ipcidrBtS, nil)
 
 func ipcidrBtS(b []byte) (string, error) {
+	if len(b) != 1 {
+		return "", fmt.Errorf("invalid length (should be == 1)")
+	}
 	return strconv.Itoa(int(b[0])), nil
 }
 
