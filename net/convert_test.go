@@ -202,3 +202,65 @@ func TestDialArgs(t *testing.T) {
 	test("/dns6/abc.com/udp/1234", "udp6", "abc.com:1234")          // DNS6:port
 	test("/dns6/abc.com", "ip6", "abc.com")                         // Just DNS6
 }
+
+func TestMultiaddrToIPNet(t *testing.T) {
+	type testCase struct {
+		name      string
+		ma        string
+		ips       []string
+		contained []bool
+	}
+
+	testCases := []testCase{
+		{
+			name:      "basic",
+			ma:        "/ip4/1.2.3.0/ipcidr/24",
+			ips:       []string{"1.2.3.4", "1.2.3.9", "2.1.1.1"},
+			contained: []bool{true, true, false},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			ma := ma.StringCast(tc.ma)
+
+			ipnet, err := MultiaddrToIPNet(ma)
+			if err != nil {
+				t.Fatalf("failed to parse multiaddr %v into ipnet", ma)
+			}
+			for i, ipString := range tc.ips {
+				ip := net.ParseIP(ipString)
+				if ip == nil {
+					t.Fatalf("failed to parse IP %s", ipString)
+				}
+				if ipnet.Contains(ip) != tc.contained[i] {
+					t.Fatalf("Contains check failed. Expected %v got %v", tc.contained[i], ipnet.Contains(ip))
+				}
+			}
+		})
+	}
+}
+
+func TestFailMultiaddrToIPNet(t *testing.T) {
+	type testCase struct {
+		name string
+		ma   string
+	}
+
+	testCases := []testCase{
+		{name: "missing ip addr", ma: "/ipcidr/24"},
+		{name: "wrong mask", ma: "/ip4/1.2.3.0/ipcidr/128"},
+		{name: "wrong mask", ma: "/ip6/::/ipcidr/255"},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			ma := ma.StringCast(tc.ma)
+
+			_, err := MultiaddrToIPNet(ma)
+			if err == nil {
+				t.Fatalf("Expected error when parsing: %s", tc.ma)
+			}
+		})
+	}
+}
