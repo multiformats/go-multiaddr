@@ -547,7 +547,7 @@ func TestRoundTrip(t *testing.T) {
 		"/ip4/127.0.0.1/tcp/123/tls",
 		"/ip4/127.0.0.1/udp/123",
 		"/ip4/127.0.0.1/udp/123/ip6/::",
-		"/ip4/127.0.0.1/udp/1234/quic/webtransport/certhash/zQmbWTwYGcmdyK9CYfNBcfs9nhZs17a6FQ4Y8oea278xx41",
+		"/ip4/127.0.0.1/udp/1234/quic/webtransport/certhash/uEiDDq4_xNyDorZBH3TlGazyJdOWSwvo4PUo5YHFMrvDE8g",
 		"/p2p/QmbHVEEepCi7rn7VL7Exxpd2Ci9NNB6ifvqwhsrbRMgQFP",
 		"/p2p/QmbHVEEepCi7rn7VL7Exxpd2Ci9NNB6ifvqwhsrbRMgQFP/unix/a/b/c",
 	} {
