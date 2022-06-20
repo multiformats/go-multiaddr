@@ -379,7 +379,13 @@ var TranscoderCertHash = NewTranscoderFromFunctions(certHashStB, certHashBtS, ni
 
 func certHashStB(s string) ([]byte, error) {
 	_, data, err := multibase.Decode(s)
-	return data, err
+	if err != nil {
+		return nil, err
+	}
+	if _, err := mh.Decode(data); err != nil {
+		return nil, err
+	}
+	return data, nil
 }
 
 func certHashBtS(b []byte) (string, error) {

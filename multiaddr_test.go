@@ -75,6 +75,7 @@ func TestConstructFails(t *testing.T) {
 		"/ip4/127.0.0.1/tcp",
 		"/ip4/127.0.0.1/quic/1234",
 		"/ip4/127.0.0.1/udp/1234/quic/webtransport/certhash",
+		"/ip4/127.0.0.1/udp/1234/quic/webtransport/certhash/b2uaraocy6yrdblb4sfptaddgimjmmp", // 1 character missing from certhash
 		"/ip4/127.0.0.1/ipfs",
 		"/ip4/127.0.0.1/ipfs/tcp",
 		"/ip4/127.0.0.1/p2p",
@@ -159,8 +160,8 @@ func TestConstructSucceeds(t *testing.T) {
 		"/ip4/127.0.0.1/tcp/1234/",
 		"/ip4/127.0.0.1/udp/1234/quic",
 		"/ip4/127.0.0.1/udp/1234/quic/webtransport",
-		"/ip4/127.0.0.1/udp/1234/quic/webtransport/certhash/zt1Zv2yaZ",
-		"/ip4/127.0.0.1/udp/1234/quic/webtransport/certhash/zt1Zv2yaZ/certhash/zt1Zv2yaY",
+		"/ip4/127.0.0.1/udp/1234/quic/webtransport/certhash/b2uaraocy6yrdblb4sfptaddgimjmmpy",
+		"/ip4/127.0.0.1/udp/1234/quic/webtransport/certhash/b2uaraocy6yrdblb4sfptaddgimjmmpy/certhash/zQmbWTwYGcmdyK9CYfNBcfs9nhZs17a6FQ4Y8oea278xx41",
 		"/ip4/127.0.0.1/ipfs/QmcgpsyWgH8Y8ajJz1Cu72KnS5uo2Aa2LpzU7kinSupNKC",
 		"/ip4/127.0.0.1/ipfs/QmcgpsyWgH8Y8ajJz1Cu72KnS5uo2Aa2LpzU7kinSupNKC/tcp/1234",
 		"/ip4/127.0.0.1/ipfs/k2k4r8oqamigqdo6o7hsbfwd45y70oyynp98usk7zmyfrzpqxh1pohl7",
@@ -546,8 +547,7 @@ func TestRoundTrip(t *testing.T) {
 		"/ip4/127.0.0.1/tcp/123/tls",
 		"/ip4/127.0.0.1/udp/123",
 		"/ip4/127.0.0.1/udp/123/ip6/::",
-		"/ip4/127.0.0.1/udp/1234/quic/webtransport/certhash/zt1Zv2yaZ",
-		"/ip4/127.0.0.1/udp/1234/quic/webtransport/certhash/zt1Zv2yaZ/certhash/zt1Zv2yaY",
+		"/ip4/127.0.0.1/udp/1234/quic/webtransport/certhash/zQmbWTwYGcmdyK9CYfNBcfs9nhZs17a6FQ4Y8oea278xx41",
 		"/p2p/QmbHVEEepCi7rn7VL7Exxpd2Ci9NNB6ifvqwhsrbRMgQFP",
 		"/p2p/QmbHVEEepCi7rn7VL7Exxpd2Ci9NNB6ifvqwhsrbRMgQFP/unix/a/b/c",
 	} {
