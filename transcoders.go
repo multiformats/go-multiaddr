@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/ipfs/go-cid"
+	"github.com/multiformats/go-multibase"
 	mh "github.com/multiformats/go-multihash"
 )
 
@@ -372,4 +373,21 @@ func dnsStB(s string) ([]byte, error) {
 
 func dnsBtS(b []byte) (string, error) {
 	return string(b), nil
+}
+
+var TranscoderCertHash = NewTranscoderFromFunctions(certHashStB, certHashBtS, nil)
+
+func certHashStB(s string) ([]byte, error) {
+	_, data, err := multibase.Decode(s)
+	if err != nil {
+		return nil, err
+	}
+	if _, err := mh.Decode(data); err != nil {
+		return nil, err
+	}
+	return data, nil
+}
+
+func certHashBtS(b []byte) (string, error) {
+	return multibase.Encode(multibase.Base64url, b)
 }
