@@ -36,7 +36,7 @@ const (
 	P_WS                = 0x01DD
 	P_WSS               = 0x01DE // deprecated alias for /tls/ws
 	P_PLAINTEXTV2       = 0x706c61
-	P_XWEBRTC           = 0x115
+	P_WEBRTC           = 0x115
 )
 
 var (
@@ -249,11 +249,9 @@ var (
 		VCode: CodeToVarint(P_WSS),
 	}
 	protoXWebRTC = Protocol {
-		Name: "x-webrtc",
-		Code: P_XWEBRTC,
-		VCode: CodeToVarint(P_XWEBRTC),
-		Size: 256,
-		Transcoder: TranscoderXWebRTC,
+		Name: "webrtc",
+		Code: P_WEBRTC,
+		VCode: CodeToVarint(P_WEBRTC),
 	}
 )
 

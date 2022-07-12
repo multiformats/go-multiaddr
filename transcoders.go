@@ -5,7 +5,6 @@ import (
 	"encoding/base32"
 	"encoding/base64"
 	"encoding/binary"
-	"encoding/hex"
 	"fmt"
 	"net"
 	"strconv"
@@ -392,21 +391,4 @@ func certHashStB(s string) ([]byte, error) {
 func certHashBtS(b []byte) (string, error) {
 	return multibase.Encode(multibase.Base64url, b)
 }
-
-func xwebrtcVal(b []byte) error {
-	if len(b) != 32 {
-		return fmt.Errorf("fingerprint should be 32 bytes, found: %d", len(b))
-	}
-	return nil
-}
-
-func xwebrtcStB(s string) ([]byte, error) {
-	return hex.DecodeString(s)
-}
-
-func xwebrtcBtS(b []byte) (string, error) {
-	return hex.EncodeToString(b), nil
-}
-
-var TranscoderXWebRTC = NewTranscoderFromFunctions(xwebrtcStB, xwebrtcBtS, xwebrtcVal)
 
