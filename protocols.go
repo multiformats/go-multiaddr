@@ -248,7 +248,7 @@ var (
 		Code:  P_WSS,
 		VCode: CodeToVarint(P_WSS),
 	}
-	protoXWebRTC = Protocol {
+	protoWebRTC = Protocol {
 		Name: "webrtc",
 		Code: P_WEBRTC,
 		VCode: CodeToVarint(P_WEBRTC),
@@ -289,6 +289,7 @@ func init() {
 		protoWS,
 		protoWSS,
 		protoPlaintextV2,
+		protoWebRTC,
 	} {
 		if err := AddProtocol(p); err != nil {
 			panic(err)

@@ -391,4 +391,3 @@ func certHashStB(s string) ([]byte, error) {
 func certHashBtS(b []byte) (string, error) {
 	return multibase.Encode(multibase.Base64url, b)
 }
-
