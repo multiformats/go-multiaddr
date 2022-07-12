@@ -36,7 +36,7 @@ const (
 	P_WS                = 0x01DD
 	P_WSS               = 0x01DE // deprecated alias for /tls/ws
 	P_PLAINTEXTV2       = 0x706c61
-	P_WEBRTC            = 0x115
+	P_WEBRTC            = 0x118
 )
 
 var (
