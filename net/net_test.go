@@ -3,7 +3,6 @@ package manet
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"os"
 	"path/filepath"
@@ -80,7 +79,7 @@ func TestDial(t *testing.T) {
 }
 
 func TestUnixSockets(t *testing.T) {
-	dir, err := ioutil.TempDir(os.TempDir(), "manettest")
+	dir, err := os.MkdirTemp(os.TempDir(), "manettest")
 	if err != nil {
 		t.Fatal(err)
 	}
