@@ -47,9 +47,9 @@ type Multiaddr interface {
 	//
 	Encapsulate(Multiaddr) Multiaddr
 
-	// Decapsultate removes a Multiaddr wrapping. For example:
+	// Decapsulate removes a Multiaddr wrapping. For example:
 	//
-	//      /ip4/1.2.3.4/tcp/80 decapsulate /ip4/1.2.3.4 = /tcp/80
+	//      /ip4/1.2.3.4/tcp/80 decapsulate /tcp/80 = /ip4/1.2.3.4
 	//
 	Decapsulate(Multiaddr) Multiaddr
 
