@@ -434,6 +434,16 @@ func TestDecapsulateComment(t *testing.T) {
 	if rest.String() != "/ip4/1.2.3.4" {
 		t.Fatalf("Documented behavior is not correct. Expected %v saw %v", "/ip4/1.2.3.4/", rest.String())
 	}
+
+	m = StringCast("/ip4/1.2.3.4/tcp/80")
+	rest = m.Decapsulate(StringCast("/udp/80"))
+	if !rest.Equal(m) {
+		t.Fatalf("Documented behavior is not correct. Expected %v saw %v", "/ip4/1.2.3.4/tcp/80", rest.String())
+	}
+
+	m = StringCast("/ip4/1.2.3.4/tcp/80")
+	rest = m.Decapsulate(StringCast("/ip4/1.2.3.4"))
+	require.Nil(t, rest, "expected a nil multiaddr if we decapsulate everything")
 }
 
 func assertValueForProto(t *testing.T, a Multiaddr, p int, exp string) {
