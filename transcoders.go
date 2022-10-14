@@ -391,3 +391,29 @@ func certHashStB(s string) ([]byte, error) {
 func certHashBtS(b []byte) (string, error) {
 	return multibase.Encode(multibase.Base64url, b)
 }
+
+var TranscoderHostHeader = NewTranscoderFromFunctions(hostHeaderStB, hostHeaderBtS, hostHeaderVal)
+
+func hostHeaderVal(b []byte) error {
+	s := string(b)
+	host, port, err := net.SplitHostPort(s)
+	if err != nil {
+		return fmt.Errorf("host %q is invalid %w", s, err)
+	}
+	if err := dnsVal([]byte(host)); err != nil {
+		return err
+	}
+	p, err := strconv.Atoi(port)
+	if err != nil || p < 0 || p > 65535 {
+		return fmt.Errorf("port %q is not valid", port)
+	}
+	return nil
+}
+
+func hostHeaderStB(s string) ([]byte, error) {
+	return []byte(s), nil
+}
+
+func hostHeaderBtS(b []byte) (string, error) {
+	return string(b), nil
+}

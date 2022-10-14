@@ -24,6 +24,7 @@ const (
 	P_UNIX              = 400
 	P_P2P               = 421
 	P_IPFS              = P_P2P // alias for backwards compatibility
+	P_HOST_HEADER       = 481
 	P_HTTP              = 480
 	P_HTTPS             = 443 // deprecated alias for /tls/http
 	P_ONION             = 444 // also for backwards compatibility
@@ -193,6 +194,13 @@ var (
 		VCode:      CodeToVarint(P_CERTHASH),
 		Size:       LengthPrefixedVarSize,
 		Transcoder: TranscoderCertHash,
+	}
+	protoHOSTHEADER = Protocol{
+		Code:       P_HOST_HEADER,
+		Size:       LengthPrefixedVarSize,
+		Name:       "host-header",
+		VCode:      CodeToVarint(P_HOST_HEADER),
+		Transcoder: TranscoderDns,
 	}
 	protoHTTP = Protocol{
 		Name:  "http",
