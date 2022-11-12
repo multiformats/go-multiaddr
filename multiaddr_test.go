@@ -39,6 +39,7 @@ func TestConstructFails(t *testing.T) {
 		"/udp/65536",
 		"/tcp/65536",
 		"/quic/65536",
+		"/quic-v1/65536",
 		"/onion/9imaq4ygg2iegci7:80",
 		"/onion/aaimaq4ygg2iegci7:80",
 		"/onion/timaq4ygg2iegci7:0",
@@ -74,8 +75,9 @@ func TestConstructFails(t *testing.T) {
 		"/ip4/127.0.0.1/tcp/jfodsajfidosajfoidsa",
 		"/ip4/127.0.0.1/tcp",
 		"/ip4/127.0.0.1/quic/1234",
-		"/ip4/127.0.0.1/udp/1234/quic/webtransport/certhash",
-		"/ip4/127.0.0.1/udp/1234/quic/webtransport/certhash/b2uaraocy6yrdblb4sfptaddgimjmmp", // 1 character missing from certhash
+		"/ip4/127.0.0.1/quic-v1/1234",
+		"/ip4/127.0.0.1/udp/1234/quic-v1/webtransport/certhash",
+		"/ip4/127.0.0.1/udp/1234/quic-v1/webtransport/certhash/b2uaraocy6yrdblb4sfptaddgimjmmp", // 1 character missing from certhash
 		"/ip4/127.0.0.1/ipfs",
 		"/ip4/127.0.0.1/ipfs/tcp",
 		"/ip4/127.0.0.1/p2p",
@@ -109,11 +111,13 @@ func TestConstructSucceeds(t *testing.T) {
 		"/ip6/::1",
 		"/ip6/2601:9:4f81:9700:803e:ca65:66e8:c21",
 		"/ip6/2601:9:4f81:9700:803e:ca65:66e8:c21/udp/1234/quic",
+		"/ip6/2601:9:4f81:9700:803e:ca65:66e8:c21/udp/1234/quic-v1",
 		"/ip6/2001:db8::/ipcidr/32",
 		"/ip6zone/x/ip6/fe80::1",
 		"/ip6zone/x%y/ip6/fe80::1",
 		"/ip6zone/x%y/ip6/::",
 		"/ip6zone/x/ip6/fe80::1/udp/1234/quic",
+		"/ip6zone/x/ip6/fe80::1/udp/1234/quic-v1",
 		"/onion/timaq4ygg2iegci7:1234",
 		"/onion/timaq4ygg2iegci7:80/http",
 		"/onion3/vww6ybal4bd7szmgncyruucpgfkqahzddi37ktceo3ah7ngmcopnpyyd:1234",
@@ -159,9 +163,10 @@ func TestConstructSucceeds(t *testing.T) {
 		"/ip4/127.0.0.1/tcp/1234",
 		"/ip4/127.0.0.1/tcp/1234/",
 		"/ip4/127.0.0.1/udp/1234/quic",
-		"/ip4/127.0.0.1/udp/1234/quic/webtransport",
-		"/ip4/127.0.0.1/udp/1234/quic/webtransport/certhash/b2uaraocy6yrdblb4sfptaddgimjmmpy",
-		"/ip4/127.0.0.1/udp/1234/quic/webtransport/certhash/b2uaraocy6yrdblb4sfptaddgimjmmpy/certhash/zQmbWTwYGcmdyK9CYfNBcfs9nhZs17a6FQ4Y8oea278xx41",
+		"/ip4/127.0.0.1/udp/1234/quic-v1",
+		"/ip4/127.0.0.1/udp/1234/quic-v1/webtransport",
+		"/ip4/127.0.0.1/udp/1234/quic-v1/webtransport/certhash/b2uaraocy6yrdblb4sfptaddgimjmmpy",
+		"/ip4/127.0.0.1/udp/1234/quic-v1/webtransport/certhash/b2uaraocy6yrdblb4sfptaddgimjmmpy/certhash/zQmbWTwYGcmdyK9CYfNBcfs9nhZs17a6FQ4Y8oea278xx41",
 		"/ip4/127.0.0.1/ipfs/QmcgpsyWgH8Y8ajJz1Cu72KnS5uo2Aa2LpzU7kinSupNKC",
 		"/ip4/127.0.0.1/ipfs/QmcgpsyWgH8Y8ajJz1Cu72KnS5uo2Aa2LpzU7kinSupNKC/tcp/1234",
 		"/ip4/127.0.0.1/ipfs/k2k4r8oqamigqdo6o7hsbfwd45y70oyynp98usk7zmyfrzpqxh1pohl7",
@@ -566,7 +571,7 @@ func TestRoundTrip(t *testing.T) {
 		"/ip4/127.0.0.1/tcp/123/tls",
 		"/ip4/127.0.0.1/udp/123",
 		"/ip4/127.0.0.1/udp/123/ip6/::",
-		"/ip4/127.0.0.1/udp/1234/quic/webtransport/certhash/uEiDDq4_xNyDorZBH3TlGazyJdOWSwvo4PUo5YHFMrvDE8g",
+		"/ip4/127.0.0.1/udp/1234/quic-v1/webtransport/certhash/uEiDDq4_xNyDorZBH3TlGazyJdOWSwvo4PUo5YHFMrvDE8g",
 		"/p2p/QmbHVEEepCi7rn7VL7Exxpd2Ci9NNB6ifvqwhsrbRMgQFP",
 		"/p2p/QmbHVEEepCi7rn7VL7Exxpd2Ci9NNB6ifvqwhsrbRMgQFP/unix/a/b/c",
 	} {
@@ -796,11 +801,13 @@ func TestContains(t *testing.T) {
 	a1 := newMultiaddr(t, "/ip4/127.0.0.1/tcp/1234")
 	a2 := newMultiaddr(t, "/ip4/1.1.1.1/tcp/999")
 	a3 := newMultiaddr(t, "/ip4/1.2.3.4/udp/443/quic")
-	addrs := []Multiaddr{a1, a2, a3}
+	a4 := newMultiaddr(t, "/ip4/1.2.3.4/udp/443/quic-v1")
+	addrs := []Multiaddr{a1, a2, a3, a4}
 
 	require.True(t, Contains(addrs, a1))
 	require.True(t, Contains(addrs, a2))
 	require.True(t, Contains(addrs, a3))
+	require.True(t, Contains(addrs, a4))
 	require.False(t, Contains(addrs, newMultiaddr(t, "/ip4/4.3.2.1/udp/1234/utp")))
 	require.False(t, Contains(nil, a1))
 }
