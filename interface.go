@@ -41,6 +41,10 @@ type Multiaddr interface {
 	// will panic if protocol code incorrect (and bytes accessed incorrectly)
 	Protocols() []Protocol
 
+	// AppendProtocols is similar to Protocols but it will reuse the extra
+	// capacity in the slice first, this allows to prevent allocations.
+	AppendProtocols([]Protocol) []Protocol
+
 	// Encapsulate wraps this Multiaddr around another. For example:
 	//
 	//      /ip4/1.2.3.4 encapsulate /tcp/80 = /ip4/1.2.3.4/tcp/80
