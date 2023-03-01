@@ -11,6 +11,7 @@ const (
 	P_DNSADDR           = 56
 	P_UDP               = 273
 	P_DCCP              = 33
+	P_PERCENTENCODE     = 37 // 37 = "%" in ascii
 	P_IP6               = 41
 	P_IP6ZONE           = 42
 	P_IPCIDR            = 43
@@ -267,6 +268,13 @@ var (
 		Code:  P_WEBRTC,
 		VCode: CodeToVarint(P_WEBRTC),
 	}
+	protoPercentEncode = Protocol{
+		Name:       "percentencode",
+		Code:       P_PERCENTENCODE,
+		VCode:      CodeToVarint(P_PERCENTENCODE),
+		Size:       LengthPrefixedVarSize,
+		Transcoder: TranscoderPercentEncode,
+	}
 )
 
 func init() {
@@ -306,6 +314,7 @@ func init() {
 		protoWSS,
 		protoPlaintextV2,
 		protoWebRTC,
+		protoPercentEncode,
 	} {
 		if err := AddProtocol(p); err != nil {
 			panic(err)

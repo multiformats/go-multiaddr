@@ -3,7 +3,9 @@ package multiaddr
 import (
 	"bytes"
 	"encoding/hex"
+	"fmt"
 	"math/rand"
+	"regexp"
 	"strings"
 	"testing"
 	"time"
@@ -12,6 +14,7 @@ import (
 
 	"github.com/ipfs/go-cid"
 	mh "github.com/multiformats/go-multihash"
+	"github.com/multiformats/go-varint"
 )
 
 func newMultiaddr(t *testing.T, a string) Multiaddr {
@@ -572,6 +575,9 @@ func TestRoundTrip(t *testing.T) {
 		"/ip4/127.0.0.1/udp/123",
 		"/ip4/127.0.0.1/udp/123/ip6/::",
 		"/ip4/127.0.0.1/udp/1234/quic-v1/webtransport/certhash/uEiDDq4_xNyDorZBH3TlGazyJdOWSwvo4PUo5YHFMrvDE8g",
+		"/percentencode/hello%2Fworld",
+		"/percentencode/hello%2Fworld%25",
+		"/percentencode/%25hello%2Fworld%25",
 		"/p2p/QmbHVEEepCi7rn7VL7Exxpd2Ci9NNB6ifvqwhsrbRMgQFP",
 		"/p2p/QmbHVEEepCi7rn7VL7Exxpd2Ci9NNB6ifvqwhsrbRMgQFP/unix/a/b/c",
 	} {
@@ -582,6 +588,24 @@ func TestRoundTrip(t *testing.T) {
 		}
 		if ma.String() != s {
 			t.Errorf("failed to round trip %q", s)
+		}
+	}
+}
+
+func TestRoundTripPercentEncodeLowercase(t *testing.T) {
+	// Same as TestRoundTrip, but with lowercase percent-encoded characters.
+	for _, s := range []string{
+		"/percentencode/hello%2fworld",
+		"/percentencode/hello%2fworld%25",
+		"/percentencode/%25hello%2fworld%25",
+	} {
+		ma, err := NewMultiaddr(s)
+		if err != nil {
+			t.Errorf("error when parsing %q: %s", s, err)
+			continue
+		}
+		if ma.String() != strings.Replace(s, "%2f", "%2F", -1) {
+			t.Errorf("failed to round trip %q, got %q", s, ma.String())
 		}
 	}
 }
@@ -810,4 +834,65 @@ func TestContains(t *testing.T) {
 	require.True(t, Contains(addrs, a4))
 	require.False(t, Contains(addrs, newMultiaddr(t, "/ip4/4.3.2.1/udp/1234/utp")))
 	require.False(t, Contains(nil, a1))
+}
+
+func TestInvalidPercentEncode(t *testing.T) {
+	testcases := []string{
+		"/percentencode/asdfooo%",
+		"/percentencode/%",
+		"/percentencode/%FFooo",
+	}
+	for _, tc := range testcases {
+		_, err := NewMultiaddr(tc)
+		require.Error(t, err)
+	}
+}
+
+func TestByteRepresentationOfPercentEncode(t *testing.T) {
+	msg := "HELLO%2FDINO! 🦖"
+	fmt.Println("msg is", msg, len(msg))
+	ma, err := NewMultiaddr("/percentencode/" + msg)
+	require.NoError(t, err)
+	expected := []byte("%_HELLO/DINO! 🦖")
+	expected[1] = 16 // msg len
+	require.Equal(t, expected, ma.Bytes())
+}
+
+func FuzzPercentEncode(f *testing.F) {
+	f.Add("/percentencode/helloworld")
+	manySlashes := regexp.MustCompile(`\/+`)
+	f.Fuzz(func(t *testing.T, in string) {
+		in = strings.TrimRight(in, "/")
+		in = manySlashes.ReplaceAllString(in, "/")
+		ma, err := NewMultiaddr(in)
+		if err == nil {
+			require.Equal(t, in, ma.String())
+		}
+	})
+}
+
+func FuzzPercentEncodeDecoding(f *testing.F) {
+	b := []byte("%_HELLO/DINO! 🦖")
+	b[1] = 16 // msg len
+	f.Add(b)
+	f.Fuzz(func(t *testing.T, in []byte) {
+		if len(in) < 3 {
+			return
+		}
+
+		var buf bytes.Buffer
+
+		buf.WriteByte('%')
+		varintLen := varint.ToUvarint(uint64(len(in)))
+		buf.ReadFrom(bytes.NewReader(varintLen))
+		buf.ReadFrom(bytes.NewReader(in))
+
+		ma, err := NewMultiaddrBytes(buf.Bytes())
+		if err == nil {
+			s := ma.String()
+			ma, err := NewMultiaddr(s)
+			require.NoError(t, err)
+			require.Equal(t, s, ma.String())
+		}
+	})
 }
