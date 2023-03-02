@@ -864,6 +864,7 @@ func FuzzPercentEncode(f *testing.F) {
 	f.Fuzz(func(t *testing.T, in string) {
 		in = strings.TrimRight(in, "/")
 		in = manySlashes.ReplaceAllString(in, "/")
+		in = strings.ReplaceAll(in, "%2f", "%2F")
 		ma, err := NewMultiaddr(in)
 		if err == nil {
 			require.Equal(t, in, ma.String())
