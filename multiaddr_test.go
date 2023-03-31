@@ -190,6 +190,8 @@ func TestConstructSucceeds(t *testing.T) {
 		"/ip4/127.0.0.1/tcp/127/noise",
 		"/ip4/127.0.0.1/tcp/127/wss",
 		"/ip4/127.0.0.1/tcp/127/wss",
+		"/ip4/127.0.0.1/tcp/127/webrtc-direct",
+		"/ip4/127.0.0.1/tcp/127/webrtc",
 	}
 
 	for _, a := range cases {
