@@ -391,3 +391,80 @@ func certHashStB(s string) ([]byte, error) {
 func certHashBtS(b []byte) (string, error) {
 	return multibase.Encode(multibase.Base64url, b)
 }
+
+var TranscoderPercentEncode = NewTranscoderFromFunctions(percentEncodeStB, percentEncodeBtS, nil)
+
+func percentEncodeStB(s string) ([]byte, error) {
+	size := 0
+	for i := 0; i < len(s); {
+		switch c := s[i]; c {
+		case '%':
+			size++
+			i += 3
+		default:
+			size++
+			i++
+		}
+	}
+
+	buf := make([]byte, size)
+
+	j := 0
+	for i := 0; i < len(s); {
+		switch c := s[i]; c {
+		case '%':
+			if i+3 > len(s) {
+				return nil, fmt.Errorf("invalid percent encoding: %s", string(s[i:]))
+			}
+			switch string(s[i : i+3]) {
+			case "%25":
+				buf[j] = '%'
+			case "%2F", "%2f":
+				buf[j] = '/'
+			default:
+				return nil, fmt.Errorf("invalid percent encoding: %s. Only / and %% are escaped", string(s[i:i+3]))
+			}
+			i += 3
+			j++
+		default:
+			buf[j] = c
+			i++
+			j++
+		}
+	}
+
+	return buf, nil
+
+}
+
+func percentEncodeBtS(b []byte) (string, error) {
+	// The following code is a loose copy from Go's url.QueryEscape
+	hexCount := 0
+	for _, c := range b {
+		switch c {
+		case '%', '/':
+			hexCount++
+		default:
+		}
+	}
+
+	var s strings.Builder
+	s.Grow(len(b) + hexCount*2)
+
+	for _, c := range b {
+		switch c {
+		case '%':
+			s.WriteByte('%')
+			s.WriteByte('2')
+			s.WriteByte('5')
+		case '/':
+			s.WriteByte('%')
+			s.WriteByte('2')
+			s.WriteByte('F')
+		default:
+			s.WriteByte(c)
+		}
+	}
+
+	return s.String(), nil
+}
