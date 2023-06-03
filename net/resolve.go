@@ -7,26 +7,26 @@ import (
 )
 
 // ResolveUnspecifiedAddress expands an unspecified ip addresses (/ip4/0.0.0.0, /ip6/::) to
-// use the known local interfaces. If ifaceAddr is nil, we request interface addresses
-// from the network stack. (this is so you can provide a cached value if resolving many addrs)
+// use the known local interfaces
 func ResolveUnspecifiedAddress(resolve ma.Multiaddr, ifaceAddrs []ma.Multiaddr) ([]ma.Multiaddr, error) {
-	// split address into its components
-	split := ma.Split(resolve)
-
 	// if first component (ip) is not unspecified, use it as is.
-	if !IsIPUnspecified(split[0]) {
+	first, rest := ma.SplitFirst(resolve)
+	if first == nil || !IsIPUnspecified(first) {
 		return []ma.Multiaddr{resolve}, nil
 	}
 
 	out := make([]ma.Multiaddr, 0, len(ifaceAddrs))
 	for _, ia := range ifaceAddrs {
-		// must match the first protocol to be resolve.
-		if ia.Protocols()[0].Code != resolve.Protocols()[0].Code {
+		// must match the first protocol to resolve.
+		match := false
+		ma.ForEach(ia, func(c ma.Component) bool {
+			match = c.Protocol().Code == first.Protocol().Code
+			return false
+		})
+		if !match {
 			continue
 		}
-
-		split[0] = ia
-		joined := ma.Join(split...)
+		joined := ma.Join(ia, rest)
 		out = append(out, joined)
 	}
 	if len(out) < 1 {

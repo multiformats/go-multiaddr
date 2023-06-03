@@ -1,6 +1,7 @@
 package manet
 
 import (
+	"math/rand"
 	"testing"
 
 	ma "github.com/multiformats/go-multiaddr"
@@ -53,5 +54,19 @@ func TestResolvingAddrs(t *testing.T) {
 	}
 	if _, err := ResolveUnspecifiedAddresses(ip4u, ip6i); err == nil {
 		t.Fatal("should have failed")
+	}
+}
+
+func BenchmarkResolveAddr(b *testing.B) {
+	b.ReportAllocs()
+	unspec := []ma.Multiaddr{
+		ma.StringCast("/ip4/0.0.0.0/tcp/1234"),
+	}
+
+	iface := []ma.Multiaddr{
+		ma.StringCast("/ip4/127.0.0.1"),
+	}
+	for i := 0; i < b.N; i++ {
+		ResolveUnspecifiedAddress(unspec[rand.Intn(len(unspec))], iface)
 	}
 }
