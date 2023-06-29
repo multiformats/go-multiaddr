@@ -1,6 +1,7 @@
 package manet
 
 import (
+	"bytes"
 	"net"
 
 	ma "github.com/multiformats/go-multiaddr"
@@ -115,4 +116,15 @@ func zoneless(m ma.Multiaddr) ma.Multiaddr {
 	} else {
 		return m
 	}
+}
+
+var NAT64WellKnownPrefix = [4]byte{0x0, 0x64, 0xff, 0x9b}
+
+// IsNAT64IPv4ConvertedIPv6Addr returns whether addr is an IPv6 address that begins with
+// the well-known prefix "64:ff9b" used for NAT64 Translation
+// see RFC 6052
+func IsNAT64IPv4ConvertedIPv6Addr(addr ma.Multiaddr) bool {
+	c, _ := ma.SplitFirst(addr)
+	return c != nil && c.Protocol().Code == ma.P_IP6 &&
+		bytes.HasPrefix(c.RawValue(), NAT64WellKnownPrefix[:])
 }
