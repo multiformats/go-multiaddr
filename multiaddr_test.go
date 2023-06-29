@@ -3,15 +3,11 @@ package multiaddr
 import (
 	"bytes"
 	"encoding/hex"
-	"math/rand"
-	"strings"
 	"testing"
-	"time"
-
-	"github.com/stretchr/testify/require"
 
 	"github.com/ipfs/go-cid"
 	mh "github.com/multiformats/go-multihash"
+	"github.com/stretchr/testify/require"
 )
 
 func newMultiaddr(t *testing.T, a string) Multiaddr {
@@ -501,56 +497,32 @@ func TestGetValue(t *testing.T) {
 	assertValueForProto(t, a, P_UNIX, "/a/b/c/d")
 }
 
-func TestFuzzBytes(t *testing.T) {
-	rand.Seed(time.Now().UnixNano())
-	// Bump up these numbers if you want to stress this
-	buf := make([]byte, 256)
-	for i := 0; i < 2000; i++ {
-		l := rand.Intn(len(buf))
-		rand.Read(buf[:l])
-
-		// just checking that it doesnt panic
-		ma, err := NewMultiaddrBytes(buf[:l])
+func FuzzNewMultiaddrBytes(f *testing.F) {
+	f.Fuzz(func(_ *testing.T, b []byte) {
+		// just checking that it doesn't panic
+		ma, err := NewMultiaddrBytes(b)
 		if err == nil {
 			// for any valid multiaddrs, make sure these calls don't panic
 			_ = ma.String()
 			ma.Protocols()
 		}
-	}
+	})
 }
 
-func randMaddrString() string {
-	good_corpus := []string{"tcp", "ip", "udp", "ipfs", "0.0.0.0", "127.0.0.1", "12345", "QmbHVEEepCi7rn7VL7Exxpd2Ci9NNB6ifvqwhsrbRMgQFP"}
-
-	size := rand.Intn(256)
-	parts := make([]string, 0, size)
-	for i := 0; i < size; i++ {
-		switch rand.Intn(5) {
-		case 0, 1, 2:
-			parts = append(parts, good_corpus[rand.Intn(len(good_corpus))])
-		default:
-			badbuf := make([]byte, rand.Intn(256))
-			rand.Read(badbuf)
-			parts = append(parts, string(badbuf))
-		}
-	}
-
-	return "/" + strings.Join(parts, "/")
-}
-
-func TestFuzzString(t *testing.T) {
-	rand.Seed(time.Now().UnixNano())
-	// Bump up these numbers if you want to stress this
-	for i := 0; i < 2000; i++ {
-
-		// just checking that it doesnt panic
-		ma, err := NewMultiaddr(randMaddrString())
+func FuzzNewMultiaddrString(f *testing.F) {
+	f.Add("/ip4/0.0.0.0/udp/12345/utp")
+	f.Add("/ip4/1.2.3.4/udp/12345/quic")
+	f.Add("/ip4/127.0.0.1/tcp/12345")
+	f.Add("/ip4/127.0.0.1/udp/1234/quic-v1/webtransport/certhash/uEiDDq4_xNyDorZBH3TlGazyJdOWSwvo4PUo5YHFMrvDE8g")
+	f.Fuzz(func(_ *testing.T, s string) {
+		// just checking that it doesn't panic
+		ma, err := NewMultiaddr(s)
 		if err == nil {
 			// for any valid multiaddrs, make sure these calls don't panic
 			_ = ma.String()
 			ma.Protocols()
 		}
-	}
+	})
 }
 
 func TestBinaryRepresentation(t *testing.T) {
