@@ -3,6 +3,9 @@ package multiaddr
 import (
 	"bytes"
 	"encoding/hex"
+	"fmt"
+	"math"
+	"math/rand"
 	"testing"
 
 	"github.com/ipfs/go-cid"
@@ -784,4 +787,51 @@ func TestContains(t *testing.T) {
 	require.True(t, Contains(addrs, a4))
 	require.False(t, Contains(addrs, newMultiaddr(t, "/ip4/4.3.2.1/udp/1234/utp")))
 	require.False(t, Contains(nil, a1))
+}
+
+func TestUniqueAddrs(t *testing.T) {
+	tcpAddr := StringCast("/ip4/127.0.0.1/tcp/1234")
+	quicAddr := StringCast("/ip4/127.0.0.1/udp/1234/quic-v1")
+	wsAddr := StringCast("/ip4/127.0.0.1/tcp/1234/ws")
+
+	type testcase struct {
+		in, out []Multiaddr
+	}
+
+	for i, tc := range []testcase{
+		{in: nil, out: nil},
+		{in: []Multiaddr{tcpAddr}, out: []Multiaddr{tcpAddr}},
+		{in: []Multiaddr{tcpAddr, tcpAddr, tcpAddr}, out: []Multiaddr{tcpAddr}},
+		{in: []Multiaddr{tcpAddr, quicAddr, tcpAddr}, out: []Multiaddr{tcpAddr, quicAddr}},
+		{in: []Multiaddr{tcpAddr, quicAddr, wsAddr}, out: []Multiaddr{tcpAddr, quicAddr, wsAddr}},
+	} {
+		tc := tc
+		t.Run(fmt.Sprintf("test %d", i), func(t *testing.T) {
+			deduped := Unique(tc.in)
+			for _, a := range tc.out {
+				require.Contains(t, deduped, a)
+			}
+		})
+	}
+}
+
+func BenchmarkUniqueAddrs(b *testing.B) {
+	b.ReportAllocs()
+	var addrs []Multiaddr
+	r := rand.New(rand.NewSource(1234))
+	for i := 0; i < 100; i++ {
+		tcpAddr := StringCast(fmt.Sprintf("/ip4/127.0.0.1/tcp/%d", r.Intn(math.MaxUint16)))
+		quicAddr := StringCast(fmt.Sprintf("/ip4/127.0.0.1/udp/%d/quic-v1", r.Intn(math.MaxUint16)))
+		wsAddr := StringCast(fmt.Sprintf("/ip4/127.0.0.1/tcp/%d/ws", r.Intn(math.MaxUint16)))
+		addrs = append(addrs, tcpAddr, tcpAddr, quicAddr, quicAddr, wsAddr)
+	}
+	for _, sz := range []int{10, 20, 30, 50, 100} {
+		b.Run(fmt.Sprintf("%d", sz), func(b *testing.B) {
+			items := make([]Multiaddr, sz)
+			for i := 0; i < b.N; i++ {
+				copy(items, addrs[:sz])
+				Unique(items)
+			}
+		})
+	}
 }
