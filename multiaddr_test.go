@@ -789,7 +789,7 @@ func TestContains(t *testing.T) {
 	require.False(t, Contains(nil, a1))
 }
 
-func TestDedupAddrs(t *testing.T) {
+func TestUniqueAddrs(t *testing.T) {
 	tcpAddr := StringCast("/ip4/127.0.0.1/tcp/1234")
 	quicAddr := StringCast("/ip4/127.0.0.1/udp/1234/quic-v1")
 	wsAddr := StringCast("/ip4/127.0.0.1/tcp/1234/ws")
@@ -807,7 +807,7 @@ func TestDedupAddrs(t *testing.T) {
 	} {
 		tc := tc
 		t.Run(fmt.Sprintf("test %d", i), func(t *testing.T) {
-			deduped := Deduplicate(tc.in)
+			deduped := Unique(tc.in)
 			for _, a := range tc.out {
 				require.Contains(t, deduped, a)
 			}
@@ -815,7 +815,7 @@ func TestDedupAddrs(t *testing.T) {
 	}
 }
 
-func BenchmarkDedupAddrs(b *testing.B) {
+func BenchmarkUniqueAddrs(b *testing.B) {
 	b.ReportAllocs()
 	var addrs []Multiaddr
 	r := rand.New(rand.NewSource(1234))
@@ -830,7 +830,7 @@ func BenchmarkDedupAddrs(b *testing.B) {
 			items := make([]Multiaddr, sz)
 			for i := 0; i < b.N; i++ {
 				copy(items, addrs[:sz])
-				Deduplicate(items)
+				Unique(items)
 			}
 		})
 	}

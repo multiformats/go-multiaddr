@@ -213,9 +213,9 @@ func Contains(addrs []Multiaddr, addr Multiaddr) bool {
 	return false
 }
 
-// Deduplicate deduplicates addresses in place, leave only unique addresses.
+// Unique deduplicates addresses in place, leave only unique addresses.
 // It doesn't allocate.
-func Deduplicate(addrs []Multiaddr) []Multiaddr {
+func Unique(addrs []Multiaddr) []Multiaddr {
 	if len(addrs) == 0 {
 		return addrs
 	}
