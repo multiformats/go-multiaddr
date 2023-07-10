@@ -1,7 +1,6 @@
 package manet
 
 import (
-	"bytes"
 	"net"
 
 	ma "github.com/multiformats/go-multiaddr"
@@ -118,13 +117,20 @@ func zoneless(m ma.Multiaddr) ma.Multiaddr {
 	}
 }
 
-var NAT64WellKnownPrefix = [4]byte{0x0, 0x64, 0xff, 0x9b}
+var nat64WellKnownPrefix net.IPNet
 
-// IsNAT64IPv4ConvertedIPv6Addr returns whether addr is an IPv6 address that begins with
-// the well-known prefix "64:ff9b" used for NAT64 Translation
-// see RFC 6052
+func init() {
+	_, np, err := net.ParseCIDR("64:ff9b::/96")
+	if err != nil {
+		panic(err)
+	}
+	nat64WellKnownPrefix = *np
+}
+
+// IsNAT64IPv4ConvertedIPv6Addr returns whether addr is a well-known prefix "64:ff9b::/96" addr
+// used for NAT64 Translation. See RFC 6052
 func IsNAT64IPv4ConvertedIPv6Addr(addr ma.Multiaddr) bool {
 	c, _ := ma.SplitFirst(addr)
 	return c != nil && c.Protocol().Code == ma.P_IP6 &&
-		bytes.HasPrefix(c.RawValue(), NAT64WellKnownPrefix[:])
+		nat64WellKnownPrefix.Contains(net.IP(c.RawValue()))
 }
