@@ -33,6 +33,11 @@ func TestIsWellKnownPrefixIPv4ConvertedIPv6Address(t *testing.T) {
 			want:          true,
 			failureReason: "ip6 address begins with well-known prefix",
 		},
+		{
+			addr:          ma.StringCast("/ip6/64:ff9b::1:192.0.1.2/tcp/1234"),
+			want:          false,
+			failureReason: "64:ff9b::1 is not well-known prefix",
+		},
 	}
 	for i, tc := range cases {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
