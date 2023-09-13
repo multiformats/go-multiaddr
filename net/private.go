@@ -47,53 +47,31 @@ var unroutableCIDR6 = []string{
 	"ff00::/8",
 }
 
-// specialUseDomains are reserved for various purposes and do not have a central authority
-// for consistent resolution in different networks.
-// see: https://en.wikipedia.org/wiki/Special-use_domain_name#Reserved_domain_names
-// This list doesn't contain `.onion` addresses as they are consistently resolved everywhere.
-var specialUseDomains = []string{
-	"6tisch.arpa",
-	"10.in-addr.arpa",
-	"16.172.in-addr.arpa",
-	"17.172.in-addr.arpa",
-	"18.172.in-addr.arpa",
-	"19.172.in-addr.arpa",
-	"20.172.in-addr.arpa",
-	"21.172.in-addr.arpa",
-	"22.172.in-addr.arpa",
-	"23.172.in-addr.arpa",
-	"24.172.in-addr.arpa",
-	"25.172.in-addr.arpa",
-	"26.172.in-addr.arpa",
-	"27.172.in-addr.arpa",
-	"28.172.in-addr.arpa",
-	"29.172.in-addr.arpa",
-	"30.172.in-addr.arpa",
-	"31.172.in-addr.arpa",
-	"168.192.in-addr.arpa",
-	"170.0.0.192.in-addr.arpa",
-	"171.0.0.192.in-addr.arpa",
-	"ipv4only.arpa",
-	"254.169.in-addr.arpa",
-	"8.e.f.ip6.arpa",
-	"9.e.f.ip6.arpa",
-	"a.e.f.ip6.arpa",
-	"b.e.f.ip6.arpa",
-	"home.arpa",
-	"example",
-	"example.com",
-	"example.net",
-	"example.org",
-	"invalid",
-	"intranet",
-	"internal",
-	"private",
-	"corp",
-	"home",
-	"lan",
-	"local",
-	"localhost",
-	"test",
+// unResolvableDomains do not resolve to an IP address.
+var unResolvableDomains = []string{
+	// Reverse DNS Lookup
+	".in-addr.arpa",
+	".ip6.arpa",
+
+	// RFC 6761: Users MAY assume that queries for "invalid" names will always return NXDOMAIN
+	// responses
+	".invalid",
+}
+
+// privateUseDomains are reserved for private use and have no central authority for consistent
+// address resolution
+var privateUseDomains = []string{
+	// RFC 8375: Reserved for home networks
+	".home.arpa",
+
+	// MDNS
+	".local",
+
+	// RFC 6761: Users may assume that IPv4 and IPv6 address queries for localhost names will
+	// always resolve to the respective IP loopback address
+	".localhost",
+	// RFC 6761: No central authority for .test names
+	".test",
 }
 
 func init() {
@@ -132,8 +110,14 @@ func IsPublicAddr(a ma.Multiaddr) bool {
 		case ma.P_DNS, ma.P_DNS4, ma.P_DNS6, ma.P_DNSADDR:
 			dnsAddr := c.Value()
 			isPublic = true
-			for _, sd := range specialUseDomains {
-				if strings.HasSuffix(dnsAddr, sd) {
+			for _, ud := range unResolvableDomains {
+				if strings.HasSuffix(dnsAddr, ud) {
+					isPublic = false
+					break
+				}
+			}
+			for _, pd := range privateUseDomains {
+				if strings.HasSuffix(dnsAddr, pd) {
 					isPublic = false
 					break
 				}
