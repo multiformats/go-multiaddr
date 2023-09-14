@@ -113,7 +113,7 @@ func IsPublicAddr(a ma.Multiaddr) bool {
 			for _, ud := range unResolvableDomains {
 				if strings.HasSuffix(dnsAddr, ud) {
 					isPublic = false
-					break
+					return false
 				}
 			}
 			for _, pd := range privateUseDomains {
