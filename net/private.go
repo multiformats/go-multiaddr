@@ -48,6 +48,7 @@ var unroutableCIDR6 = []string{
 }
 
 // unResolvableDomains do not resolve to an IP address.
+// Ref: https://en.wikipedia.org/wiki/Special-use_domain_name#Reserved_domain_names
 var unResolvableDomains = []string{
 	// Reverse DNS Lookup
 	".in-addr.arpa",
@@ -60,6 +61,7 @@ var unResolvableDomains = []string{
 
 // privateUseDomains are reserved for private use and have no central authority for consistent
 // address resolution
+// Ref: https://en.wikipedia.org/wiki/Special-use_domain_name#Reserved_domain_names
 var privateUseDomains = []string{
 	// RFC 8375: Reserved for home networks
 	".home.arpa",
