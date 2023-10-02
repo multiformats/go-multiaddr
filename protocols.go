@@ -40,6 +40,7 @@ const (
 	P_PLAINTEXTV2       = 7367777
 	P_WEBRTC_DIRECT     = 280
 	P_WEBRTC            = 281
+	P_ETH               = 338
 )
 
 var (
@@ -273,6 +274,13 @@ var (
 		Code:  P_WEBRTC,
 		VCode: CodeToVarint(P_WEBRTC),
 	}
+	protoETHAddress = Protocol{
+		Name:       "eth",
+		Code:       P_ETH,
+		VCode:      CodeToVarint(P_ETH),
+		Size:       20 * 8, // 20 bytes in bits
+		Transcoder: TranscoderEthAddress,
+	}
 )
 
 func init() {
@@ -313,6 +321,7 @@ func init() {
 		protoPlaintextV2,
 		protoWebRTCDirect,
 		protoWebRTC,
+		protoETHAddress,
 	} {
 		if err := AddProtocol(p); err != nil {
 			panic(err)

@@ -5,6 +5,7 @@ import (
 	"encoding/base32"
 	"encoding/base64"
 	"encoding/binary"
+	"encoding/hex"
 	"fmt"
 	"net"
 	"strconv"
@@ -390,4 +391,17 @@ func certHashStB(s string) ([]byte, error) {
 
 func certHashBtS(b []byte) (string, error) {
 	return multibase.Encode(multibase.Base64url, b)
+}
+
+var TranscoderEthAddress = NewTranscoderFromFunctions(EthAddressStB, EthAddressBtS, nil)
+
+func EthAddressStB(s string) ([]byte, error) {
+	if strings.HasPrefix(s, "0x") {
+		s = s[2:]
+	}
+	return hex.DecodeString(s)
+}
+
+func EthAddressBtS(b []byte) (string, error) {
+	return "0x" + hex.EncodeToString(b), nil
 }
