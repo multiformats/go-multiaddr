@@ -43,6 +43,16 @@ func TestIsPublicAddr(t *testing.T) {
 			isPublic:  false,
 			isPrivate: false, // You can configure .local domains in local networks to return public addrs
 		},
+		{
+			addr:      ma.StringCast("/dns/localhost/udp/1/quic-v1"),
+			isPublic:  false,
+			isPrivate: true,
+		},
+		{
+			addr:      ma.StringCast("/dns/a.localhost/tcp/1"),
+			isPublic:  false,
+			isPrivate: true,
+		},
 	}
 	for i, tt := range tests {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {

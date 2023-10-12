@@ -69,12 +69,13 @@ var privateUseDomains = []string{
 	// MDNS
 	".local",
 
-	// RFC 6761: Users may assume that IPv4 and IPv6 address queries for localhost names will
-	// always resolve to the respective IP loopback address
-	".localhost",
 	// RFC 6761: No central authority for .test names
 	".test",
 }
+
+// RFC 6761: Users may assume that IPv4 and IPv6 address queries for localhost names will
+// always resolve to the respective IP loopback address
+const localHostDomain = ".localhost"
 
 func init() {
 	Private4 = parseCIDR(privateCIDR4)
@@ -112,14 +113,18 @@ func IsPublicAddr(a ma.Multiaddr) bool {
 		case ma.P_DNS, ma.P_DNS4, ma.P_DNS6, ma.P_DNSADDR:
 			dnsAddr := c.Value()
 			isPublic = true
+			if isSubdomain(dnsAddr, localHostDomain) {
+				isPublic = false
+				return false
+			}
 			for _, ud := range unResolvableDomains {
-				if strings.HasSuffix(dnsAddr, ud) {
+				if isSubdomain(dnsAddr, ud) {
 					isPublic = false
 					return false
 				}
 			}
 			for _, pd := range privateUseDomains {
-				if strings.HasSuffix(dnsAddr, pd) {
+				if isSubdomain(dnsAddr, pd) {
 					isPublic = false
 					break
 				}
@@ -128,6 +133,13 @@ func IsPublicAddr(a ma.Multiaddr) bool {
 		return false
 	})
 	return isPublic
+}
+
+// isSubdomain checks if child is sub domain of parent. It also returns true if child and parent are
+// the same domain.
+// Parent must have a "." prefix.
+func isSubdomain(child, parent string) bool {
+	return strings.HasSuffix(child, parent) || child == parent[1:]
 }
 
 // IsPrivateAddr returns true if the IP part of the mutiaddr is in a private network
@@ -141,6 +153,13 @@ func IsPrivateAddr(a ma.Multiaddr) bool {
 			isPrivate = inAddrRange(net.IP(c.RawValue()), Private4)
 		case ma.P_IP6:
 			isPrivate = inAddrRange(net.IP(c.RawValue()), Private6)
+		case ma.P_DNS, ma.P_DNS4, ma.P_DNS6, ma.P_DNSADDR:
+			dnsAddr := c.Value()
+			if isSubdomain(dnsAddr, localHostDomain) {
+				isPrivate = true
+			}
+			// We don't check for privateUseDomains because private use domains can
+			// resolve to public IP addresses
 		}
 		return false
 	})
