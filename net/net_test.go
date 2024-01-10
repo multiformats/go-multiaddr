@@ -682,3 +682,12 @@ func TestNetListener(t *testing.T) {
 	}
 	nc.Close()
 }
+
+func BenchmarkResolveUnspecifiedAddress(b *testing.B) {
+	b.ReportAllocs()
+	a := ma.StringCast("/ip4/0.0.0.0/udp/42/quic-v1")
+	iaddrs, _ := interfaceAddresses()
+	for i := 0; i < b.N; i++ {
+		ResolveUnspecifiedAddress(a, iaddrs)
+	}
+}
