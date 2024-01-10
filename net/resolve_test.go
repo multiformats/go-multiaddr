@@ -13,6 +13,7 @@ func TestResolvingAddrs(t *testing.T) {
 		newMultiaddr(t, "/ip4/1.2.3.4/tcp/1234"),
 		newMultiaddr(t, "/ip6/::/tcp/1234"),
 		newMultiaddr(t, "/ip6/::100/tcp/1234"),
+		newMultiaddr(t, "/ip4/0.0.0.0"),
 	}
 
 	iface := []ma.Multiaddr{
@@ -29,6 +30,8 @@ func TestResolvingAddrs(t *testing.T) {
 		newMultiaddr(t, "/ip6/::1/tcp/1234"),
 		newMultiaddr(t, "/ip6/::f/tcp/1234"),
 		newMultiaddr(t, "/ip6/::100/tcp/1234"),
+		newMultiaddr(t, "/ip4/127.0.0.1"),
+		newMultiaddr(t, "/ip4/10.20.30.40"),
 	}
 
 	actual, err := ResolveUnspecifiedAddresses(unspec, iface)
