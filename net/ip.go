@@ -114,6 +114,9 @@ func zoneless(m ma.Multiaddr) ma.Multiaddr {
 			return nil
 		}
 		tailhead, _ := ma.SplitFirst(tail)
+		if tailhead == nil {
+			return nil
+		}
 		if tailhead.Protocol().Code != ma.P_IP6 {
 			return nil
 		}

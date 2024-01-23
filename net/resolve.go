@@ -12,6 +12,9 @@ import (
 func ResolveUnspecifiedAddress(resolve ma.Multiaddr, ifaceAddrs []ma.Multiaddr) ([]ma.Multiaddr, error) {
 	// split address into its components
 	first, rest := ma.SplitFirst(resolve)
+	if first == nil {
+		return nil, fmt.Errorf("invalid address components: %s", resolve)
+	}
 
 	// if first component (ip) is not unspecified, use it as is.
 	if !IsIPUnspecified(first) {
@@ -22,6 +25,9 @@ func ResolveUnspecifiedAddress(resolve ma.Multiaddr, ifaceAddrs []ma.Multiaddr) 
 	out := make([]ma.Multiaddr, 0, len(ifaceAddrs))
 	for _, ia := range ifaceAddrs {
 		iafirst, _ := ma.SplitFirst(ia)
+		if iafirst == nil {
+			return nil, fmt.Errorf("invalid interface component: %s", ia)
+		}
 		// must match the first protocol to be resolve.
 		if iafirst.Protocol().Code != resolveProto {
 			continue
