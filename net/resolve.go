@@ -28,7 +28,7 @@ func ResolveUnspecifiedAddress(resolve ma.Multiaddr, ifaceAddrs []ma.Multiaddr) 
 		if iafirst == nil {
 			return nil, fmt.Errorf("invalid interface component: %s", ia)
 		}
-		// must match the first protocol to be resolve.
+		// must match the first protocol to be resolved.
 		if iafirst.Protocol().Code != resolveProto {
 			continue
 		}
