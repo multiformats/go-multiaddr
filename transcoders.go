@@ -168,8 +168,8 @@ func onionStB(s string) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse onion addr: %s", err)
 	}
-	if i < 1 {
-		return nil, fmt.Errorf("failed to parse onion addr: %s", "port less than 1")
+	if i == 0 {
+		return nil, fmt.Errorf("failed to parse onion addr: %s", "non-zero port")
 	}
 
 	onionPortBytes := make([]byte, 2)
@@ -183,8 +183,8 @@ func onionStB(s string) ([]byte, error) {
 func onionBtS(b []byte) (string, error) {
 	addr := strings.ToLower(base32.StdEncoding.EncodeToString(b[0:10]))
 	port := binary.BigEndian.Uint16(b[10:12])
-	if port < 1 {
-		return "", fmt.Errorf("failed to parse onion addr: %s", "port less than 1")
+	if port == 0 {
+		return "", fmt.Errorf("failed to parse onion addr: %s", "non-zero port")
 	}
 	return addr + ":" + strconv.FormatUint(uint64(port), 10), nil
 }
@@ -211,8 +211,8 @@ func onion3StB(s string) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse onion addr: %s", err)
 	}
-	if i < 1 {
-		return nil, fmt.Errorf("failed to parse onion addr: %s", "port less than 1")
+	if i == 0 {
+		return nil, fmt.Errorf("failed to parse onion addr: %s", "non-zero port")
 	}
 
 	onionPortBytes := make([]byte, 2)
