@@ -83,7 +83,7 @@ func TestConstructFails(t *testing.T) {
 		"/ip4/127.0.0.1/p2p/tcp",
 		"/unix",
 		"/ip4/1.2.3.4/tcp/80/unix",
-		"/ip4/1.2.3.4/tcp/-1/unix",
+		"/ip4/1.2.3.4/tcp/-1",
 		"/ip4/127.0.0.1/tcp/9090/http/p2p-webcrt-direct",
 		"/",
 		"",
