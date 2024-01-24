@@ -27,6 +27,10 @@ func NewMultiaddr(s string) (a Multiaddr, err error) {
 	if err != nil {
 		return nil, err
 	}
+	if len(b) == 0 {
+		return nil, fmt.Errorf("empty multiaddr")
+	}
+
 	return &multiaddr{bytes: b}, nil
 }
 
