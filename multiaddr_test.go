@@ -536,7 +536,6 @@ func FuzzNewMultiaddrString(f *testing.F) {
 		ma, err := NewMultiaddr(s)
 		if err == nil {
 			// for any valid multiaddrs, make sure these calls don't panic
-			_ = ma.String()
 			ma.Protocols()
 			roundTripBytes(t, ma)
 			roundTripString(t, ma)
