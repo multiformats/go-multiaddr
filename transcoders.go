@@ -5,6 +5,7 @@ import (
 	"encoding/base32"
 	"encoding/base64"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"net"
 	"strconv"
@@ -146,7 +147,7 @@ func portBtS(b []byte) (string, error) {
 	return strconv.FormatUint(uint64(i), 10), nil
 }
 
-var TranscoderOnion = NewTranscoderFromFunctions(onionStB, onionBtS, nil)
+var TranscoderOnion = NewTranscoderFromFunctions(onionStB, onionBtS, onionValidate)
 
 func onionStB(s string) ([]byte, error) {
 	addr := strings.Split(s, ":")
@@ -190,7 +191,18 @@ func onionBtS(b []byte) (string, error) {
 	return addr + ":" + strconv.FormatUint(uint64(port), 10), nil
 }
 
-var TranscoderOnion3 = NewTranscoderFromFunctions(onion3StB, onion3BtS, nil)
+func onionValidate(b []byte) error {
+	if len(b) != 12 {
+		return fmt.Errorf("invalid len for onion addr: got %d expected 12", len(b))
+	}
+	port := binary.BigEndian.Uint16(b[10:12])
+	if port == 0 {
+		return fmt.Errorf("invalid port 0 for onion addr")
+	}
+	return nil
+}
+
+var TranscoderOnion3 = NewTranscoderFromFunctions(onion3StB, onion3BtS, onion3Validate)
 
 func onion3StB(s string) ([]byte, error) {
 	addr := strings.Split(s, ":")
@@ -232,6 +244,17 @@ func onion3BtS(b []byte) (string, error) {
 	}
 	str := addr + ":" + strconv.FormatUint(uint64(port), 10)
 	return str, nil
+}
+
+func onion3Validate(b []byte) error {
+	if len(b) != 37 {
+		return fmt.Errorf("invalid len for onion addr: got %d expected 37", len(b))
+	}
+	port := binary.BigEndian.Uint16(b[35:37])
+	if port == 0 {
+		return fmt.Errorf("invalid port 0 for onion addr")
+	}
+	return nil
 }
 
 var TranscoderGarlic64 = NewTranscoderFromFunctions(garlic64StB, garlic64BtS, garlic64Validate)
@@ -314,6 +337,9 @@ func p2pStB(s string) ([]byte, error) {
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse p2p addr: %s %s", s, err)
 		}
+		if err := p2pVal(m); err != nil {
+			return nil, err
+		}
 		return m, nil
 	}
 
@@ -324,6 +350,9 @@ func p2pStB(s string) ([]byte, error) {
 	}
 
 	if ty := c.Type(); ty == cid.Libp2pKey {
+		if err := p2pVal(c.Hash()); err != nil {
+			return nil, err
+		}
 		return c.Hash(), nil
 	} else {
 		return nil, fmt.Errorf("failed to parse p2p addr: %s has the invalid codec %d", s, ty)
@@ -331,8 +360,20 @@ func p2pStB(s string) ([]byte, error) {
 }
 
 func p2pVal(b []byte) error {
-	_, err := mh.Cast(b)
-	return err
+	h, err := mh.Decode([]byte(b))
+	if err != nil {
+		return fmt.Errorf("invalid multihash: %s", err)
+	}
+	// Peer IDs require either sha256 or identity multihash
+	// https://github.com/libp2p/specs/blob/master/peer-ids/peer-ids.md#peer-ids
+	if h.Code != mh.SHA2_256 && h.Code != mh.IDENTITY {
+		return fmt.Errorf("invalid multihash code %d expected sha-256 or identity", h.Code)
+	}
+	// This check should ideally be in multihash. sha256 digest lengths MUST be 32
+	if h.Code == mh.SHA2_256 && h.Length != 32 {
+		return fmt.Errorf("invalid digest length %d for sha256 addr: expected 32", h.Length)
+	}
+	return nil
 }
 
 func p2pBtS(b []byte) (string, error) {
@@ -343,7 +384,7 @@ func p2pBtS(b []byte) (string, error) {
 	return m.B58String(), nil
 }
 
-var TranscoderUnix = NewTranscoderFromFunctions(unixStB, unixBtS, nil)
+var TranscoderUnix = NewTranscoderFromFunctions(unixStB, unixBtS, unixValidate)
 
 func unixStB(s string) ([]byte, error) {
 	return []byte(s), nil
@@ -353,9 +394,27 @@ func unixBtS(b []byte) (string, error) {
 	return string(b), nil
 }
 
+func unixValidate(b []byte) error {
+	// The string to bytes parser requires that all Path protocols begin with a '/'
+	// file://./codec.go#L49
+	if len(b) < 2 {
+		return fmt.Errorf("byte slice too short: %d", len(b))
+	}
+	if b[0] != '/' {
+		return errors.New("path protocol must begin with '/'")
+	}
+	if b[len(b)-1] == '/' {
+		return errors.New("unix socket path must not end in '/'")
+	}
+	return nil
+}
+
 var TranscoderDns = NewTranscoderFromFunctions(dnsStB, dnsBtS, dnsVal)
 
 func dnsVal(b []byte) error {
+	if len(b) == 0 {
+		return fmt.Errorf("empty dns addr")
+	}
 	if bytes.IndexByte(b, '/') >= 0 {
 		return fmt.Errorf("domain name %q contains a slash", string(b))
 	}
@@ -363,14 +422,18 @@ func dnsVal(b []byte) error {
 }
 
 func dnsStB(s string) ([]byte, error) {
-	return []byte(s), nil
+	b := []byte(s)
+	if err := dnsVal(b); err != nil {
+		return nil, err
+	}
+	return b, nil
 }
 
 func dnsBtS(b []byte) (string, error) {
 	return string(b), nil
 }
 
-var TranscoderCertHash = NewTranscoderFromFunctions(certHashStB, certHashBtS, nil)
+var TranscoderCertHash = NewTranscoderFromFunctions(certHashStB, certHashBtS, validateCertHash)
 
 func certHashStB(s string) ([]byte, error) {
 	_, data, err := multibase.Decode(s)
@@ -385,4 +448,9 @@ func certHashStB(s string) ([]byte, error) {
 
 func certHashBtS(b []byte) (string, error) {
 	return multibase.Encode(multibase.Base64url, b)
+}
+
+func validateCertHash(b []byte) error {
+	_, err := mh.Decode(b)
+	return err
 }

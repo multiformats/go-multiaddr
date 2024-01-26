@@ -87,6 +87,7 @@ func TestConstructFails(t *testing.T) {
 		"/ip4/127.0.0.1/tcp/9090/http/p2p-webcrt-direct",
 		"/",
 		"",
+		"/p2p/QmxoHT6iViN5xAjoz1VZ553cL31U9F94ht3QvWR1FrEbZY", // sha256 multihash with digest len > 32
 	}
 
 	for _, a := range cases {
@@ -510,13 +511,15 @@ func FuzzNewMultiaddrBytes(f *testing.F) {
 		f.Add(ma.Bytes())
 	}
 
-	f.Fuzz(func(_ *testing.T, b []byte) {
+	f.Fuzz(func(t *testing.T, b []byte) {
 		// just checking that it doesn't panic
 		ma, err := NewMultiaddrBytes(b)
 		if err == nil {
 			// for any valid multiaddrs, make sure these calls don't panic
 			_ = ma.String()
 			ma.Protocols()
+			roundTripBytes(t, ma)
+			roundTripString(t, ma)
 		}
 	})
 }
@@ -529,16 +532,37 @@ func FuzzNewMultiaddrString(f *testing.F) {
 		}
 		f.Add(v)
 	}
-
-	f.Fuzz(func(_ *testing.T, s string) {
+	f.Fuzz(func(t *testing.T, s string) {
 		// just checking that it doesn't panic
 		ma, err := NewMultiaddr(s)
 		if err == nil {
 			// for any valid multiaddrs, make sure these calls don't panic
 			_ = ma.String()
 			ma.Protocols()
+			roundTripBytes(t, ma)
+			roundTripString(t, ma)
 		}
 	})
+}
+
+func roundTripBytes(t *testing.T, orig Multiaddr) {
+	m2, err := NewMultiaddrBytes(orig.Bytes())
+	if err != nil {
+		t.Fatalf("failed to parse maddr back from ma.Bytes, %v: %v", orig, err)
+	}
+	if !m2.Equal(orig) {
+		t.Fatalf("unequal maddr after roundTripBytes %v %v", orig, m2)
+	}
+}
+
+func roundTripString(t *testing.T, orig Multiaddr) {
+	m2, err := NewMultiaddr(orig.String())
+	if err != nil {
+		t.Fatalf("failed to parse maddr back from ma.String, %v: %v", orig, err)
+	}
+	if !m2.Equal(orig) {
+		t.Fatalf("unequal maddr after roundTripString %v %v\n% 02x\n% 02x\n", orig, m2, orig.Bytes(), m2.Bytes())
+	}
 }
 
 func TestBinaryRepresentation(t *testing.T) {
@@ -846,5 +870,21 @@ func BenchmarkUniqueAddrs(b *testing.B) {
 				Unique(items)
 			}
 		})
+	}
+}
+
+func TestDNS(t *testing.T) {
+	b := []byte("7*000000000000000000000000000000000000000000")
+	a, err := NewMultiaddrBytes(b)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println(b)
+	fmt.Println([]byte(a.String()))
+	aa := StringCast(a.String())
+	if !a.Equal(aa) {
+		fmt.Println(a.Bytes())
+		fmt.Println(aa.Bytes())
+		t.Fatal("expected equality")
 	}
 }
