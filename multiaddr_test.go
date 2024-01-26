@@ -879,8 +879,6 @@ func TestDNS(t *testing.T) {
 	}
 	aa := StringCast(a.String())
 	if !a.Equal(aa) {
-		fmt.Println(a.Bytes())
-		fmt.Println(aa.Bytes())
 		t.Fatal("expected equality")
 	}
 }
