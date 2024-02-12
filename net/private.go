@@ -44,8 +44,21 @@ var unroutableCIDR4 = []string{
 	"255.255.255.255/32",
 }
 var unroutableCIDR6 = []string{
-	"ff00::/8",
+	"ff00::/8",      // multicast
+	"2001:db8::/32", // documentation
 }
+
+var globalUnicast []*net.IPNet
+var globalUnicastCIDR6 = []string{
+	"2000::/3",
+}
+
+var nat64CIDRs = []string{
+	"64:ff9b:1::/48", // RFC 8215
+	"64:ff9b::/96",   // RFC 6052
+}
+
+var nat64 []*net.IPNet
 
 // unResolvableDomains do not resolve to an IP address.
 // Ref: https://en.wikipedia.org/wiki/Special-use_domain_name#Reserved_domain_names
@@ -82,6 +95,8 @@ func init() {
 	Private6 = parseCIDR(privateCIDR6)
 	Unroutable4 = parseCIDR(unroutableCIDR4)
 	Unroutable6 = parseCIDR(unroutableCIDR6)
+	globalUnicast = parseCIDR(globalUnicastCIDR6)
+	nat64 = parseCIDR(nat64CIDRs)
 }
 
 func parseCIDR(cidrs []string) []*net.IPNet {
@@ -109,7 +124,9 @@ func IsPublicAddr(a ma.Multiaddr) bool {
 			isPublic = !inAddrRange(ip, Private4) && !inAddrRange(ip, Unroutable4)
 		case ma.P_IP6:
 			ip := net.IP(c.RawValue())
-			isPublic = !inAddrRange(ip, Private6) && !inAddrRange(ip, Unroutable6)
+			// NAT64 addresses reference public IPv4 addresses.
+			// Unroutable IPv6 documentation prefix is a subset of the globalUnicast prefix.
+			isPublic = (inAddrRange(ip, globalUnicast) || inAddrRange(ip, nat64)) && !inAddrRange(ip, Unroutable6)
 		case ma.P_DNS, ma.P_DNS4, ma.P_DNS6, ma.P_DNSADDR:
 			dnsAddr := c.Value()
 			isPublic = true
