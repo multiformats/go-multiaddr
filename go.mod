@@ -2,7 +2,6 @@ module github.com/multiformats/go-multiaddr
 
 go 1.21
 
-
 require (
 	github.com/ipfs/go-cid v0.0.7
 	github.com/multiformats/go-multibase v0.2.0
