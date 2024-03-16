@@ -79,26 +79,6 @@ func MultiaddrToIPNet(m ma.Multiaddr) (*net.IPNet, error) {
 	return ipnet, err
 }
 
-func parseBasicNetMaddr(maddr ma.Multiaddr) (net.Addr, error) {
-	network, host, err := DialArgs(maddr)
-	if err != nil {
-		return nil, err
-	}
-
-	switch network {
-	case "tcp", "tcp4", "tcp6":
-		return net.ResolveTCPAddr(network, host)
-	case "udp", "udp4", "udp6":
-		return net.ResolveUDPAddr(network, host)
-	case "ip", "ip4", "ip6":
-		return net.ResolveIPAddr(network, host)
-	case "unix":
-		return net.ResolveUnixAddr(network, host)
-	}
-
-	return nil, fmt.Errorf("network not supported: %s", network)
-}
-
 func FromIPAndZone(ip net.IP, zone string) (ma.Multiaddr, error) {
 	switch {
 	case ip.To4() != nil:
