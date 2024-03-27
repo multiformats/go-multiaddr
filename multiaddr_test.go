@@ -2,6 +2,7 @@ package multiaddr
 
 import (
 	"bytes"
+	"encoding/binary"
 	"encoding/hex"
 	"fmt"
 	"math"
@@ -922,4 +923,146 @@ func TestDNS(t *testing.T) {
 	if !a.Equal(aa) {
 		t.Fatal("expected equality")
 	}
+}
+
+// Returns a nil component and nil error if there is not enough data to generate a component.
+// Returns the unconsumed portion of the input data.
+func generateComponent(d []byte) (*Component, []byte, error) {
+	if len(d) <= 2 {
+		return nil, d, nil
+	}
+
+	// Pick a random protocol
+	idx := int(binary.LittleEndian.Uint16(d[:2]))
+	p := Protocols[idx%len(Protocols)]
+	d = d[2:]
+
+	if p.Size == 0 {
+		// No arg
+		return newComponent(p, nil), d, nil
+	} else if p.Size > 0 {
+		// Fixed size
+		if len(d) < (p.Size / 8) {
+			return nil, d, nil
+		}
+		return newComponent(p, d[:p.Size/8]), d, nil
+	} else {
+		// Varint
+
+		// Limit the value size to 1k bytes. Not sure if this is enforced anywhere?
+		if len(d) <= 2 {
+			return nil, d, nil
+		}
+		valSize := int(binary.LittleEndian.Uint16(d[:2]))
+		d = d[2:]
+		valSize = valSize % 1024
+
+		if len(d) < valSize {
+			return nil, d, nil
+		}
+
+		return newComponent(p, d[:valSize]), d[valSize:], nil
+	}
+}
+
+func validateComponent(c *Component) bool {
+	// TODO: we are validating the component by converting into a multiaddr first.
+	// Do users ever parse bytes as a component directly? That would open up other issues.
+	// There's a public api for this with .UnmarshalBinary.
+	_, err := NewMultiaddrBytes(c.Bytes())
+	return err == nil
+}
+
+func generateMultiaddr(d []byte) (Multiaddr, []byte, error) {
+	if len(d) == 0 {
+		return nil, d, nil
+	}
+
+	componentCount := int(uint8(d[0]))
+	d = d[1:]
+
+	if componentCount == 0 {
+		return nil, d, nil
+	}
+
+	parts := make([]Multiaddr, 0, componentCount)
+	var err error
+	var c *Component
+	for i := 0; i < componentCount; i++ {
+		c, d, err = generateComponent(d)
+		if err != nil {
+			return nil, d, err
+		}
+		if c == nil {
+			return nil, d, nil
+		}
+		if !validateComponent(c) {
+			return nil, d, nil
+		}
+
+		parts = append(parts, c)
+	}
+	return Join(parts...), d, nil
+}
+
+func FuzzEnDecapsulate(f *testing.F) {
+	f.Fuzz(func(t *testing.T, left, right []byte) {
+		leftMa, _, err := generateMultiaddr(left)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if leftMa == nil {
+			return
+		}
+
+		rightMa, _, err := generateMultiaddr(right)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if rightMa == nil {
+			return
+		}
+
+		decapped := leftMa.Decapsulate(rightMa)
+		if decapped == nil {
+			// rightMA matched the leftmost leftMA
+			leftParts := Split(leftMa)
+			rightParts := Split(rightMa)
+			for i := range rightParts {
+				if !leftParts[i].Equal(rightParts[i]) {
+					t.Fatalf("Right didn't match the leftmost of left.\nleft=%s\n right=%s", leftMa, rightMa)
+				}
+			}
+		} else if decapped.Equal(leftMa) {
+			// rightMA didn't match anything
+			// assert that there's no overlap
+			leftParts := Split(leftMa)
+			rightParts := Split(rightMa)
+			for i := range leftParts {
+				foundMatch := false
+				for j := range rightParts {
+					if i+j >= len(leftParts) {
+						foundMatch = false
+						break
+					}
+					foundMatch = rightParts[j].Equal(leftParts[i+j])
+					if !foundMatch {
+						break
+					}
+				}
+				if foundMatch {
+					t.Fatalf("expected no overlap between %s and %s", leftMa, rightMa)
+				}
+			}
+		} else {
+			// rightMA matched a part of leftMA. Test the invariant that
+			// encapsulating rightMa back into decapped should yield the original leftmost parts of left.
+			recapped := decapped.Encapsulate(rightMa)
+			leftParts := Split(leftMa)
+			leftmostParts := Join(leftParts[:len(recapped.Protocols())]...)
+			if !leftmostParts.Equal(recapped) {
+				t.Fatalf("expected %s, got %s", leftmostParts, recapped)
+			}
+		}
+	})
 }
