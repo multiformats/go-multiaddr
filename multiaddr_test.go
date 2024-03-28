@@ -454,6 +454,47 @@ func TestDecapsulateComment(t *testing.T) {
 	require.Nil(t, rest, "expected a nil multiaddr if we decapsulate everything")
 }
 
+func TestDecapsulate(t *testing.T) {
+	t.Run("right is nil", func(t *testing.T) {
+		left := StringCast("/ip4/1.2.3.4/tcp/1")
+		var right Multiaddr
+		left.Decapsulate(right)
+	})
+
+	testcases := []struct {
+		left, right, expected string
+	}{
+		{"/ip4/1.2.3.4/tcp/1234", "/ip4/1.2.3.4", ""},
+		{"/ip4/1.2.3.4", "/ip4/1.2.3.4/tcp/1234", "/ip4/1.2.3.4"},
+		{"/ip4/1.2.3.5/tcp/1234", "/ip4/5.3.2.1", "/ip4/1.2.3.5/tcp/1234"},
+		{"/ip4/1.2.3.5/udp/1234/quic-v1", "/udp/1234", "/ip4/1.2.3.5"},
+		{"/ip4/1.2.3.6/udp/1234/quic-v1", "/udp/1234/quic-v1", "/ip4/1.2.3.6"},
+		{"/ip4/1.2.3.7/tcp/1234", "/ws", "/ip4/1.2.3.7/tcp/1234"},
+		{"/dnsaddr/wss.com/tcp/4001", "/ws", "/dnsaddr/wss.com/tcp/4001"},
+		{"/dnsaddr/wss.com/tcp/4001/ws", "/wss", "/dnsaddr/wss.com/tcp/4001/ws"},
+		{"/dnsaddr/wss.com/ws", "/wss", "/dnsaddr/wss.com/ws"},
+		{"/dnsaddr/wss.com/ws", "/dnsaddr/wss.com", ""},
+		{"/dnsaddr/wss.com/tcp/4001/wss", "/wss", "/dnsaddr/wss.com/tcp/4001"},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.left, func(t *testing.T) {
+			left := StringCast(tc.left)
+			right := StringCast(tc.right)
+			actualMa := left.Decapsulate(right)
+
+			if tc.expected == "" {
+				require.Nil(t, actualMa, "expected nil")
+				return
+			}
+
+			actual := actualMa.String()
+			expected := StringCast(tc.expected).String()
+			require.Equal(t, expected, actual)
+		})
+	}
+}
+
 func assertValueForProto(t *testing.T, a Multiaddr, p int, exp string) {
 	t.Logf("checking for %s in %s", ProtocolWithCode(p).Name, a)
 	fv, err := a.ValueForProtocol(p)
