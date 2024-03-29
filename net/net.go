@@ -9,6 +9,9 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"runtime"
+
+	store "weshd/go/store"
 
 	ma "github.com/multiformats/go-multiaddr"
 )
@@ -387,7 +390,24 @@ func WrapPacketConn(pc net.PacketConn) (PacketConn, error) {
 
 // InterfaceMultiaddrs will return the addresses matching net.InterfaceAddrs
 func InterfaceMultiaddrs() ([]ma.Multiaddr, error) {
-	addrs, err := net.InterfaceAddrs()
+
+	var addrs []net.Addr
+	var err error
+
+	if runtime.GOOS == "android" {
+		addrStrings := store.GetMultiAddrs()
+		for _, addrStr := range addrStrings {
+			addr, err := net.ResolveUDPAddr("udp", addrStr)
+			if err != nil {
+				fmt.Printf("Error resolving address %s: %s\n", addrStr, err)
+				continue // Skip this address if there's an error
+			}
+			addrs = append(addrs, addr)
+		}
+	} else {
+		addrs, err = net.InterfaceAddrs()
+	}
+
 	if err != nil {
 		return nil, err
 	}
