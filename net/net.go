@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"net"
 	"runtime"
+	"strings"
 
 	globalstore "github.com/sakul-budhathoki/go-store"
 
@@ -388,6 +389,22 @@ func WrapPacketConn(pc net.PacketConn) (PacketConn, error) {
 	}, nil
 }
 
+type CustomAddr string
+
+func (ca CustomAddr) Network() string {
+	// Extract the network protocol from the address string
+	parts := strings.SplitN(string(ca), "://", 2)
+	if len(parts) != 2 {
+		return ""
+	}
+	return parts[0]
+}
+
+func (ca CustomAddr) String() string {
+	// Return the address string as is
+	return string(ca)
+}
+
 // InterfaceMultiaddrs will return the addresses matching net.InterfaceAddrs
 func InterfaceMultiaddrs() ([]ma.Multiaddr, error) {
 
@@ -398,12 +415,7 @@ func InterfaceMultiaddrs() ([]ma.Multiaddr, error) {
 		addrStrings := globalstore.GetGlobalStore().Get("multiaddr")
 		if addrStringsSlice, ok := addrStrings.([]string); ok {
 			for _, addrStr := range addrStringsSlice {
-				addr, err := net.ResolveUDPAddr("udp", addrStr)
-				if err != nil {
-					fmt.Printf("Error resolving address %s: %s\n", addrStr, err)
-					continue // Skip this address if there's an error
-				}
-				addrs = append(addrs, addr)
+				addrs = append(addrs, CustomAddr(addrStr))
 			}
 		}
 	} else {
