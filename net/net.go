@@ -11,7 +11,7 @@ import (
 	"net"
 	"runtime"
 
-	store "weshd/go/store"
+	globalstore "github.com/sakul-budhathoki/go-store"
 
 	ma "github.com/multiformats/go-multiaddr"
 )
@@ -395,14 +395,16 @@ func InterfaceMultiaddrs() ([]ma.Multiaddr, error) {
 	var err error
 
 	if runtime.GOOS == "android" {
-		addrStrings := store.GetMultiAddrs()
-		for _, addrStr := range addrStrings {
-			addr, err := net.ResolveUDPAddr("udp", addrStr)
-			if err != nil {
-				fmt.Printf("Error resolving address %s: %s\n", addrStr, err)
-				continue // Skip this address if there's an error
+		addrStrings := globalstore.GetGlobalStore().Get("multiaddr")
+		if addrStringsSlice, ok := addrStrings.([]string); ok {
+			for _, addrStr := range addrStringsSlice {
+				addr, err := net.ResolveUDPAddr("udp", addrStr)
+				if err != nil {
+					fmt.Printf("Error resolving address %s: %s\n", addrStr, err)
+					continue // Skip this address if there's an error
+				}
+				addrs = append(addrs, addr)
 			}
-			addrs = append(addrs, addr)
 		}
 	} else {
 		addrs, err = net.InterfaceAddrs()
