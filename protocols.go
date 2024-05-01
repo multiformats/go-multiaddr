@@ -42,6 +42,7 @@ const (
 	P_WEBRTC_DIRECT     = 280
 	P_WEBRTC            = 281
 	P_MEMORY            = 777
+	P_SCION             = 13639680
 )
 
 var (
@@ -290,6 +291,14 @@ var (
 		Size:       64,
 		Transcoder: TranscoderMemory,
 	}
+	protoSCION = Protocol{
+		Name:       "scion",
+		Code:       P_SCION,
+		VCode:      CodeToVarint(P_SCION),
+		Size:       LengthPrefixedVarSize,
+		Path:       false,
+		Transcoder: TranscoderSCION,
+	}
 )
 
 func init() {
@@ -332,6 +341,7 @@ func init() {
 		protoWebRTCDirect,
 		protoWebRTC,
 		protoMemory,
+		protoSCION,
 	} {
 		if err := AddProtocol(p); err != nil {
 			panic(err)
