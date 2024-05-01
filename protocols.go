@@ -40,6 +40,7 @@ const (
 	P_PLAINTEXTV2       = 7367777
 	P_WEBRTC_DIRECT     = 280
 	P_WEBRTC            = 281
+	P_SCION             = 13639680
 )
 
 var (
@@ -273,6 +274,14 @@ var (
 		Code:  P_WEBRTC,
 		VCode: CodeToVarint(P_WEBRTC),
 	}
+	protoSCION = Protocol{
+		Name:       "scion",
+		Code:       P_SCION,
+		VCode:      CodeToVarint(P_SCION),
+		Size:       LengthPrefixedVarSize,
+		Path:       false,
+		Transcoder: TranscoderSCION,
+	}
 )
 
 func init() {
@@ -313,6 +322,7 @@ func init() {
 		protoPlaintextV2,
 		protoWebRTCDirect,
 		protoWebRTC,
+		protoSCION,
 	} {
 		if err := AddProtocol(p); err != nil {
 			panic(err)

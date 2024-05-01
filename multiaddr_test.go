@@ -88,6 +88,10 @@ func TestConstructFails(t *testing.T) {
 		"/",
 		"",
 		"/p2p/QmxoHT6iViN5xAjoz1VZ553cL31U9F94ht3QvWR1FrEbZY", // sha256 multihash with digest len > 32
+		"/scion",
+		"/scion//udp/1234",
+		"/scion/0-",
+		"/scion/1234",
 	}
 
 	for _, a := range cases {
@@ -192,6 +196,10 @@ var good = []string{
 	"/ip4/127.0.0.1/tcp/127/wss",
 	"/ip4/127.0.0.1/tcp/127/webrtc-direct",
 	"/ip4/127.0.0.1/tcp/127/webrtc",
+	"/scion/0-0",
+	"/scion/1-ff00:0:110",
+	"/scion/1-ff00:0:110/ip4/1.2.3.4",
+	"/scion/1-ff00:0:110/ip6/::ffff:127.0.0.1/udp/111",
 }
 
 func TestConstructSucceeds(t *testing.T) {
@@ -433,6 +441,12 @@ func TestEncapsulate(t *testing.T) {
 	if d != nil {
 		t.Error("decapsulate /ip4 failed: ", d)
 	}
+
+	m5, _ := NewMultiaddr("/scion/1-ff00:0:110")
+	e := m5.Encapsulate(m)
+	if s := e.String(); s != "/scion/1-ff00:0:110/ip4/127.0.0.1/udp/1234" {
+		t.Error("encapsulate /scion/1-ff00:0:110/ip4/127.0.0.1/udp/1234 failed.", s)
+	}
 }
 
 func TestDecapsulateComment(t *testing.T) {
@@ -541,6 +555,11 @@ func TestGetValue(t *testing.T) {
 	a = newMultiaddr(t, "/ip4/0.0.0.0/unix/a/b/c/d") // ending in a path one.
 	assertValueForProto(t, a, P_IP4, "0.0.0.0")
 	assertValueForProto(t, a, P_UNIX, "/a/b/c/d")
+
+	a = newMultiaddr(t, "/scion/1-ff00:0:110/ip4/127.0.0.1/udp/1234")
+	assertValueForProto(t, a, P_SCION, "1-ff00:0:110")
+	assertValueForProto(t, a, P_IP4, "127.0.0.1")
+	assertValueForProto(t, a, P_UDP, "1234")
 }
 
 func FuzzNewMultiaddrBytes(f *testing.F) {
@@ -627,6 +646,7 @@ func TestRoundTrip(t *testing.T) {
 		"/ip4/127.0.0.1/udp/1234/quic-v1/webtransport/certhash/uEiDDq4_xNyDorZBH3TlGazyJdOWSwvo4PUo5YHFMrvDE8g",
 		"/p2p/QmbHVEEepCi7rn7VL7Exxpd2Ci9NNB6ifvqwhsrbRMgQFP",
 		"/p2p/QmbHVEEepCi7rn7VL7Exxpd2Ci9NNB6ifvqwhsrbRMgQFP/unix/a/b/c",
+		"/scion/1-ff00:0:110/ip6/::ffff:127.0.0.1/tcp/111",
 	} {
 		ma, err := NewMultiaddr(s)
 		if err != nil {
