@@ -124,9 +124,23 @@ func IsPublicAddr(a ma.Multiaddr) bool {
 			isPublic = !inAddrRange(ip, Private4) && !inAddrRange(ip, Unroutable4)
 		case ma.P_IP6:
 			ip := net.IP(c.RawValue())
-			// NAT64 addresses reference public IPv4 addresses.
-			// Unroutable IPv6 documentation prefix is a subset of the globalUnicast prefix.
-			isPublic = (inAddrRange(ip, globalUnicast) || inAddrRange(ip, nat64)) && !inAddrRange(ip, Unroutable6)
+			// IP6 documentation prefix(part of Unroutable6) is a subset of the ip6
+			// global unicast allocation so we ensure that it's not a documentation
+			// prefix by diffing with Unroutable6
+			isPublicUnicastAddr := inAddrRange(ip, globalUnicast) && !inAddrRange(ip, Unroutable6)
+			if isPublicUnicastAddr {
+				isPublic = true
+				return false
+			}
+			// The WellKnown NAT64 prefix(RFC 6052) can only reference a public IPv4
+			// address.
+			// The Local use NAT64 prefix(RFC 8215) can reference private IPv4
+			// addresses. But since the translation from Local use NAT64 prefix to IPv4
+			// address is left to the user we have no way of knowing which IPv4 address
+			// is referenced. We count these as Public addresses because a false
+			// negative for this method here is generally worse than a false positive.
+			isPublic = inAddrRange(ip, nat64)
+			return false
 		case ma.P_DNS, ma.P_DNS4, ma.P_DNS6, ma.P_DNSADDR:
 			dnsAddr := c.Value()
 			isPublic = true
