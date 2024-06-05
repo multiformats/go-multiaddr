@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"net/url"
 	"strconv"
 	"strings"
 
@@ -453,4 +454,19 @@ func certHashBtS(b []byte) (string, error) {
 func validateCertHash(b []byte) error {
 	_, err := mh.Decode(b)
 	return err
+}
+
+var TranscoderHTTPPath = NewTranscoderFromFunctions(httpPathStB, httpPathBtS, validateHTTPPath)
+
+func httpPathStB(s string) ([]byte, error) {
+	unescaped, err := url.QueryUnescape(s)
+	return []byte(unescaped), err
+}
+
+func httpPathBtS(b []byte) (string, error) {
+	return url.QueryEscape(string(b)), nil
+}
+
+func validateHTTPPath(b []byte) error {
+	return nil // We can represent any byte slice when we escape it.
 }
