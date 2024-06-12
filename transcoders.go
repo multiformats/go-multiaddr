@@ -460,13 +460,25 @@ var TranscoderHTTPPath = NewTranscoderFromFunctions(httpPathStB, httpPathBtS, va
 
 func httpPathStB(s string) ([]byte, error) {
 	unescaped, err := url.QueryUnescape(s)
+	if err != nil {
+		return nil, err
+	}
+	if len(unescaped) == 0 {
+		return nil, fmt.Errorf("empty http path is not allowed")
+	}
 	return []byte(unescaped), err
 }
 
 func httpPathBtS(b []byte) (string, error) {
+	if len(b) == 0 {
+		return "", fmt.Errorf("empty http path is not allowed")
+	}
 	return url.QueryEscape(string(b)), nil
 }
 
 func validateHTTPPath(b []byte) error {
+	if len(b) == 0 {
+		return fmt.Errorf("empty http path is not allowed")
+	}
 	return nil // We can represent any byte slice when we escape it.
 }

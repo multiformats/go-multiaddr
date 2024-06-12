@@ -192,6 +192,11 @@ var good = []string{
 	"/ip4/127.0.0.1/tcp/127/wss",
 	"/ip4/127.0.0.1/tcp/127/webrtc-direct",
 	"/ip4/127.0.0.1/tcp/127/webrtc",
+	"/http-path/tmp%2Fbar",
+	"/http-path/tmp%2Fbar%2Fbaz",
+	"/http-path/foo",
+	"/ip4/127.0.0.1/tcp/0/p2p/12D3KooWCryG7Mon9orvQxcS1rYZjotPgpwoJNHHKcLLfE4Hf5mV/http-path/foo",
+	"/ip4/127.0.0.1/tcp/443/tls/sni/example.com/http/http-path/foo",
 }
 
 func TestConstructSucceeds(t *testing.T) {
@@ -927,9 +932,19 @@ func TestDNS(t *testing.T) {
 
 func TestHTTPPath(t *testing.T) {
 	t.Run("bad addr", func(t *testing.T) {
-		badAddr := "/http-path/thisIsMissingAfullBytes%f"
+		badAddr := "/http-path/thisIsMissingAfullByte%f"
 		_, err := NewMultiaddr(badAddr)
 		require.Error(t, err)
+	})
+
+	t.Run("only reads the http-path part", func(t *testing.T) {
+		addr := "/http-path/tmp%2Fbar/p2p-circuit" // The http-path only reference the part immediately after it. It does not include the rest of the multiaddr (like the /path component sometimes does)
+		m, err := NewMultiaddr(addr)
+		require.NoError(t, err)
+		m.ValueForProtocol(P_HTTP_PATH)
+		v, err := m.ValueForProtocol(P_HTTP_PATH)
+		require.NoError(t, err)
+		require.Equal(t, "tmp%2Fbar", v)
 	})
 
 	t.Run("round trip", func(t *testing.T) {
@@ -937,6 +952,8 @@ func TestHTTPPath(t *testing.T) {
 			"/http-path/tmp%2Fbar",
 			"/http-path/tmp%2Fbar%2Fbaz",
 			"/http-path/foo",
+			"/ip4/127.0.0.1/tcp/0/p2p/12D3KooWCryG7Mon9orvQxcS1rYZjotPgpwoJNHHKcLLfE4Hf5mV/http-path/foo",
+			"/ip4/127.0.0.1/tcp/443/tls/sni/example.com/http/http-path/foo",
 		}
 		for _, c := range cases {
 			m, err := NewMultiaddr(c)
