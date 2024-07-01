@@ -974,3 +974,43 @@ func TestHTTPPath(t *testing.T) {
 		require.Equal(t, "tmp/bar", string(component.RawValue()))
 	})
 }
+
+func FuzzSplitRoundtrip(f *testing.F) {
+	for _, v := range good {
+		f.Add(v, uint(0))
+	}
+
+	f.Fuzz(func(t *testing.T, addrStr string, splitOnProto uint) {
+		addr, err := NewMultiaddr(addrStr)
+		if err != nil {
+			t.Skip() // Skip inputs that are not valid multiaddrs
+		}
+
+		// Test SplitFirst
+		first, rest := SplitFirst(addr)
+		joined := Join(first, rest)
+		require.Equal(t, addr, joined, "SplitFirst and Join should round-trip")
+
+		// Test SplitLast
+		rest, last := SplitLast(addr)
+		joined = Join(rest, last)
+		require.Equal(t, addr, joined, "SplitLast and Join should round-trip")
+
+		p := addr.Protocols()
+		if err != nil || len(p) == 0 {
+			t.Skip() // Skip if no components or error
+		}
+
+		selectedProto := p[int(splitOnProto)%len(p)]
+
+		// Test SplitFunc
+		splitFunc := func(c Component) bool {
+			return c.Protocol().Code == selectedProto.Code
+		}
+		before, after := SplitFunc(addr, splitFunc)
+		joined = Join(before, after)
+		if !addr.Equal(joined) {
+			t.Errorf("Join(SplitFunc(addr, selectedComponent)) = %s; want %s", joined, addr)
+		}
+	})
+}

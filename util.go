@@ -28,12 +28,18 @@ func Join(ms ...Multiaddr) Multiaddr {
 
 	length := 0
 	for _, m := range ms {
+		if m == nil {
+			continue
+		}
 		length += len(m.Bytes())
 	}
 
 	bidx := 0
 	b := make([]byte, length)
 	for _, mb := range ms {
+		if mb == nil {
+			continue
+		}
 		bidx += copy(b[bidx:], mb.Bytes())
 	}
 	return &multiaddr{bytes: b}
