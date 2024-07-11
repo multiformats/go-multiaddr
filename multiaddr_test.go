@@ -200,6 +200,11 @@ var good = []string{
 	"/scion/1-ff00:0:110",
 	"/scion/1-ff00:0:110/ip4/1.2.3.4",
 	"/scion/1-ff00:0:110/ip6/::ffff:127.0.0.1/udp/111",
+	"/http-path/tmp%2Fbar",
+	"/http-path/tmp%2Fbar%2Fbaz",
+	"/http-path/foo",
+	"/ip4/127.0.0.1/tcp/0/p2p/12D3KooWCryG7Mon9orvQxcS1rYZjotPgpwoJNHHKcLLfE4Hf5mV/http-path/foo",
+	"/ip4/127.0.0.1/tcp/443/tls/sni/example.com/http/http-path/foo",
 }
 
 func TestConstructSucceeds(t *testing.T) {
@@ -647,6 +652,7 @@ func TestRoundTrip(t *testing.T) {
 		"/p2p/QmbHVEEepCi7rn7VL7Exxpd2Ci9NNB6ifvqwhsrbRMgQFP",
 		"/p2p/QmbHVEEepCi7rn7VL7Exxpd2Ci9NNB6ifvqwhsrbRMgQFP/unix/a/b/c",
 		"/scion/1-ff00:0:110/ip6/::ffff:127.0.0.1/tcp/111",
+		"/http-path/tmp%2Fbar",
 	} {
 		ma, err := NewMultiaddr(s)
 		if err != nil {
@@ -942,4 +948,49 @@ func TestDNS(t *testing.T) {
 	if !a.Equal(aa) {
 		t.Fatal("expected equality")
 	}
+}
+
+func TestHTTPPath(t *testing.T) {
+	t.Run("bad addr", func(t *testing.T) {
+		badAddr := "/http-path/thisIsMissingAfullByte%f"
+		_, err := NewMultiaddr(badAddr)
+		require.Error(t, err)
+	})
+
+	t.Run("only reads the http-path part", func(t *testing.T) {
+		addr := "/http-path/tmp%2Fbar/p2p-circuit" // The http-path only reference the part immediately after it. It does not include the rest of the multiaddr (like the /path component sometimes does)
+		m, err := NewMultiaddr(addr)
+		require.NoError(t, err)
+		m.ValueForProtocol(P_HTTP_PATH)
+		v, err := m.ValueForProtocol(P_HTTP_PATH)
+		require.NoError(t, err)
+		require.Equal(t, "tmp%2Fbar", v)
+	})
+
+	t.Run("round trip", func(t *testing.T) {
+		cases := []string{
+			"/http-path/tmp%2Fbar",
+			"/http-path/tmp%2Fbar%2Fbaz",
+			"/http-path/foo",
+			"/ip4/127.0.0.1/tcp/0/p2p/12D3KooWCryG7Mon9orvQxcS1rYZjotPgpwoJNHHKcLLfE4Hf5mV/http-path/foo",
+			"/ip4/127.0.0.1/tcp/443/tls/sni/example.com/http/http-path/foo",
+		}
+		for _, c := range cases {
+			m, err := NewMultiaddr(c)
+			require.NoError(t, err)
+			require.Equal(t, c, m.String())
+		}
+	})
+
+	t.Run("value for protocol", func(t *testing.T) {
+		m := StringCast("/http-path/tmp%2Fbar")
+		v, err := m.ValueForProtocol(P_HTTP_PATH)
+		require.NoError(t, err)
+		// This gives us the url escaped version
+		require.Equal(t, "tmp%2Fbar", v)
+
+		// If we want the raw unescaped version, we can use the component and read it
+		_, component := SplitLast(m)
+		require.Equal(t, "tmp/bar", string(component.RawValue()))
+	})
 }

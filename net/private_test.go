@@ -53,6 +53,21 @@ func TestIsPublicAddr(t *testing.T) {
 			isPublic:  false,
 			isPrivate: true,
 		},
+		{
+			addr:      ma.StringCast("/ip6/2400::1/tcp/10"),
+			isPublic:  true,
+			isPrivate: false,
+		},
+		{
+			addr:      ma.StringCast("/ip6/2001:db8::42/tcp/10"),
+			isPublic:  false,
+			isPrivate: false,
+		},
+		{
+			addr:      ma.StringCast("/ip6/64:ff9b::1.1.1.1/tcp/10"),
+			isPublic:  true,
+			isPrivate: false,
+		},
 	}
 	for i, tt := range tests {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
