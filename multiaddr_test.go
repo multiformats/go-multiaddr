@@ -977,10 +977,11 @@ func TestHTTPPath(t *testing.T) {
 
 func FuzzSplitRoundtrip(f *testing.F) {
 	for _, v := range good {
-		f.Add(v, uint(0))
+		f.Add(v)
 	}
+	otherMultiaddr := StringCast("/udp/1337")
 
-	f.Fuzz(func(t *testing.T, addrStr string, splitOnProto uint) {
+	f.Fuzz(func(t *testing.T, addrStr string) {
 		addr, err := NewMultiaddr(addrStr)
 		if err != nil {
 			t.Skip() // Skip inputs that are not valid multiaddrs
@@ -997,20 +998,42 @@ func FuzzSplitRoundtrip(f *testing.F) {
 		require.Equal(t, addr, joined, "SplitLast and Join should round-trip")
 
 		p := addr.Protocols()
-		if err != nil || len(p) == 0 {
-			t.Skip() // Skip if no components or error
+		if len(p) == 0 {
+			t.Skip()
 		}
 
-		selectedProto := p[int(splitOnProto)%len(p)]
-
-		// Test SplitFunc
-		splitFunc := func(c Component) bool {
-			return c.Protocol().Code == selectedProto.Code
+		tryPubMethods := func(a Multiaddr) {
+			if a == nil {
+				return
+			}
+			_ = a.Equal(otherMultiaddr)
+			_ = a.Bytes()
+			_ = a.String()
+			_ = a.Protocols()
+			_ = a.Encapsulate(otherMultiaddr)
+			_ = a.Decapsulate(otherMultiaddr)
+			_, _ = a.ValueForProtocol(P_TCP)
 		}
-		before, after := SplitFunc(addr, splitFunc)
-		joined = Join(before, after)
-		if !addr.Equal(joined) {
-			t.Errorf("Join(SplitFunc(addr, selectedComponent)) = %s; want %s", joined, addr)
+
+		for _, proto := range p {
+			splitFunc := func(c Component) bool {
+				return c.Protocol().Code == proto.Code
+			}
+			beforeC, after := SplitFirst(addr)
+			joined = Join(beforeC, after)
+			require.Equal(t, addr, joined)
+			tryPubMethods(after)
+
+			before, afterC := SplitLast(addr)
+			joined = Join(before, afterC)
+			require.Equal(t, addr, joined)
+			tryPubMethods(before)
+
+			before, after = SplitFunc(addr, splitFunc)
+			joined = Join(before, after)
+			require.Equal(t, addr, joined)
+			tryPubMethods(before)
+			tryPubMethods(after)
 		}
 	})
 }
