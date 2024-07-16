@@ -242,7 +242,9 @@ func TestEqual(t *testing.T) {
 	}
 }
 
-func TestMethodsWithNil(t *testing.T) {
+// TestNilInterface makes sure funcs that accept a multiaddr interface don't
+// panic if it's passed a nil interface.
+func TestNilInterface(t *testing.T) {
 	m1 := newMultiaddr(t, "/ip4/127.0.0.1/udp/1234")
 	var m2 Multiaddr
 	m1.Equal(m2)
@@ -254,6 +256,12 @@ func TestMethodsWithNil(t *testing.T) {
 	c.Equal(m2)
 	c.Encapsulate(m2)
 	c.Decapsulate(m2)
+
+	// Util funcs
+	_ = Split(m2)
+	_, _ = SplitFirst(m2)
+	_, _ = SplitLast(m2)
+	ForEach(m2, func(c Component) bool { return true })
 }
 
 func TestStringToBytes(t *testing.T) {
