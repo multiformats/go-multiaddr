@@ -36,6 +36,9 @@ func Join(ms ...Multiaddr) Multiaddr {
 	for _, mb := range ms {
 		bidx += copy(b[bidx:], mb.Bytes())
 	}
+	if length == 0 {
+		return nil
+	}
 	return &multiaddr{bytes: b}
 }
 
@@ -59,6 +62,9 @@ func StringCast(s string) Multiaddr {
 
 // SplitFirst returns the first component and the rest of the multiaddr.
 func SplitFirst(m Multiaddr) (*Component, Multiaddr) {
+	if m == nil {
+		return nil, nil
+	}
 	// Shortcut if we already have a component
 	if c, ok := m.(*Component); ok {
 		return c, nil
@@ -80,6 +86,10 @@ func SplitFirst(m Multiaddr) (*Component, Multiaddr) {
 
 // SplitLast returns the rest of the multiaddr and the last component.
 func SplitLast(m Multiaddr) (Multiaddr, *Component) {
+	if m == nil {
+		return nil, nil
+	}
+
 	// Shortcut if we already have a component
 	if c, ok := m.(*Component); ok {
 		return nil, c
@@ -117,6 +127,9 @@ func SplitLast(m Multiaddr) (Multiaddr, *Component) {
 // component on which the callback first returns will be included in the
 // *second* multiaddr.
 func SplitFunc(m Multiaddr, cb func(Component) bool) (Multiaddr, Multiaddr) {
+	if m == nil {
+		return nil, nil
+	}
 	// Shortcut if we already have a component
 	if c, ok := m.(*Component); ok {
 		if cb(*c) {
@@ -159,6 +172,9 @@ func SplitFunc(m Multiaddr, cb func(Component) bool) (Multiaddr, Multiaddr) {
 // This function iterates over components *by value* to avoid allocating.
 // Return true to continue iteration, false to stop.
 func ForEach(m Multiaddr, cb func(c Component) bool) {
+	if m == nil {
+		return
+	}
 	// Shortcut if we already have a component
 	if c, ok := m.(*Component); ok {
 		cb(*c)
