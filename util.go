@@ -36,6 +36,9 @@ func Join(ms ...Multiaddr) Multiaddr {
 
 	bidx := 0
 	b := make([]byte, length)
+	if length == 0 {
+		return nil
+	}
 	for _, mb := range ms {
 		if mb == nil {
 			continue
