@@ -242,6 +242,20 @@ func TestEqual(t *testing.T) {
 	}
 }
 
+func TestMethodsWithNil(t *testing.T) {
+	m1 := newMultiaddr(t, "/ip4/127.0.0.1/udp/1234")
+	var m2 Multiaddr
+	m1.Equal(m2)
+	m1.Encapsulate(m2)
+	m1.Decapsulate(m2)
+
+	// Test components
+	c, _ := SplitFirst(m1)
+	c.Equal(m2)
+	c.Encapsulate(m2)
+	c.Decapsulate(m2)
+}
+
 func TestStringToBytes(t *testing.T) {
 
 	testString := func(s string, h string) {
