@@ -974,3 +974,66 @@ func TestHTTPPath(t *testing.T) {
 		require.Equal(t, "tmp/bar", string(component.RawValue()))
 	})
 }
+
+func FuzzSplitRoundtrip(f *testing.F) {
+	for _, v := range good {
+		f.Add(v)
+	}
+	otherMultiaddr := StringCast("/udp/1337")
+
+	f.Fuzz(func(t *testing.T, addrStr string) {
+		addr, err := NewMultiaddr(addrStr)
+		if err != nil {
+			t.Skip() // Skip inputs that are not valid multiaddrs
+		}
+
+		// Test SplitFirst
+		first, rest := SplitFirst(addr)
+		joined := Join(first, rest)
+		require.Equal(t, addr, joined, "SplitFirst and Join should round-trip")
+
+		// Test SplitLast
+		rest, last := SplitLast(addr)
+		joined = Join(rest, last)
+		require.Equal(t, addr, joined, "SplitLast and Join should round-trip")
+
+		p := addr.Protocols()
+		if len(p) == 0 {
+			t.Skip()
+		}
+
+		tryPubMethods := func(a Multiaddr) {
+			if a == nil {
+				return
+			}
+			_ = a.Equal(otherMultiaddr)
+			_ = a.Bytes()
+			_ = a.String()
+			_ = a.Protocols()
+			_ = a.Encapsulate(otherMultiaddr)
+			_ = a.Decapsulate(otherMultiaddr)
+			_, _ = a.ValueForProtocol(P_TCP)
+		}
+
+		for _, proto := range p {
+			splitFunc := func(c Component) bool {
+				return c.Protocol().Code == proto.Code
+			}
+			beforeC, after := SplitFirst(addr)
+			joined = Join(beforeC, after)
+			require.Equal(t, addr, joined)
+			tryPubMethods(after)
+
+			before, afterC := SplitLast(addr)
+			joined = Join(before, afterC)
+			require.Equal(t, addr, joined)
+			tryPubMethods(before)
+
+			before, after = SplitFunc(addr, splitFunc)
+			joined = Join(before, after)
+			require.Equal(t, addr, joined)
+			tryPubMethods(before)
+			tryPubMethods(after)
+		}
+	})
+}
