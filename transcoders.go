@@ -57,11 +57,11 @@ func (t twrp) ValidateBytes(b []byte) error {
 var TranscoderIP4 = NewTranscoderFromFunctions(ip4StB, ip4BtS, nil)
 var TranscoderIP6 = NewTranscoderFromFunctions(ip6StB, ip6BtS, nil)
 var TranscoderIP6Zone = NewTranscoderFromFunctions(ip6zoneStB, ip6zoneBtS, ip6zoneVal)
-var TranscoderIPCIDR = NewTranscoderFromFunctions(ipcidrStB, ipcidrBtS, nil)
+var TranscoderIPCIDR = NewTranscoderFromFunctions(ipcidrStB, ipcidrBtS, ipcidrValidate)
 
 func ipcidrBtS(b []byte) (string, error) {
-	if len(b) != 1 {
-		return "", fmt.Errorf("invalid length (should be == 1)")
+	if err := ipcidrValidate(b); err != nil {
+		return "", err
 	}
 	return strconv.Itoa(int(b[0])), nil
 }
@@ -72,6 +72,13 @@ func ipcidrStB(s string) ([]byte, error) {
 		return nil, err
 	}
 	return []byte{byte(uint8(ipMask))}, nil
+}
+
+func ipcidrValidate(b []byte) error {
+	if len(b) != 1 {
+		return fmt.Errorf("invalid length (should be == 1)")
+	}
+	return nil
 }
 
 func ip4StB(s string) ([]byte, error) {
