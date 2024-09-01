@@ -80,6 +80,10 @@ func (c *Component) Protocols() []Protocol {
 	return []Protocol{c.protocol}
 }
 
+func (c *Component) AppendProtocols(ps []Protocol) []Protocol {
+	return append(ps, c.protocol)
+}
+
 func (c *Component) Decapsulate(o Multiaddr) Multiaddr {
 	if c.Equal(o) {
 		return nil
