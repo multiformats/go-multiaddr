@@ -85,6 +85,7 @@ func TestConstructFails(t *testing.T) {
 		"/ip4/1.2.3.4/tcp/80/unix",
 		"/ip4/1.2.3.4/tcp/-1",
 		"/ip4/127.0.0.1/tcp/9090/http/p2p-webcrt-direct",
+		fmt.Sprintf("/memory/%d1", uint64(1<<63)),
 		"/",
 		"",
 		"/p2p/QmxoHT6iViN5xAjoz1VZ553cL31U9F94ht3QvWR1FrEbZY", // sha256 multihash with digest len > 32
@@ -197,6 +198,7 @@ var good = []string{
 	"/http-path/foo",
 	"/ip4/127.0.0.1/tcp/0/p2p/12D3KooWCryG7Mon9orvQxcS1rYZjotPgpwoJNHHKcLLfE4Hf5mV/http-path/foo",
 	"/ip4/127.0.0.1/tcp/443/tls/sni/example.com/http/http-path/foo",
+	"/memory/4",
 }
 
 func TestConstructSucceeds(t *testing.T) {
