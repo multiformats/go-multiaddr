@@ -41,7 +41,7 @@ const (
 	P_PLAINTEXTV2       = 7367777
 	P_WEBRTC_DIRECT     = 280
 	P_WEBRTC            = 281
-	P_MEMORY            = 0x0309 // 777 decimal
+	P_MEMORY            = 777
 )
 
 var (
