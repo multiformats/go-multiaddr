@@ -489,3 +489,32 @@ func validateHTTPPath(b []byte) error {
 	}
 	return nil // We can represent any byte slice when we escape it.
 }
+
+var TranscoderMemory = NewTranscoderFromFunctions(memoryStB, memoryBtS, memoryValidate)
+
+func memoryStB(s string) ([]byte, error) {
+	z, err := strconv.ParseUint(s, 10, 64)
+	if err != nil {
+		return nil, err
+	}
+	buf := make([]byte, 8)
+	binary.BigEndian.PutUint64(buf, z)
+	return buf, nil
+}
+
+func memoryBtS(b []byte) (string, error) {
+	if len(b) != 8 {
+		return "", fmt.Errorf("expected uint64, only found %d bits", len(b)*8)
+	}
+	z := binary.BigEndian.Uint64(b)
+	return strconv.FormatUint(z, 10), nil
+}
+
+func memoryValidate(b []byte) error {
+	// Ensure the byte array is exactly 8 bytes long for a uint64 in big-endian format
+	if len(b) != 8 {
+		return errors.New("invalid length: must be exactly 8 bytes")
+	}
+
+	return nil
+}
