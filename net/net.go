@@ -34,48 +34,6 @@ type halfOpen interface {
 	CloseWrite() error
 }
 
-func wrap(nconn net.Conn, laddr, raddr ma.Multiaddr) Conn {
-	endpts := maEndpoints{
-		laddr: laddr,
-		raddr: raddr,
-	}
-	// This sucks. However, it's the only way to reliably expose the
-	// underlying methods. This way, users that need access to, e.g.,
-	// CloseRead and CloseWrite, can do so via type assertions.
-	switch nconn := nconn.(type) {
-	case *net.TCPConn:
-		return &struct {
-			*net.TCPConn
-			maEndpoints
-		}{nconn, endpts}
-	case *net.UDPConn:
-		return &struct {
-			*net.UDPConn
-			maEndpoints
-		}{nconn, endpts}
-	case *net.IPConn:
-		return &struct {
-			*net.IPConn
-			maEndpoints
-		}{nconn, endpts}
-	case *net.UnixConn:
-		return &struct {
-			*net.UnixConn
-			maEndpoints
-		}{nconn, endpts}
-	case halfOpen:
-		return &struct {
-			halfOpen
-			maEndpoints
-		}{nconn, endpts}
-	default:
-		return &struct {
-			net.Conn
-			maEndpoints
-		}{nconn, endpts}
-	}
-}
-
 // WrapNetConn wraps a net.Conn object with a Multiaddr friendly Conn.
 //
 // This function does it's best to avoid "hiding" methods exposed by the wrapped
@@ -362,7 +320,7 @@ func ListenPacket(laddr ma.Multiaddr) (PacketConn, error) {
 		return nil, err
 	}
 
-	pc, err := net.ListenPacket(lnet, lnaddr)
+	pc, err := listenPacket(lnet, lnaddr)
 	if err != nil {
 		return nil, err
 	}
