@@ -14,18 +14,40 @@ type ProtocolCode uint64
 
 type Component struct {
 	value          []byte
-	protocolCode   ProtocolCode
+	protocol       *Protocol
 	isVariableSize bool
 }
 
-func (c Component) Code() int {
-	return int(c.protocolCode)
+func (c Component) Code() ProtocolCode {
+	if c.protocol == nil {
+		return 0
+	}
+	return c.protocol.Code
+}
+
+func (c Component) Name() ProtocolName {
+	if c.protocol == nil {
+		return ""
+	}
+	return c.protocol.Name
 }
 
 func (c Component) Value() []byte {
 	out := make([]byte, len(c.value))
 	copy(out, c.value)
 	return out
+}
+
+func (c Component) StringValue() (string, error) {
+	if c.protocol == nil || c.protocol.Transcoder == nil {
+		return "", errors.New("missing transcoder for protocol")
+	}
+
+	return c.protocol.Transcoder.BytesToString(c.value)
+}
+
+func (c Component) Protocol() Protocol {
+	return *c.protocol
 }
 
 // MultiaddrBytes represents the binary form of a multiaddr
@@ -42,21 +64,68 @@ func (m Multiaddr) PopLast() (Multiaddr, Component) {
 	return m[:len(m)-1], m[len(m)-1]
 }
 
-func (m Multiaddr) ToBinary() ([]byte, error) {
+func (m Multiaddr) Bytes() (MultiaddrBytes, error) {
 	var out []byte
 
 	for _, c := range m {
-		if c.protocolCode == 0 {
-			return nil, errors.New("invalid multiaddr: component has no protocol code")
+		if c.protocol == nil || c.protocol.Code == 0 {
+			return MultiaddrBytes{}, errors.New("invalid multiaddr: component has no attached protocol")
 		}
-		out = binary.AppendUvarint(out, uint64(c.protocolCode))
+		out = binary.AppendUvarint(out, uint64(c.protocol.Code))
 		if c.isVariableSize {
 			out = binary.AppendUvarint(out, uint64(len(c.value)))
 		}
 		out = append(out, c.value...)
 	}
 
-	return out, nil
+	return MultiaddrBytes{out}, nil
+}
+
+func (m Multiaddr) ToString() (string, error) {
+	var out strings.Builder
+
+	for _, c := range m {
+		if c.protocol == nil || c.protocol.Code == 0 {
+			return "", errors.New("invalid multiaddr: component has no protocol")
+		}
+
+		if c.protocol == nil || c.protocol.Name == "" {
+			return "", errors.New("missing protocol")
+		}
+		p := c.protocol
+
+		out.WriteRune('/')
+		out.WriteString(string(p.Name))
+
+		if len(c.value) != 0 {
+			if p.Transcoder == nil {
+				return "", errors.New("missing transcoder for protocol")
+			}
+			err := p.Transcoder.ValidateBytes(c.value)
+			if err != nil {
+				return "", err
+			}
+
+			s, err := p.Transcoder.BytesToString(c.value)
+			if err != nil {
+				return "", err
+			}
+			out.WriteRune('/')
+			out.WriteString(s)
+		}
+	}
+
+	return out.String(), nil
+}
+
+// String converts the multiaddr to its string form. If there is an error in
+// conversion it returns an empty string.
+func (m Multiaddr) String() string {
+	s, err := m.ToString()
+	if err != nil {
+		return ""
+	}
+	return s
 }
 
 // MultiaddrTranscoder coverts between Strings/Bytes to Multiaddrs and back.
@@ -65,19 +134,18 @@ func (m Multiaddr) ToBinary() ([]byte, error) {
 // the protocols they are working with.
 type MultiaddrTranscoder struct {
 	protocols       []Protocol
-	protocolsByName map[ProtocolName]Protocol
-	protocolsByCode map[ProtocolCode]Protocol
+	protocolsByName map[ProtocolName]*Protocol
+	protocolsByCode map[ProtocolCode]*Protocol
 }
 
 func (t *MultiaddrTranscoder) AddProtocol(p Protocol) error {
 	if t.protocolsByName == nil {
-		t.protocolsByName = make(map[ProtocolName]Protocol)
+		t.protocolsByName = make(map[ProtocolName]*Protocol)
 	}
 	if t.protocolsByCode == nil {
-		t.protocolsByCode = make(map[ProtocolCode]Protocol)
+		t.protocolsByCode = make(map[ProtocolCode]*Protocol)
 	}
 
-	t.protocols = append(t.protocols, p)
 	if _, ok := t.protocolsByName[p.Name]; ok {
 		return fmt.Errorf("protocol by the name %q already exists", p.Name)
 	}
@@ -93,18 +161,23 @@ func (t *MultiaddrTranscoder) AddProtocol(p Protocol) error {
 		return fmt.Errorf("path protocols must have variable-length sizes")
 	}
 
-	Protocols = append(Protocols, p)
-	t.protocolsByName[p.Name] = p
-	t.protocolsByCode[p.Code] = p
+	t.protocols = append(t.protocols, p)
+	ptr := &t.protocols[len(t.protocols)-1]
+	t.protocolsByName[p.Name] = ptr
+	t.protocolsByCode[p.Code] = ptr
 	return nil
 }
 
+// AliasProtocol aliases the "from" protocol name to use the same Protocol as
+// the "to" ProtocolName.
+//
+// the "to" Protocol should be Added first, otherwise this returns an error.
 func (t *MultiaddrTranscoder) AliasProtocolName(from ProtocolName, to ProtocolName) error {
 	if t.protocolsByName == nil {
-		t.protocolsByName = make(map[ProtocolName]Protocol)
+		return fmt.Errorf("protocol %q is missing", to)
 	}
 	if t.protocolsByCode == nil {
-		t.protocolsByCode = make(map[ProtocolCode]Protocol)
+		return fmt.Errorf("protocol %q is missing", to)
 	}
 
 	p, ok := t.protocolsByName[to]
@@ -118,19 +191,19 @@ func (t *MultiaddrTranscoder) AliasProtocolName(from ProtocolName, to ProtocolNa
 
 func (t *MultiaddrTranscoder) ProtocolWithName(s ProtocolName) (Protocol, bool) {
 	v, ok := t.protocolsByName[s]
-	return v, ok
+	return *v, ok
 }
 
 func (t *MultiaddrTranscoder) ProtocolWithCode(c ProtocolCode) (Protocol, bool) {
 	v, ok := t.protocolsByCode[c]
-	return v, ok
+	return *v, ok
 }
 
 func (t *MultiaddrTranscoder) Decode(mab MultiaddrBytes) (Multiaddr, error) {
-	return t.FromBinary(mab.Bytes)
+	return t.FromBytes(mab.Bytes)
 }
 
-func (t *MultiaddrTranscoder) FromBinary(b []byte) (Multiaddr, error) {
+func (t *MultiaddrTranscoder) FromBytes(b []byte) (Multiaddr, error) {
 	var out []Component
 	for len(b) > 0 {
 		code, n := binary.Uvarint(b)
@@ -165,7 +238,7 @@ func (t *MultiaddrTranscoder) FromBinary(b []byte) (Multiaddr, error) {
 
 		c := Component{
 			value:          value,
-			protocolCode:   ProtocolCode(code),
+			protocol:       p,
 			isVariableSize: isVariableSize,
 		}
 		out = append(out, c)
@@ -178,8 +251,12 @@ func (t *MultiaddrTranscoder) FromBinary(b []byte) (Multiaddr, error) {
 	return out, nil
 }
 
-func (t *MultiaddrTranscoder) ToBinary(m Multiaddr) ([]byte, error) {
-	return m.ToBinary()
+func (t *MultiaddrTranscoder) ToBytes(m Multiaddr) ([]byte, error) {
+	b, err := m.Bytes()
+	if err != nil {
+		return nil, err
+	}
+	return b.Bytes, nil
 }
 
 func (t *MultiaddrTranscoder) FromString(s string) (Multiaddr, error) {
@@ -205,7 +282,7 @@ func (t *MultiaddrTranscoder) FromString(s string) (Multiaddr, error) {
 		}
 		if p.Size == 0 {
 			// No value. We exit this iteration early
-			out = append(out, Component{protocolCode: ProtocolCode(p.Code)})
+			out = append(out, Component{protocol: p})
 			continue
 		}
 
@@ -220,7 +297,7 @@ func (t *MultiaddrTranscoder) FromString(s string) (Multiaddr, error) {
 
 		out = append(out, Component{
 			value:          val,
-			protocolCode:   ProtocolCode(p.Code),
+			protocol:       p,
 			isVariableSize: p.Size < 0,
 		})
 	}
@@ -240,13 +317,13 @@ func (t *MultiaddrTranscoder) ToString(m Multiaddr) (string, error) {
 	var out strings.Builder
 
 	for _, c := range m {
-		if c.protocolCode == 0 {
-			return "", errors.New("invalid multiaddr: component has no protocol code")
+		if c.protocol == nil || c.protocol.Code == 0 {
+			return "", errors.New("invalid multiaddr: component has no protocol")
 		}
 
-		p, ok := t.protocolsByCode[c.protocolCode]
+		p, ok := t.protocolsByCode[c.protocol.Code]
 		if !ok {
-			return "", fmt.Errorf("unsupported protocol code: %d", c.protocolCode)
+			return "", fmt.Errorf("unsupported protocol code: %d", c.protocol.Code)
 		}
 
 		out.WriteRune('/')

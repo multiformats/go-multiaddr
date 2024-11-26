@@ -41,8 +41,7 @@ func TestRoundTrip(t *testing.T) {
 	expectedStr := "/ip4/127.0.0.1/tcp/1234"
 	ma, err := DefaultMultiaddrTranscoder.FromString(expectedStr)
 	assertNoErr(t, err)
-	str, err := DefaultMultiaddrTranscoder.ToString(ma)
-	assertNoErr(t, err)
+	str := ma.String()
 
 	if str != expectedStr {
 		t.Fatalf("expected %q, got %q", expectedStr, str)
@@ -155,7 +154,7 @@ func FuzzRoundTrip(f *testing.F) {
 			return
 		}
 
-		b, err := ma.ToBinary()
+		b, err := ma.Bytes()
 		if err != nil {
 			panic("failed to roundtrip to bytes")
 		}
@@ -169,12 +168,12 @@ func FuzzRoundTrip(f *testing.F) {
 		if err != nil {
 			panic("failed to roundtrip from string: " + err.Error() + " " + s + data)
 		}
-		b2, err := DefaultMultiaddrTranscoder.ToBinary(ma2)
+		b2, err := DefaultMultiaddrTranscoder.ToBytes(ma2)
 		if err != nil {
 			panic("failed to roundtrip to bytes second time")
 		}
 
-		if !bytes.Equal(b, b2) {
+		if !bytes.Equal(b.Bytes, b2) {
 			panic(fmt.Sprintf("expected %q, got %q", data, s))
 		}
 	})
