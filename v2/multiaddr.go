@@ -34,7 +34,11 @@ type MultiaddrBytes struct {
 }
 
 func (m MultiaddrBytes) Decode() (Multiaddr, error) {
-	return FromBinaryWithProtos(m.Bytes, protocolsByCode)
+	return m.DecodeWithProtos(protocolsByCode)
+}
+
+func (m MultiaddrBytes) DecodeWithProtos(supportedProtocols map[ProtocolCode]Protocol) (Multiaddr, error) {
+	return FromBinaryWithProtos(m.Bytes, supportedProtocols)
 }
 
 type Multiaddr []Component
