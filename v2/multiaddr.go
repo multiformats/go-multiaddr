@@ -33,14 +33,6 @@ type MultiaddrBytes struct {
 	Bytes []byte
 }
 
-func (m MultiaddrBytes) Decode() (Multiaddr, error) {
-	return m.DecodeWithProtos(protocolsByCode)
-}
-
-func (m MultiaddrBytes) DecodeWithProtos(supportedProtocols map[ProtocolCode]Protocol) (Multiaddr, error) {
-	return FromBinaryWithProtos(m.Bytes, supportedProtocols)
-}
-
 type Multiaddr []Component
 
 func (m Multiaddr) PopLast() (Multiaddr, Component) {
@@ -50,11 +42,95 @@ func (m Multiaddr) PopLast() (Multiaddr, Component) {
 	return m[:len(m)-1], m[len(m)-1]
 }
 
-func FromBinary(b []byte) (Multiaddr, error) {
-	return FromBinaryWithProtos(b, protocolsByCode)
+func (m Multiaddr) ToBinary() ([]byte, error) {
+	var out []byte
+
+	for _, c := range m {
+		if c.protocolCode == 0 {
+			return nil, errors.New("invalid multiaddr: component has no protocol code")
+		}
+		out = binary.AppendUvarint(out, uint64(c.protocolCode))
+		if c.isVariableSize {
+			out = binary.AppendUvarint(out, uint64(len(c.value)))
+		}
+		out = append(out, c.value...)
+	}
+
+	return out, nil
 }
 
-func FromBinaryWithProtos(b []byte, supportedProtocols map[ProtocolCode]Protocol) (Multiaddr, error) {
+// MultiaddrTranscoder coverts between Strings/Bytes to Multiaddrs and back.
+// A default MultiaddrTranscoder is provided with all configured protocols.
+// Users are encouraged to build their own MultiaddrTranscoder and support only
+// the protocols they are working with.
+type MultiaddrTranscoder struct {
+	protocols       []Protocol
+	protocolsByName map[ProtocolName]Protocol
+	protocolsByCode map[ProtocolCode]Protocol
+}
+
+func (t *MultiaddrTranscoder) AddProtocol(p Protocol) error {
+	if t.protocolsByName == nil {
+		t.protocolsByName = make(map[ProtocolName]Protocol)
+	}
+	if t.protocolsByCode == nil {
+		t.protocolsByCode = make(map[ProtocolCode]Protocol)
+	}
+
+	t.protocols = append(t.protocols, p)
+	if _, ok := t.protocolsByName[p.Name]; ok {
+		return fmt.Errorf("protocol by the name %q already exists", p.Name)
+	}
+
+	if _, ok := t.protocolsByCode[p.Code]; ok {
+		return fmt.Errorf("protocol code %d already taken by %q", p.Code, p.Code)
+	}
+
+	if p.Size != 0 && p.Transcoder == nil {
+		return fmt.Errorf("protocols with arguments must define transcoders")
+	}
+	if p.Path && p.Size >= 0 {
+		return fmt.Errorf("path protocols must have variable-length sizes")
+	}
+
+	Protocols = append(Protocols, p)
+	t.protocolsByName[p.Name] = p
+	t.protocolsByCode[p.Code] = p
+	return nil
+}
+
+func (t *MultiaddrTranscoder) AliasProtocolName(from ProtocolName, to ProtocolName) error {
+	if t.protocolsByName == nil {
+		t.protocolsByName = make(map[ProtocolName]Protocol)
+	}
+	if t.protocolsByCode == nil {
+		t.protocolsByCode = make(map[ProtocolCode]Protocol)
+	}
+
+	p, ok := t.protocolsByName[to]
+	if !ok {
+		return fmt.Errorf("protocol %q is missing", to)
+	}
+
+	t.protocolsByName[from] = p
+	return nil
+}
+
+func (t *MultiaddrTranscoder) ProtocolWithName(s ProtocolName) (Protocol, bool) {
+	v, ok := t.protocolsByName[s]
+	return v, ok
+}
+
+func (t *MultiaddrTranscoder) ProtocolWithCode(c ProtocolCode) (Protocol, bool) {
+	v, ok := t.protocolsByCode[c]
+	return v, ok
+}
+
+func (t *MultiaddrTranscoder) Decode(mab MultiaddrBytes) (Multiaddr, error) {
+	return t.FromBinary(mab.Bytes)
+}
+
+func (t *MultiaddrTranscoder) FromBinary(b []byte) (Multiaddr, error) {
 	var out []Component
 	for len(b) > 0 {
 		code, n := binary.Uvarint(b)
@@ -62,7 +138,7 @@ func FromBinaryWithProtos(b []byte, supportedProtocols map[ProtocolCode]Protocol
 			return nil, errors.New("invalid multiaddr: invalid protocol code")
 		}
 		b = b[n:]
-		p, ok := supportedProtocols[ProtocolCode(code)]
+		p, ok := t.protocolsByCode[ProtocolCode(code)]
 		if !ok {
 			return nil, fmt.Errorf("unsupported protocol code: %d", code)
 		}
@@ -102,28 +178,11 @@ func FromBinaryWithProtos(b []byte, supportedProtocols map[ProtocolCode]Protocol
 	return out, nil
 }
 
-func (m Multiaddr) ToBinary() ([]byte, error) {
-	var out []byte
-
-	for _, c := range m {
-		if c.protocolCode == 0 {
-			return nil, errors.New("invalid multiaddr: component has no protocol code")
-		}
-		out = binary.AppendUvarint(out, uint64(c.protocolCode))
-		if c.isVariableSize {
-			out = binary.AppendUvarint(out, uint64(len(c.value)))
-		}
-		out = append(out, c.value...)
-	}
-
-	return out, nil
+func (t *MultiaddrTranscoder) ToBinary(m Multiaddr) ([]byte, error) {
+	return m.ToBinary()
 }
 
-func FromString(s string) (Multiaddr, error) {
-	return FromStringWithProtos(s, protocolsByName)
-}
-
-func FromStringWithProtos(s string, supportedProtocols map[ProtocolName]Protocol) (Multiaddr, error) {
+func (t *MultiaddrTranscoder) FromString(s string) (Multiaddr, error) {
 	if len(s) == 0 {
 		return nil, errors.New("invalid multiaddr: empty string")
 	}
@@ -140,7 +199,7 @@ func FromStringWithProtos(s string, supportedProtocols map[ProtocolName]Protocol
 
 	for scanner.Scan() {
 		protoName := scanner.Text()
-		p, ok := supportedProtocols[ProtocolName(protoName)]
+		p, ok := t.protocolsByName[ProtocolName(protoName)]
 		if !ok {
 			return nil, fmt.Errorf("unsupported protocol: %s", protoName)
 		}
@@ -173,36 +232,8 @@ func FromStringWithProtos(s string, supportedProtocols map[ProtocolName]Protocol
 	return out, nil
 }
 
-// splitTextOnSlash splits the input data on the '/' character.
-// It returns the advance count, the token, and an error if any.
-// If atEOF is true and there is remaining data, it returns the final token.
-//
-// For use with bufio.Scanner.
-func splitTextOnSlash(data []byte, atEOF bool) (advance int, token []byte, err error) {
-	start := 0
-
-	// Scan until space, marking end of word.
-	for width, i := 0, start; i < len(data); i += width {
-		var r rune
-		r, width = utf8.DecodeRune(data[i:])
-		if r == '/' {
-			return i + width, data[start:i], nil
-		}
-	}
-	// If we're at EOF, we have a final, non-empty, non-terminated word. Return it.
-	if atEOF && len(data) > start {
-		return len(data), data[start:], nil
-	}
-	// Request more data.
-	return start, nil, nil
-}
-
-func (m Multiaddr) ToString() (string, error) {
-	return m.ToStringWithProtos(protocolsByCode)
-}
-
-func (m Multiaddr) ToStringWithProtos(supportedProtocols map[ProtocolCode]Protocol) (string, error) {
-	if len(supportedProtocols) == 0 {
+func (t *MultiaddrTranscoder) ToString(m Multiaddr) (string, error) {
+	if len(t.protocolsByCode) == 0 {
 		return "", errors.New("no supported protocols")
 	}
 
@@ -213,7 +244,7 @@ func (m Multiaddr) ToStringWithProtos(supportedProtocols map[ProtocolCode]Protoc
 			return "", errors.New("invalid multiaddr: component has no protocol code")
 		}
 
-		p, ok := supportedProtocols[c.protocolCode]
+		p, ok := t.protocolsByCode[c.protocolCode]
 		if !ok {
 			return "", fmt.Errorf("unsupported protocol code: %d", c.protocolCode)
 		}
@@ -237,4 +268,30 @@ func (m Multiaddr) ToStringWithProtos(supportedProtocols map[ProtocolCode]Protoc
 	}
 
 	return out.String(), nil
+}
+
+// var _ = Transcoder(MultiaddrTranscoder{})
+
+// splitTextOnSlash splits the input data on the '/' character.
+// It returns the advance count, the token, and an error if any.
+// If atEOF is true and there is remaining data, it returns the final token.
+//
+// For use with bufio.Scanner.
+func splitTextOnSlash(data []byte, atEOF bool) (advance int, token []byte, err error) {
+	start := 0
+
+	// Scan until space, marking end of word.
+	for width, i := 0, start; i < len(data); i += width {
+		var r rune
+		r, width = utf8.DecodeRune(data[i:])
+		if r == '/' {
+			return i + width, data[start:i], nil
+		}
+	}
+	// If we're at EOF, we have a final, non-empty, non-terminated word. Return it.
+	if atEOF && len(data) > start {
+		return len(data), data[start:], nil
+	}
+	// Request more data.
+	return start, nil, nil
 }

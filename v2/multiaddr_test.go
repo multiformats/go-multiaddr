@@ -17,7 +17,7 @@ func assertNoErr(t *testing.T, err error) {
 // that the multiaddr is of some form.
 func TestAssertForm(t *testing.T) {
 	expectedStr := "/ip4/127.0.0.1/tcp/1234"
-	ma, err := FromString(expectedStr)
+	ma, err := DefaultMultiaddrTranscoder.FromString(expectedStr)
 	assertNoErr(t, err)
 
 	ma, c := ma.PopLast()
@@ -39,9 +39,9 @@ func TestAssertForm(t *testing.T) {
 
 func TestRoundTrip(t *testing.T) {
 	expectedStr := "/ip4/127.0.0.1/tcp/1234"
-	ma, err := FromString(expectedStr)
+	ma, err := DefaultMultiaddrTranscoder.FromString(expectedStr)
 	assertNoErr(t, err)
-	str, err := ma.ToString()
+	str, err := DefaultMultiaddrTranscoder.ToString(ma)
 	assertNoErr(t, err)
 
 	if str != expectedStr {
@@ -150,7 +150,7 @@ func FuzzRoundTrip(f *testing.F) {
 	}
 
 	f.Fuzz(func(t *testing.T, data string) {
-		ma, err := FromString(data)
+		ma, err := DefaultMultiaddrTranscoder.FromString(data)
 		if err != nil {
 			return
 		}
@@ -160,16 +160,16 @@ func FuzzRoundTrip(f *testing.F) {
 			panic("failed to roundtrip to bytes")
 		}
 
-		s, err := ma.ToString()
+		s, err := DefaultMultiaddrTranscoder.ToString(ma)
 		if err != nil {
 			panic("failed to roundtrip to string: " + err.Error() + " " + data)
 		}
 
-		ma2, err := FromString(s)
+		ma2, err := DefaultMultiaddrTranscoder.FromString(s)
 		if err != nil {
 			panic("failed to roundtrip from string: " + err.Error() + " " + s + data)
 		}
-		b2, err := ma2.ToBinary()
+		b2, err := DefaultMultiaddrTranscoder.ToBinary(ma2)
 		if err != nil {
 			panic("failed to roundtrip to bytes second time")
 		}

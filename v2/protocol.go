@@ -1,10 +1,5 @@
 package multiaddr
 
-import (
-	"fmt"
-	"strings"
-)
-
 // These are special sizes
 const (
 	LengthPrefixedVarSize = -1
@@ -44,59 +39,5 @@ type Protocol struct {
 	Transcoder Transcoder
 }
 
-var protocolsByName = map[ProtocolName]Protocol{}
-var protocolsByCode = map[ProtocolCode]Protocol{}
-
 // Protocols is the list of multiaddr protocols supported by this module.
 var Protocols = []Protocol{}
-
-func AddProtocol(p Protocol) error {
-	if _, ok := protocolsByName[p.Name]; ok {
-		return fmt.Errorf("protocol by the name %q already exists", p.Name)
-	}
-
-	if _, ok := protocolsByCode[p.Code]; ok {
-		return fmt.Errorf("protocol code %d already taken by %q", p.Code, p.Code)
-	}
-
-	if p.Size != 0 && p.Transcoder == nil {
-		return fmt.Errorf("protocols with arguments must define transcoders")
-	}
-	if p.Path && p.Size >= 0 {
-		return fmt.Errorf("path protocols must have variable-length sizes")
-	}
-
-	Protocols = append(Protocols, p)
-	protocolsByName[p.Name] = p
-	protocolsByCode[p.Code] = p
-	return nil
-}
-
-// protocolWithName returns the Protocol description with given protocol name.
-func protocolWithName(s string) Protocol {
-	return protocolsByName[ProtocolName(s)]
-}
-
-// protocolWithCode returns the Protocol description with given protocol code.
-func protocolWithCode(c int) Protocol {
-	return protocolsByCode[ProtocolCode(c)]
-}
-
-// protocolsWithString returns a slice of protocols matching given string.
-func protocolsWithString(s string) ([]Protocol, error) {
-	s = strings.Trim(s, "/")
-	sp := strings.Split(s, "/")
-	if len(sp) == 0 {
-		return nil, nil
-	}
-
-	t := make([]Protocol, len(sp))
-	for i, name := range sp {
-		p := protocolWithName(name)
-		if p.Code == 0 {
-			return nil, fmt.Errorf("no protocol with name: %s", name)
-		}
-		t[i] = p
-	}
-	return t, nil
-}
