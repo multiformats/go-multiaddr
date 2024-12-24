@@ -379,7 +379,7 @@ func TestBytesSplitAndJoin(t *testing.T) {
 func TestProtocols(t *testing.T) {
 	m, err := NewMultiaddr("/ip4/127.0.0.1/udp/1234")
 	if err != nil {
-		t.Error("failed to construct", "/ip4/127.0.0.1/udp/1234")
+		t.Fatal("failed to construct", "/ip4/127.0.0.1/udp/1234")
 	}
 
 	ps := m.Protocols()
@@ -393,6 +393,48 @@ func TestProtocols(t *testing.T) {
 		t.Error("failed to get udp protocol")
 	}
 
+	ps = m.AppendProtocols(ps)
+	if ps[2].Code != ProtocolWithName("ip4").Code {
+		t.Error(ps[2], ProtocolWithName("ip4"))
+		t.Error("failed to get ip4 protocol")
+	}
+
+	if ps[3].Code != ProtocolWithName("udp").Code {
+		t.Error(ps[3], ProtocolWithName("udp"))
+		t.Error("failed to get udp protocol")
+	}
+}
+
+var ProtocolSink []Protocol
+
+func BenchmarkProtocols(b *testing.B) {
+	m, err := NewMultiaddr("/ip4/127.0.0.1/udp/1234")
+	if err != nil {
+		b.Fatal("failed to construct", "/ip4/127.0.0.1/udp/1234")
+	}
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	var ps []Protocol
+	for i := b.N; i != 0; i-- {
+		ps = m.Protocols()
+	}
+	ProtocolSink = ps
+}
+
+func BenchmarkAppendProtocols(b *testing.B) {
+	m, err := NewMultiaddr("/ip4/127.0.0.1/udp/1234")
+	if err != nil {
+		b.Fatal("failed to construct", "/ip4/127.0.0.1/udp/1234")
+	}
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	var ps []Protocol
+	for i := b.N; i != 0; i-- {
+		ps = m.AppendProtocols(ps[:0])
+	}
+	ProtocolSink = ps
 }
 
 func TestProtocolsWithString(t *testing.T) {

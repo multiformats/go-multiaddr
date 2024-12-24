@@ -110,10 +110,13 @@ func (m *multiaddr) UnmarshalJSON(data []byte) error {
 	return err
 }
 
-// Protocols returns the list of protocols this Multiaddr has.
-// will panic in case we access bytes incorrectly.
 func (m *multiaddr) Protocols() []Protocol {
-	ps := make([]Protocol, 0, 8)
+	return m.AppendProtocols(makeSlice[Protocol](8)[:0])
+}
+
+// AppendProtocols returns the list of protocols this Multiaddr has.
+// will panic in case we access bytes incorrectly.
+func (m *multiaddr) AppendProtocols(ps []Protocol) []Protocol {
 	b := m.bytes
 	for len(b) > 0 {
 		code, n, err := ReadVarintCode(b)
