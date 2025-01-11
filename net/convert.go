@@ -102,12 +102,17 @@ func parseBasicNetMaddr(maddr ma.Multiaddr) (net.Addr, error) {
 func FromIPAndZone(ip net.IP, zone string) (ma.Multiaddr, error) {
 	switch {
 	case ip.To4() != nil:
-		return ma.NewComponent("ip4", ip.String())
+		c, err := ma.NewComponent("ip4", ip.String())
+		if err != nil {
+			return ma.Multiaddr{}, err
+		}
+		return c.AsMultiaddr(), nil
 	case ip.To16() != nil:
-		ip6, err := ma.NewComponent("ip6", ip.String())
+		ip6C, err := ma.NewComponent("ip6", ip.String())
 		if err != nil {
 			return nil, err
 		}
+		ip6 := ip6C.AsMultiaddr()
 		if zone == "" {
 			return ip6, nil
 		} else {
@@ -354,5 +359,9 @@ func parseUnixNetAddr(a net.Addr) (ma.Multiaddr, error) {
 		path = "/" + path
 	}
 
-	return ma.NewComponent("unix", path)
+	c, err := ma.NewComponent("unix", path)
+	if err != nil {
+		return nil, err
+	}
+	return c.AsMultiaddr(), nil
 }
