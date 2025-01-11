@@ -864,13 +864,23 @@ func TestUseNil(t *testing.T) {
 		return nil
 	}
 
-	m := f()
-	m.Decapsulate(nil)
-	m.Encapsulate(nil)
-	m.Protocols()
-	m.Bytes()
-	m.String()
-	m.MarshalBinary()
+	_ = f()
+
+	var foo Multiaddr = nil
+	foo.Bytes()
+	foo.Compare(nil)
+	foo.Decapsulate(nil)
+	foo.Encapsulate(nil)
+	foo.Equal(nil)
+	_, _ = foo.MarshalBinary()
+	_, _ = foo.MarshalJSON()
+	_, _ = foo.MarshalText()
+	foo.Protocols()
+	_ = foo.String()
+	_ = foo.UnmarshalBinary(nil)
+	_ = foo.UnmarshalJSON(nil)
+	_ = foo.UnmarshalText(nil)
+	_, _ = foo.ValueForProtocol(0)
 }
 
 func TestFilterAddrs(t *testing.T) {
