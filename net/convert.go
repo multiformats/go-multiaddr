@@ -172,7 +172,7 @@ func DialArgs(m ma.Multiaddr) (string, string, error) {
 			return network, ip + ":" + port, nil
 		}
 		// Hostname is only true when network is one of the above.
-		panic("unreachable")
+		return "", "", errors.New("No hostname") // should be unreachable
 	}
 
 	switch network {
