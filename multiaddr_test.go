@@ -255,7 +255,7 @@ func TestNilInterface(t *testing.T) {
 
 	// Test components
 	c, _ := SplitFirst(m1)
-	c.Equal(m2)
+	c.AsMultiaddr().Equal(m2)
 	c.Encapsulate(m2)
 	c.Decapsulate(m2)
 
@@ -285,7 +285,7 @@ func TestStringToBytes(t *testing.T) {
 			t.Error("failed to convert \n", s, "to\n", hex.EncodeToString(b1), "got\n", hex.EncodeToString(b2))
 		}
 
-		if err := validateBytes(b2); err != nil {
+		if _, err := NewMultiaddrBytes(b2); err != nil {
 			t.Error(err, "len:", len(b2))
 		}
 	}
@@ -311,7 +311,7 @@ func TestBytesToString(t *testing.T) {
 			t.Error("failed to decode hex", h)
 		}
 
-		if err := validateBytes(b); err != nil {
+		if _, err := NewMultiaddrBytes(b); err != nil {
 			t.Error(err)
 		}
 
@@ -357,7 +357,7 @@ func TestBytesSplitAndJoin(t *testing.T) {
 			}
 		}
 
-		joined := Join(split...)
+		joined := JoinComponents(split...)
 		if !m.Equal(joined) {
 			t.Errorf("joined components failed: %s != %s", m, joined)
 		}
@@ -459,7 +459,7 @@ func TestEncapsulate(t *testing.T) {
 
 	m4, _ := NewMultiaddr("/ip4/127.0.0.1")
 	d := c.Decapsulate(m4)
-	if d != nil {
+	if !d.Empty() {
 		t.Error("decapsulate /ip4 failed: ", d)
 	}
 }
@@ -480,7 +480,7 @@ func TestDecapsulateComment(t *testing.T) {
 
 	m = StringCast("/ip4/1.2.3.4/tcp/80")
 	rest = m.Decapsulate(StringCast("/ip4/1.2.3.4"))
-	require.Nil(t, rest, "expected a nil multiaddr if we decapsulate everything")
+	require.True(t, rest.Empty(), "expected a nil multiaddr if we decapsulate everything")
 }
 
 func TestDecapsulate(t *testing.T) {
@@ -513,7 +513,7 @@ func TestDecapsulate(t *testing.T) {
 			actualMa := left.Decapsulate(right)
 
 			if tc.expected == "" {
-				require.Nil(t, actualMa, "expected nil")
+				require.True(t, actualMa.Empty(), "expected nil")
 				return
 			}
 
@@ -761,11 +761,11 @@ func TestBinaryMarshaler(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	var addr2 multiaddr
+	var addr2 Multiaddr
 	if err = addr2.UnmarshalBinary(b); err != nil {
 		t.Fatal(err)
 	}
-	if !addr.Equal(&addr2) {
+	if !addr.Equal(addr2) {
 		t.Error("expected equal addresses in circular marshaling test")
 	}
 }
@@ -777,11 +777,11 @@ func TestTextMarshaler(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	var addr2 multiaddr
+	var addr2 Multiaddr
 	if err = addr2.UnmarshalText(b); err != nil {
 		t.Fatal(err)
 	}
-	if !addr.Equal(&addr2) {
+	if !addr.Equal(addr2) {
 		t.Error("expected equal addresses in circular marshaling test")
 	}
 }
@@ -793,11 +793,11 @@ func TestJSONMarshaler(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	var addr2 multiaddr
+	var addr2 Multiaddr
 	if err = addr2.UnmarshalJSON(b); err != nil {
 		t.Fatal(err)
 	}
-	if !addr.Equal(&addr2) {
+	if !addr.Equal(addr2) {
 		t.Error("expected equal addresses in circular marshaling test")
 	}
 }
@@ -812,7 +812,7 @@ func TestComponentBinaryMarshaler(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	comp2 := &Component{}
+	comp2 := Component{}
 	if err = comp2.UnmarshalBinary(b); err != nil {
 		t.Fatal(err)
 	}
@@ -831,7 +831,7 @@ func TestComponentTextMarshaler(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	comp2 := &Component{}
+	comp2 := Component{}
 	if err = comp2.UnmarshalText(b); err != nil {
 		t.Fatal(err)
 	}
@@ -850,13 +850,27 @@ func TestComponentJSONMarshaler(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	comp2 := &Component{}
+	comp2 := Component{}
 	if err = comp2.UnmarshalJSON(b); err != nil {
 		t.Fatal(err)
 	}
 	if !comp.Equal(comp2) {
 		t.Error("expected equal components in circular marshaling test")
 	}
+}
+
+func TestUseNil(t *testing.T) {
+	f := func() Multiaddr {
+		return nil
+	}
+
+	m := f()
+	m.Decapsulate(nil)
+	m.Encapsulate(nil)
+	m.Protocols()
+	m.Bytes()
+	m.String()
+	m.MarshalBinary()
 }
 
 func TestFilterAddrs(t *testing.T) {
@@ -1013,13 +1027,13 @@ func FuzzSplitRoundtrip(f *testing.F) {
 
 		// Test SplitFirst
 		first, rest := SplitFirst(addr)
-		joined := Join(first, rest)
-		require.Equal(t, addr, joined, "SplitFirst and Join should round-trip")
+		joined := Join(first.AsMultiaddr(), rest)
+		require.True(t, addr.Equal(joined), "SplitFirst and Join should round-trip")
 
 		// Test SplitLast
 		rest, last := SplitLast(addr)
-		joined = Join(rest, last)
-		require.Equal(t, addr, joined, "SplitLast and Join should round-trip")
+		joined = Join(rest, last.AsMultiaddr())
+		require.True(t, addr.Equal(joined), "SplitLast and Join should round-trip")
 
 		p := addr.Protocols()
 		if len(p) == 0 {
@@ -1044,18 +1058,18 @@ func FuzzSplitRoundtrip(f *testing.F) {
 				return c.Protocol().Code == proto.Code
 			}
 			beforeC, after := SplitFirst(addr)
-			joined = Join(beforeC, after)
-			require.Equal(t, addr, joined)
+			joined = Join(beforeC.AsMultiaddr(), after)
+			require.True(t, addr.Equal(joined))
 			tryPubMethods(after)
 
 			before, afterC := SplitLast(addr)
-			joined = Join(before, afterC)
-			require.Equal(t, addr, joined)
+			joined = Join(before, afterC.AsMultiaddr())
+			require.True(t, addr.Equal(joined))
 			tryPubMethods(before)
 
 			before, after = SplitFunc(addr, splitFunc)
 			joined = Join(before, after)
-			require.Equal(t, addr, joined)
+			require.True(t, addr.Equal(joined))
 			tryPubMethods(before)
 			tryPubMethods(after)
 		}
