@@ -28,10 +28,6 @@ func (c Component) Decapsulate(o Multiaddr) Multiaddr {
 	return c.AsMultiaddr().Decapsulate(o)
 }
 
-func (c Component) IsUnknown() bool {
-	return c.protocol.Code == -1
-}
-
 func (c Component) Empty() bool {
 	return len(c.bytes) == 0
 }

@@ -124,6 +124,7 @@ func readMultiaddr(b []byte) (int, Multiaddr, error) {
 
 	var res Multiaddr
 	bytesRead := 0
+	sawPathComponent := false
 	for len(b) > 0 {
 		n, c, err := readComponent(b)
 		if err != nil {
@@ -131,6 +132,12 @@ func readMultiaddr(b []byte) (int, Multiaddr, error) {
 		}
 		b = b[n:]
 		bytesRead += n
+
+		if sawPathComponent {
+			// It is an error to have another component after a path component.
+			return bytesRead, Multiaddr{}, fmt.Errorf("unexpected component after path component")
+		}
+		sawPathComponent = c.protocol.Path
 		res = append(res, c)
 	}
 	return bytesRead, res, nil

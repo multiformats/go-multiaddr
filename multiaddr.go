@@ -39,8 +39,7 @@ func NewMultiaddr(s string) (a Multiaddr, err error) {
 	if err != nil {
 		return Multiaddr{}, err
 	}
-	_, m, err := readMultiaddr(b)
-	return m, err
+	return NewMultiaddrBytes(b)
 }
 
 // NewMultiaddrBytes initializes a Multiaddr from a byte representation.
@@ -52,7 +51,10 @@ func NewMultiaddrBytes(b []byte) (a Multiaddr, err error) {
 			err = fmt.Errorf("%v", e)
 		}
 	}()
-	_, m, err := readMultiaddr(b)
+	bytesRead, m, err := readMultiaddr(b)
+	if bytesRead != len(b) {
+		return Multiaddr{}, fmt.Errorf("Unexpected extra data. %v bytes leftover", len(b)-bytesRead)
+	}
 	return m, err
 }
 
