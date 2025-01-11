@@ -303,7 +303,6 @@ func TestStringToBytes(t *testing.T) {
 }
 
 func TestBytesToString(t *testing.T) {
-
 	testString := func(s1 string, h string) {
 		t.Helper()
 		b, err := hex.DecodeString(h)
@@ -315,7 +314,8 @@ func TestBytesToString(t *testing.T) {
 			t.Error(err)
 		}
 
-		s2, err := bytesToString(b)
+		m, err := NewMultiaddrBytes(b)
+		s2 := m.String()
 		if err != nil {
 			t.Log("236", s1, ":", string(h), ":", s2)
 			t.Error("failed to convert", b, err)

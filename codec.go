@@ -90,14 +90,21 @@ func readComponent(b []byte) (int, Component, error) {
 		return offset, c, err
 	}
 
-	n, size, err := sizeForAddr(p, b[offset:])
-	if err != nil {
-		return 0, Component{}, err
+	var size int
+	if p.Size < 0 {
+		// varint
+		var n int
+		size, n, err = ReadVarintCode(b[offset:])
+		if err != nil {
+			return 0, Component{}, err
+		}
+		offset += n
+	} else {
+		// Size is in bits, but we operate on bytes
+		size = p.Size / 8
 	}
 
-	offset += n
-
-	if len(b[offset:]) < size || size < 0 {
+	if len(b[offset:]) < size || size <= 0 {
 		return 0, Component{}, fmt.Errorf("invalid value for size %d", len(b[offset:]))
 	}
 
@@ -127,37 +134,4 @@ func readMultiaddr(b []byte) (int, Multiaddr, error) {
 		res = append(res, c)
 	}
 	return bytesRead, res, nil
-}
-
-func bytesToString(b []byte) (ret string, err error) {
-	if len(b) == 0 {
-		return "", fmt.Errorf("empty multiaddr")
-	}
-	var buf strings.Builder
-
-	for len(b) > 0 {
-		n, c, err := readComponent(b)
-		if err != nil {
-			return "", err
-		}
-		b = b[n:]
-		c.writeTo(&buf)
-	}
-
-	return buf.String(), nil
-}
-
-func sizeForAddr(p Protocol, b []byte) (skip, size int, err error) {
-	switch {
-	case p.Size > 0:
-		return 0, (p.Size / 8), nil
-	case p.Size == 0:
-		return 0, 0, nil
-	default:
-		size, n, err := ReadVarintCode(b)
-		if err != nil {
-			return 0, 0, err
-		}
-		return n, size, nil
-	}
 }
