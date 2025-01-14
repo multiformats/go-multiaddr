@@ -86,8 +86,6 @@ func (m Multiaddr) Compare(o Multiaddr) int {
 }
 
 // Bytes returns the []byte representation of this Multiaddr
-//
-// Do not modify the returned buffer, it may be shared.
 func (m Multiaddr) Bytes() []byte {
 	size := 0
 	for _, c := range m {

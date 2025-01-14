@@ -10,7 +10,13 @@ func Split(m Multiaddr) []Component {
 }
 
 func JoinComponents(cs ...Component) Multiaddr {
-	return cs
+	out := make([]Component, 0, len(cs))
+	for _, c := range cs {
+		if !c.Empty() {
+			out = append(out, c)
+		}
+	}
+	return out
 }
 
 // Join returns a combination of addresses.
@@ -22,7 +28,11 @@ func Join(ms ...Multiaddr) Multiaddr {
 
 	out := make([]Component, 0, size)
 	for _, m := range ms {
-		out = append(out, m...)
+		for _, c := range m {
+			if !c.Empty() {
+				out = append(out, c)
+			}
+		}
 	}
 	return out
 }
