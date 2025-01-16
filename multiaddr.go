@@ -172,10 +172,7 @@ func (m Multiaddr) Protocols() []Protocol {
 
 // Encapsulate wraps a given Multiaddr, returning the resulting joined Multiaddr
 func (m Multiaddr) Encapsulate(o Multiaddr) Multiaddr {
-	out := make([]Component, 0, len(m)+len(o))
-	out = append(out, m...)
-	out = append(out, o...)
-	return out
+	return Join(m, o)
 }
 
 // Decapsulate unwraps Multiaddr up until the given Multiaddr is found.
