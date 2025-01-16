@@ -57,15 +57,17 @@ func MultiaddrToIPNet(m ma.Multiaddr) (*net.IPNet, error) {
 	var ipString string
 	var mask string
 
-	ma.ForEach(m, func(c ma.Component) bool {
+	for _, c := range m {
 		if c.Protocol().Code == ma.P_IP4 || c.Protocol().Code == ma.P_IP6 {
 			ipString = c.Value()
 		}
 		if c.Protocol().Code == ma.P_IPCIDR {
 			mask = c.Value()
 		}
-		return ipString == "" || mask == ""
-	})
+		if ipString != "" && mask != "" {
+			break
+		}
+	}
 
 	if ipString == "" {
 		return nil, errors.New("no ip protocol found")
