@@ -37,7 +37,7 @@ func NewMultiaddr(s string) (a Multiaddr, err error) {
 	}()
 	b, err := stringToBytes(s)
 	if err != nil {
-		return Multiaddr{}, err
+		return nil, err
 	}
 	return NewMultiaddrBytes(b)
 }
@@ -53,7 +53,10 @@ func NewMultiaddrBytes(b []byte) (a Multiaddr, err error) {
 	}()
 	bytesRead, m, err := readMultiaddr(b)
 	if bytesRead != len(b) {
-		return Multiaddr{}, fmt.Errorf("Unexpected extra data. %v bytes leftover", len(b)-bytesRead)
+		return nil, fmt.Errorf("Unexpected extra data. %v bytes leftover", len(b)-bytesRead)
+	}
+	if len(m) == 0 {
+		return nil, err
 	}
 	return m, err
 }
@@ -175,6 +178,16 @@ func (m Multiaddr) Encapsulate(o Multiaddr) Multiaddr {
 	return Join(m, o)
 }
 
+func (m Multiaddr) EncapsulateC(c Component) Multiaddr {
+	if c.Empty() {
+		return m
+	}
+	out := make([]Component, 0, len(m)+1)
+	out = append(out, m...)
+	out = append(out, c)
+	return out
+}
+
 // Decapsulate unwraps Multiaddr up until the given Multiaddr is found.
 func (m Multiaddr) Decapsulate(rightParts Multiaddr) Multiaddr {
 	leftParts := m
@@ -200,7 +213,7 @@ func (m Multiaddr) Decapsulate(rightParts Multiaddr) Multiaddr {
 	}
 
 	if lastIndex == 0 {
-		return Multiaddr{}
+		return nil
 	}
 
 	if lastIndex < 0 {
@@ -262,7 +275,7 @@ func Unique(addrs []Multiaddr) []Multiaddr {
 		}
 	}
 	for i := idx; i < len(addrs); i++ {
-		addrs[i] = Multiaddr{}
+		addrs[i] = nil
 	}
 	return addrs[:idx]
 }

@@ -10,6 +10,9 @@ func Split(m Multiaddr) []Component {
 }
 
 func JoinComponents(cs ...Component) Multiaddr {
+	if len(cs) == 0 {
+		return nil
+	}
 	out := make([]Component, 0, len(cs))
 	for _, c := range cs {
 		if !c.Empty() {
@@ -24,6 +27,9 @@ func Join(ms ...Multiaddr) Multiaddr {
 	size := 0
 	for _, m := range ms {
 		size += len(m)
+	}
+	if size == 0 {
+		return nil
 	}
 
 	out := make([]Component, 0, size)
@@ -58,7 +64,10 @@ func StringCast(s string) Multiaddr {
 // SplitFirst returns the first component and the rest of the multiaddr.
 func SplitFirst(m Multiaddr) (Component, Multiaddr) {
 	if m.Empty() {
-		return Component{}, Multiaddr{}
+		return Component{}, nil
+	}
+	if len(m) == 1 {
+		return m[0], nil
 	}
 	return m[0], m[1:]
 }
@@ -66,7 +75,11 @@ func SplitFirst(m Multiaddr) (Component, Multiaddr) {
 // SplitLast returns the rest of the multiaddr and the last component.
 func SplitLast(m Multiaddr) (Multiaddr, Component) {
 	if m.Empty() {
-		return Multiaddr{}, Component{}
+		return nil, Component{}
+	}
+	if len(m) == 1 {
+		// We want to explicitly return a nil slice if the prefix is now empty.
+		return nil, m[0]
 	}
 	return m[:len(m)-1], m[len(m)-1]
 }
@@ -76,7 +89,7 @@ func SplitLast(m Multiaddr) (Multiaddr, Component) {
 // *second* multiaddr.
 func SplitFunc(m Multiaddr, cb func(Component) bool) (Multiaddr, Multiaddr) {
 	if m.Empty() {
-		return Multiaddr{}, Multiaddr{}
+		return nil, nil
 	}
 
 	idx := len(m)
@@ -86,7 +99,14 @@ func SplitFunc(m Multiaddr, cb func(Component) bool) (Multiaddr, Multiaddr) {
 			break
 		}
 	}
-	return m[:idx], m[idx:]
+	pre, post := m[:idx], m[idx:]
+	if pre.Empty() {
+		pre = nil
+	}
+	if post.Empty() {
+		post = nil
+	}
+	return pre, post
 }
 
 // ForEach walks over the multiaddr, component by component.

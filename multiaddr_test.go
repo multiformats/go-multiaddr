@@ -21,6 +21,53 @@ func newMultiaddr(t *testing.T, a string) Multiaddr {
 	return m
 }
 
+func TestReturnsNilOnEmpty(t *testing.T) {
+	a := StringCast("/ip4/1.2.3.4")
+	a, _ = SplitLast(a)
+	require.Nil(t, a)
+	a, _ = SplitLast(a)
+	require.Nil(t, a)
+
+	// Test that empty multiaddr from various operations returns nil
+	a = StringCast("/ip4/1.2.3.4/tcp/1234")
+	_, a = SplitFirst(a)
+	_, a = SplitFirst(a)
+	require.Nil(t, a)
+	_, a = SplitFirst(a)
+	require.Nil(t, a)
+
+	a = StringCast("/ip4/1.2.3.4/tcp/1234")
+	a = a.Decapsulate(a)
+	require.Nil(t, a)
+
+	a = StringCast("/ip4/1.2.3.4/tcp/1234")
+	a = a.Decapsulate(StringCast("/tcp/1234"))
+	a = a.Decapsulate(StringCast("/ip4/1.2.3.4"))
+	require.Nil(t, a)
+
+	// Test that SplitFunc returns nil when we split at beginning and end
+	a = StringCast("/ip4/1.2.3.4/tcp/1234")
+	pre, _ := SplitFunc(a, func(c Component) bool {
+		return c.Protocol().Code == P_IP4
+	})
+	require.Nil(t, pre)
+
+	a = StringCast("/ip4/1.2.3.4/tcp/1234")
+	_, post := SplitFunc(a, func(c Component) bool {
+		return false
+	})
+	require.Nil(t, post)
+
+	_, err := NewMultiaddr("")
+	require.Error(t, err)
+
+	a = JoinComponents()
+	require.Nil(t, a)
+
+	a = Join()
+	require.Nil(t, a)
+}
+
 func TestConstructFails(t *testing.T) {
 	cases := []string{
 		"/ip4",
@@ -459,7 +506,7 @@ func TestEncapsulate(t *testing.T) {
 
 	m4, _ := NewMultiaddr("/ip4/127.0.0.1")
 	d := c.Decapsulate(m4)
-	if !d.Empty() {
+	if d != nil {
 		t.Error("decapsulate /ip4 failed: ", d)
 	}
 }
@@ -480,7 +527,7 @@ func TestDecapsulateComment(t *testing.T) {
 
 	m = StringCast("/ip4/1.2.3.4/tcp/80")
 	rest = m.Decapsulate(StringCast("/ip4/1.2.3.4"))
-	require.True(t, rest.Empty(), "expected a nil multiaddr if we decapsulate everything")
+	require.Nil(t, rest, "expected a nil multiaddr if we decapsulate everything")
 }
 
 func TestDecapsulate(t *testing.T) {
@@ -513,7 +560,7 @@ func TestDecapsulate(t *testing.T) {
 			actualMa := left.Decapsulate(right)
 
 			if tc.expected == "" {
-				require.True(t, actualMa.Empty(), "expected nil")
+				require.Nil(t, actualMa, "expected nil")
 				return
 			}
 

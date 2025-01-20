@@ -17,6 +17,9 @@ type Component struct {
 }
 
 func (c Component) AsMultiaddr() Multiaddr {
+	if c.Empty() {
+		return nil
+	}
 	return []Component{c}
 }
 
@@ -123,6 +126,9 @@ func (c Component) RawValue() []byte {
 }
 
 func (c Component) Value() string {
+	if c.Empty() {
+		return ""
+	}
 	// This Component MUST have been checked by validateComponent when created
 	value, _ := c.valueAndErr()
 	return value
@@ -176,7 +182,6 @@ func NewComponent(protocol, value string) (Component, error) {
 		return Component{}, fmt.Errorf("protocol %s doesn't take a value", p.Name)
 	}
 	return newComponent(p, nil)
-	// TODO: handle path /?
 }
 
 func newComponent(protocol Protocol, bvalue []byte) (Component, error) {

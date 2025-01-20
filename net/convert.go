@@ -106,7 +106,7 @@ func FromIPAndZone(ip net.IP, zone string) (ma.Multiaddr, error) {
 	case ip.To4() != nil:
 		c, err := ma.NewComponent("ip4", ip.String())
 		if err != nil {
-			return ma.Multiaddr{}, err
+			return nil, err
 		}
 		return c.AsMultiaddr(), nil
 	case ip.To16() != nil:
