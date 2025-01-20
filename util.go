@@ -111,8 +111,6 @@ func SplitFunc(m Multiaddr, cb func(Component) bool) (Multiaddr, Multiaddr) {
 
 // ForEach walks over the multiaddr, component by component.
 //
-// Deprecated: use a simple `for _, c := range m` instead.
-//
 // This function iterates over components.
 // Return true to continue iteration, false to stop.
 func ForEach(m Multiaddr, cb func(c Component) bool) {
