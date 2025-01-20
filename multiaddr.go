@@ -52,13 +52,16 @@ func NewMultiaddrBytes(b []byte) (a Multiaddr, err error) {
 		}
 	}()
 	bytesRead, m, err := readMultiaddr(b)
-	if bytesRead != len(b) {
-		return nil, fmt.Errorf("Unexpected extra data. %v bytes leftover", len(b)-bytesRead)
-	}
-	if len(m) == 0 {
+	if err != nil {
 		return nil, err
 	}
-	return m, err
+	if bytesRead != len(b) {
+		return nil, fmt.Errorf("unexpected extra data. %v bytes leftover", len(b)-bytesRead)
+	}
+	if len(m) == 0 {
+		return nil, nil
+	}
+	return m, nil
 }
 
 // Equal tests whether two multiaddrs are equal
