@@ -23,6 +23,8 @@ func JoinComponents(cs ...Component) Multiaddr {
 }
 
 // Join returns a combination of addresses.
+// Note: This copies all the components from the input Multiaddrs. Depending on
+// your use case, you may prefer to use `append(leftMA, rightMA...)` instead.
 func Join(ms ...Multiaddr) Multiaddr {
 	size := 0
 	for _, m := range ms {
@@ -113,6 +115,9 @@ func SplitFunc(m Multiaddr, cb func(Component) bool) (Multiaddr, Multiaddr) {
 //
 // This function iterates over components.
 // Return true to continue iteration, false to stop.
+//
+// Prefer to use a standard for range loop instead
+// e.g. `for _, c := range m { ... }`
 func ForEach(m Multiaddr, cb func(c Component) bool) {
 	for _, c := range m {
 		if !cb(c) {

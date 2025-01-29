@@ -1,6 +1,7 @@
 package multiaddr
 
 import (
+	"cmp"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -83,12 +84,7 @@ func (m Multiaddr) Compare(o Multiaddr) int {
 			return cmp
 		}
 	}
-	if len(m) < len(o) {
-		return -1
-	} else if len(m) > len(o) {
-		return 1
-	}
-	return 0
+	return cmp.Compare(len(m), len(o))
 }
 
 // Bytes returns the []byte representation of this Multiaddr
