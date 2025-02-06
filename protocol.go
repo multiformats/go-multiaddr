@@ -65,6 +65,9 @@ func AddProtocol(p Protocol) error {
 	if p.Path && p.Size >= 0 {
 		return fmt.Errorf("path protocols must have variable-length sizes")
 	}
+	if len(p.VCode) == 0 {
+		return fmt.Errorf("protocol code %d is missing its VCode field", p.Code)
+	}
 
 	Protocols = append(Protocols, p)
 	protocolsByName[p.Name] = p
