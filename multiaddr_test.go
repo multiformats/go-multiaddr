@@ -1132,3 +1132,17 @@ func FuzzSplitRoundtrip(f *testing.F) {
 		}
 	})
 }
+
+func BenchmarkComponentValidation(b *testing.B) {
+	comp, err := NewComponent("ip4", "127.0.0.1")
+	if err != nil {
+		b.Fatal(err)
+	}
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		_, err := validateComponent(comp)
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+}
