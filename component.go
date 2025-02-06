@@ -167,7 +167,6 @@ func (c *Component) Code() int {
 		return 0
 	}
 	return c.Protocol().Code
-}
 
 func (c *Component) RawValue() []byte {
 	if c == nil {
