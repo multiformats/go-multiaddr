@@ -134,7 +134,10 @@ func (c Component) Protocol() Protocol {
 }
 
 func (c Component) Code() int {
-	return c.Protocol().Code
+	if c.protocol == nil {
+		return 0
+	}
+	return c.protocol.Code
 }
 
 func (c Component) RawValue() []byte {
