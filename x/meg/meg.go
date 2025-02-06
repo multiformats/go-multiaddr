@@ -18,6 +18,8 @@ const (
 )
 
 // MatchState is the Thompson NFA for a regular expression.
+type Matcher = *MatchState
+
 type MatchState struct {
 	capture   captureFunc
 	next      *MatchState
