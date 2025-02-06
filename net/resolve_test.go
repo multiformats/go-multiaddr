@@ -36,7 +36,10 @@ func TestResolvingAddrs(t *testing.T) {
 
 	actual, err := ResolveUnspecifiedAddresses(unspec, iface)
 	require.NoError(t, err)
-	require.Equal(t, actual, spec)
+	require.Equal(t, len(actual), len(spec))
+	for i := range actual {
+		require.True(t, actual[i].Equal(spec[i]))
+	}
 
 	ip4u := []ma.Multiaddr{newMultiaddr(t, "/ip4/0.0.0.0")}
 	ip4i := []ma.Multiaddr{newMultiaddr(t, "/ip4/1.2.3.4")}

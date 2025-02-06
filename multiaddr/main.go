@@ -57,7 +57,7 @@ Options:
 
 func infoCommand(addr maddr.Multiaddr) {
 	var compsJson []string
-	maddr.ForEach(addr, func(comp maddr.Component) bool {
+	for _, comp := range addr {
 		lengthPrefix := ""
 		if comp.Protocol().Size == maddr.LengthPrefixedVarSize {
 			lengthPrefix = "0x" + hex.EncodeToString(maddr.CodeToVarint(len(comp.RawValue())))
@@ -76,8 +76,7 @@ func infoCommand(addr maddr.Multiaddr) {
 			fmt.Sprintf(`"uvarint": "0x%x", `, comp.Protocol().VCode)+
 			fmt.Sprintf(`"lengthPrefix": "%s"`, lengthPrefix)+
 			`}`)
-		return true
-	})
+	}
 
 	addrJson := `{
   "string": "%[1]s",
