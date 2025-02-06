@@ -3,7 +3,7 @@ package multiaddr
 import (
 	"testing"
 
-	"github.com/multiformats/go-multiaddr/meg"
+	"github.com/multiformats/go-multiaddr/x/meg"
 )
 
 func TestMatchAndCaptureMultiaddr(t *testing.T) {
