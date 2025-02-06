@@ -33,6 +33,9 @@ type captureFunc *func(string) error
 type captureMap map[captureFunc][]string
 
 func (cm captureMap) clone() captureMap {
+	if cm == nil {
+		return nil
+	}
 	out := make(captureMap, len(cm))
 	for k, v := range cm {
 		out[k] = slices.Clone(v)
@@ -80,6 +83,10 @@ func Match[S ~[]T, T Matchable](s *MatchState, components S) (bool, error) {
 			if s.kind == matchCode && s.code == c.Code() {
 				cm := currentStates.captures[i]
 				if s.capture != nil {
+					if cm == nil {
+						cm = make(captureMap)
+						currentStates.captures[i] = cm
+					}
 					cm[s.capture] = append(cm[s.capture], c.Value())
 				}
 				nextStates = appendState(nextStates, s.next, currentStates.captures[i], listGeneration)
@@ -110,9 +117,6 @@ func Match[S ~[]T, T Matchable](s *MatchState, components S) (bool, error) {
 func appendState(arr statesAndCaptures, s *MatchState, c captureMap, listGeneration int) statesAndCaptures {
 	if s == nil || s.generation == listGeneration {
 		return arr
-	}
-	if c == nil {
-		c = make(captureMap)
 	}
 	s.generation = listGeneration
 	if s.kind == split {
