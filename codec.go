@@ -79,12 +79,16 @@ func readComponent(b []byte) (int, Component, error) {
 	if p.Code == 0 {
 		return 0, Component{}, fmt.Errorf("no protocol with code %d", code)
 	}
+	pPtr := protocolPtrByCode[code]
+	if pPtr == nil {
+		return 0, Component{}, fmt.Errorf("no protocol with code %d", code)
+	}
 
 	if p.Size == 0 {
 		c, err := validateComponent(Component{
 			bytes:         string(b[:offset]),
 			valueStartIdx: offset,
-			protocol:      p,
+			protocol:      pPtr,
 		})
 
 		return offset, c, err
@@ -110,7 +114,7 @@ func readComponent(b []byte) (int, Component, error) {
 
 	c, err := validateComponent(Component{
 		bytes:         string(b[:offset+size]),
-		protocol:      p,
+		protocol:      pPtr,
 		valueStartIdx: offset,
 	})
 

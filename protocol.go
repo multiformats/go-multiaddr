@@ -47,6 +47,9 @@ type Protocol struct {
 var protocolsByName = map[string]Protocol{}
 var protocolsByCode = map[int]Protocol{}
 
+// Keep a map of pointers so that we can reuse the same pointer for the same protocol.
+var protocolPtrByCode = map[int]*Protocol{}
+
 // Protocols is the list of multiaddr protocols supported by this module.
 var Protocols = []Protocol{}
 
@@ -72,6 +75,7 @@ func AddProtocol(p Protocol) error {
 	Protocols = append(Protocols, p)
 	protocolsByName[p.Name] = p
 	protocolsByCode[p.Code] = p
+	protocolPtrByCode[p.Code] = &p
 	return nil
 }
 

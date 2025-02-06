@@ -15,7 +15,7 @@ type Component struct {
 	// bytes is the raw bytes of the component. It includes the protocol code as
 	// varint, possibly the size of the value, and the value.
 	bytes         string // string for immutability.
-	protocol      Protocol
+	protocol      *Protocol
 	valueStartIdx int // Index of the first byte of the Component's value in the bytes array
 }
 
@@ -110,10 +110,16 @@ func (c Component) Compare(o Component) int {
 }
 
 func (c Component) Protocols() []Protocol {
-	return []Protocol{c.protocol}
+	if c.protocol == nil {
+		return nil
+	}
+	return []Protocol{*c.protocol}
 }
 
 func (c Component) ValueForProtocol(code int) (string, error) {
+	if c.protocol == nil {
+		return "", fmt.Errorf("component has nil protocol")
+	}
 	if c.protocol.Code != code {
 		return "", ErrProtocolNotFound
 	}
@@ -121,7 +127,10 @@ func (c Component) ValueForProtocol(code int) (string, error) {
 }
 
 func (c Component) Protocol() Protocol {
-	return c.protocol
+	if c.protocol == nil {
+		return Protocol{}
+	}
+	return *c.protocol
 }
 
 func (c Component) RawValue() []byte {
@@ -138,6 +147,9 @@ func (c Component) Value() string {
 }
 
 func (c Component) valueAndErr() (string, error) {
+	if c.protocol == nil {
+		return "", fmt.Errorf("component has nil protocol")
+	}
 	if c.protocol.Transcoder == nil {
 		return "", nil
 	}
@@ -157,6 +169,9 @@ func (c Component) String() string {
 // writeTo is an efficient, private function for string-formatting a multiaddr.
 // Trust me, we tend to allocate a lot when doing this.
 func (c Component) writeTo(b *strings.Builder) {
+	if c.protocol == nil {
+		return
+	}
 	b.WriteByte('/')
 	b.WriteString(c.protocol.Name)
 	value := c.Value()
@@ -188,6 +203,11 @@ func NewComponent(protocol, value string) (Component, error) {
 }
 
 func newComponent(protocol Protocol, bvalue []byte) (Component, error) {
+	protocolPtr := protocolPtrByCode[protocol.Code]
+	if protocolPtr == nil {
+		protocolPtr = &protocol
+	}
+
 	size := len(bvalue)
 	size += len(protocol.VCode)
 	if protocol.Size < 0 {
@@ -209,7 +229,7 @@ func newComponent(protocol Protocol, bvalue []byte) (Component, error) {
 	return validateComponent(
 		Component{
 			bytes:         string(maddr),
-			protocol:      protocol,
+			protocol:      protocolPtr,
 			valueStartIdx: offset,
 		})
 }
@@ -218,6 +238,9 @@ func newComponent(protocol Protocol, bvalue []byte) (Component, error) {
 // It ensures that we will be able to call all methods on Component without
 // error.
 func validateComponent(c Component) (Component, error) {
+	if c.protocol == nil {
+		return Component{}, fmt.Errorf("component is missing its protocol")
+	}
 	if c.valueStartIdx > len(c.bytes) {
 		return Component{}, fmt.Errorf("component valueStartIdx is greater than the length of the component's bytes")
 	}
