@@ -55,7 +55,7 @@ func stringToBytes(s string) ([]byte, error) {
 		}
 		err = p.Transcoder.ValidateBytes(a)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to validate multiaddr %q: invalid value %q for protocol %s: %w", s, sp[0], p.Name, err)
 		}
 		if p.Size < 0 { // varint size.
 			_, _ = b.Write(varint.ToUvarint(uint64(len(a))))
