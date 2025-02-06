@@ -55,7 +55,7 @@ func stringToBytes(s string) ([]byte, error) {
 		}
 		err = p.Transcoder.ValidateBytes(a)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to validate multiaddr %q: invalid value %q for protocol %s: %w", s, sp[0], p.Name, err)
 		}
 		if p.Size < 0 { // varint size.
 			_, _ = b.Write(varint.ToUvarint(uint64(len(a))))
@@ -79,12 +79,16 @@ func readComponent(b []byte) (int, Component, error) {
 	if p.Code == 0 {
 		return 0, Component{}, fmt.Errorf("no protocol with code %d", code)
 	}
+	pPtr := protocolPtrByCode[code]
+	if pPtr == nil {
+		return 0, Component{}, fmt.Errorf("no protocol with code %d", code)
+	}
 
 	if p.Size == 0 {
 		c, err := validateComponent(Component{
-			bytes:    string(b[:offset]),
-			offset:   offset,
-			protocol: p,
+			bytes:         string(b[:offset]),
+			valueStartIdx: offset,
+			protocol:      pPtr,
 		})
 
 		return offset, c, err
@@ -109,9 +113,9 @@ func readComponent(b []byte) (int, Component, error) {
 	}
 
 	c, err := validateComponent(Component{
-		bytes:    string(b[:offset+size]),
-		protocol: p,
-		offset:   offset,
+		bytes:         string(b[:offset+size]),
+		protocol:      pPtr,
+		valueStartIdx: offset,
 	})
 
 	return offset + size, c, err

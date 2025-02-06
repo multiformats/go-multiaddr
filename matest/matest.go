@@ -72,6 +72,9 @@ type MultiaddrMatcher struct {
 	multiaddr.Multiaddr
 }
 
+// Implements the Matcher interface for gomock.Matcher
+// Let's us use this struct in gomock tests. Example:
+// Expect(mock.Method(gomock.Any(), multiaddrMatcher).Return(nil)
 func (m MultiaddrMatcher) Matches(x interface{}) bool {
 	if m2, ok := x.(multiaddr.Multiaddr); ok {
 		return m.Equal(m2)

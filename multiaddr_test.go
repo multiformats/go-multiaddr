@@ -1132,3 +1132,43 @@ func FuzzSplitRoundtrip(f *testing.F) {
 		}
 	})
 }
+
+func BenchmarkComponentValidation(b *testing.B) {
+	comp, err := NewComponent("ip4", "127.0.0.1")
+	if err != nil {
+		b.Fatal(err)
+	}
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		_, err := validateComponent(comp)
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func FuzzComponents(f *testing.F) {
+	for _, v := range good {
+		m := StringCast(v)
+		for _, c := range m {
+			f.Add(c.Bytes())
+		}
+	}
+	f.Fuzz(func(t *testing.T, compBytes []byte) {
+		n, c, err := readComponent(compBytes)
+		if err != nil {
+			t.Skip()
+		}
+		if c.protocol == nil {
+			t.Fatal("component has nil protocol")
+		}
+		if c.protocol.Code == 0 {
+			t.Fatal("component has nil protocol code")
+		}
+		if !bytes.Equal(c.Bytes(), compBytes[:n]) {
+			t.Logf("component bytes: %v", c.Bytes())
+			t.Logf("original bytes: %v", compBytes[:n])
+			t.Fatal("component bytes are not equal to the original bytes")
+		}
+	})
+}
