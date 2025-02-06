@@ -11,9 +11,11 @@ import (
 
 // Component is a single multiaddr Component.
 type Component struct {
-	bytes    string // Uses the string type to ensure immutability.
-	protocol Protocol
-	offset   int
+	// bytes is the raw bytes of the component. It includes the protocol code as
+	// varint, possibly the size of the value, and the value.
+	bytes         string // string for immutability.
+	protocol      Protocol
+	valueStartIdx int // Index of the first byte of the Component's value in the bytes array
 }
 
 func (c Component) AsMultiaddr() Multiaddr {
@@ -122,7 +124,7 @@ func (c Component) Protocol() Protocol {
 }
 
 func (c Component) RawValue() []byte {
-	return []byte(c.bytes[c.offset:])
+	return []byte(c.bytes[c.valueStartIdx:])
 }
 
 func (c Component) Value() string {
@@ -138,7 +140,7 @@ func (c Component) valueAndErr() (string, error) {
 	if c.protocol.Transcoder == nil {
 		return "", nil
 	}
-	value, err := c.protocol.Transcoder.BytesToString([]byte(c.bytes[c.offset:]))
+	value, err := c.protocol.Transcoder.BytesToString([]byte(c.bytes[c.valueStartIdx:]))
 	if err != nil {
 		return "", err
 	}
@@ -205,9 +207,9 @@ func newComponent(protocol Protocol, bvalue []byte) (Component, error) {
 
 	return validateComponent(
 		Component{
-			bytes:    string(maddr),
-			protocol: protocol,
-			offset:   offset,
+			bytes:         string(maddr),
+			protocol:      protocol,
+			valueStartIdx: offset,
 		})
 }
 
@@ -221,7 +223,7 @@ func validateComponent(c Component) (Component, error) {
 
 	}
 	if c.protocol.Transcoder != nil {
-		err = c.protocol.Transcoder.ValidateBytes([]byte(c.bytes[c.offset:]))
+		err = c.protocol.Transcoder.ValidateBytes([]byte(c.bytes[c.valueStartIdx:]))
 		if err != nil {
 			return Component{}, err
 		}

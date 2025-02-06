@@ -82,9 +82,9 @@ func readComponent(b []byte) (int, Component, error) {
 
 	if p.Size == 0 {
 		c, err := validateComponent(Component{
-			bytes:    string(b[:offset]),
-			offset:   offset,
-			protocol: p,
+			bytes:         string(b[:offset]),
+			valueStartIdx: offset,
+			protocol:      p,
 		})
 
 		return offset, c, err
@@ -109,9 +109,9 @@ func readComponent(b []byte) (int, Component, error) {
 	}
 
 	c, err := validateComponent(Component{
-		bytes:    string(b[:offset+size]),
-		protocol: p,
-		offset:   offset,
+		bytes:         string(b[:offset+size]),
+		protocol:      p,
+		valueStartIdx: offset,
 	})
 
 	return offset + size, c, err
