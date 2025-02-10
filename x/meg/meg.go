@@ -7,7 +7,6 @@ package meg
 
 import (
 	"fmt"
-	"slices"
 )
 
 type stateKind uint8
@@ -30,22 +29,16 @@ type MatchState struct {
 }
 
 type captureFunc *func(string) error
-type captureMap map[captureFunc][]string
 
-func (cm captureMap) clone() captureMap {
-	if cm == nil {
-		return nil
-	}
-	out := make(captureMap, len(cm))
-	for k, v := range cm {
-		out[k] = slices.Clone(v)
-	}
-	return out
+type capture struct {
+	f    captureFunc
+	v    string
+	prev *capture
 }
 
 type statesAndCaptures struct {
 	states   []*MatchState
-	captures []captureMap
+	captures []*capture
 }
 
 func (s *MatchState) String() string {
@@ -66,11 +59,11 @@ func Match[S ~[]T, T Matchable](s *MatchState, components S) (bool, error) {
 
 	currentStates := statesAndCaptures{
 		states:   make([]*MatchState, 0, 16),
-		captures: make([]captureMap, 0, 16),
+		captures: make([]*capture, 0, 16),
 	}
 	nextStates := statesAndCaptures{
 		states:   make([]*MatchState, 0, 16),
-		captures: make([]captureMap, 0, 16),
+		captures: make([]*capture, 0, 16),
 	}
 
 	currentStates = appendState(currentStates, s, nil, listGeneration)
@@ -83,13 +76,19 @@ func Match[S ~[]T, T Matchable](s *MatchState, components S) (bool, error) {
 			if s.kind == matchCode && s.code == c.Code() {
 				cm := currentStates.captures[i]
 				if s.capture != nil {
-					if cm == nil {
-						cm = make(captureMap)
-						currentStates.captures[i] = cm
+					next := &capture{
+						f: s.capture,
+						v: c.Value(),
 					}
-					cm[s.capture] = append(cm[s.capture], c.Value())
+					if cm == nil {
+						cm = next
+					} else {
+						next.prev = cm
+						cm = next
+					}
+					currentStates.captures[i] = cm
 				}
-				nextStates = appendState(nextStates, s.next, currentStates.captures[i], listGeneration)
+				nextStates = appendState(nextStates, s.next, cm, listGeneration)
 			}
 		}
 		currentStates, nextStates = nextStates, currentStates
@@ -101,12 +100,12 @@ func Match[S ~[]T, T Matchable](s *MatchState, components S) (bool, error) {
 	for i, s := range currentStates.states {
 		if s.kind == done {
 			// We found a complete path. Run the captures now
-			for f, v := range currentStates.captures[i] {
-				for _, s := range v {
-					if err := (*f)(s); err != nil {
-						return false, err
-					}
+			c := currentStates.captures[i]
+			for c != nil {
+				if err := (*c.f)(c.v); err != nil {
+					return false, err
 				}
+				c = c.prev
 			}
 			return true, nil
 		}
@@ -114,14 +113,14 @@ func Match[S ~[]T, T Matchable](s *MatchState, components S) (bool, error) {
 	return false, nil
 }
 
-func appendState(arr statesAndCaptures, s *MatchState, c captureMap, listGeneration int) statesAndCaptures {
+func appendState(arr statesAndCaptures, s *MatchState, c *capture, listGeneration int) statesAndCaptures {
 	if s == nil || s.generation == listGeneration {
 		return arr
 	}
 	s.generation = listGeneration
 	if s.kind == split {
 		arr = appendState(arr, s.next, c, listGeneration)
-		arr = appendState(arr, s.nextSplit, c.clone(), listGeneration)
+		arr = appendState(arr, s.nextSplit, c, listGeneration)
 	} else {
 		arr.states = append(arr.states, s)
 		arr.captures = append(arr.captures, c)
