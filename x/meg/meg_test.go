@@ -26,7 +26,7 @@ var _ Matchable = codeAndValue{}
 
 func TestSimple(t *testing.T) {
 	type testCase struct {
-		pattern        *MatchState
+		pattern        Matcher
 		skipQuickCheck bool
 		shouldMatch    [][]int
 		shouldNotMatch [][]int
@@ -40,7 +40,17 @@ func TestSimple(t *testing.T) {
 					{0},
 					{0, 0},
 					{0, 1, 0},
-				}}, {
+				},
+			},
+			{
+				pattern: PatternToMatchState(Optional(Val(1))),
+				shouldMatch: [][]int{
+					{1},
+					{},
+				},
+				shouldNotMatch: [][]int{{0}},
+			},
+			{
 				pattern: PatternToMatchState(Val(0), Val(1), Optional(Val(2))),
 				shouldMatch: [][]int{
 					{0, 1, 2},
@@ -70,13 +80,13 @@ func TestSimple(t *testing.T) {
 
 	for i, tc := range testCases {
 		for _, m := range tc.shouldMatch {
-			if matches, _ := Match(tc.pattern, codesToCodeAndValue(m)); !matches {
-				t.Fatalf("failed to match %v with %s. idx=%d", m, tc.pattern, i)
+			if matches, err := Match(tc.pattern, codesToCodeAndValue(m)); !matches {
+				t.Fatalf("failed to match %v with %v. idx=%d. err=%v", m, tc.pattern, i, err)
 			}
 		}
 		for _, m := range tc.shouldNotMatch {
 			if matches, _ := Match(tc.pattern, codesToCodeAndValue(m)); matches {
-				t.Fatalf("failed to not match %v with %s. idx=%d", m, tc.pattern, i)
+				t.Fatalf("failed to not match %v with %v. idx=%d", m, tc.pattern, i)
 			}
 		}
 		if tc.skipQuickCheck {
@@ -98,7 +108,7 @@ func TestSimple(t *testing.T) {
 }
 
 func TestCapture(t *testing.T) {
-	type setupStateAndAssert func() (*MatchState, func())
+	type setupStateAndAssert func() (Matcher, func())
 	type testCase struct {
 		setup setupStateAndAssert
 		parts []codeAndValue
@@ -107,7 +117,7 @@ func TestCapture(t *testing.T) {
 	testCases :=
 		[]testCase{
 			{
-				setup: func() (*MatchState, func()) {
+				setup: func() (Matcher, func()) {
 					var code0str string
 					return PatternToMatchState(CaptureVal(0, &code0str), Val(1)), func() {
 						if code0str != "hello" {
@@ -118,7 +128,7 @@ func TestCapture(t *testing.T) {
 				parts: []codeAndValue{{0, "hello"}, {1, "world"}},
 			},
 			{
-				setup: func() (*MatchState, func()) {
+				setup: func() (Matcher, func()) {
 					var code0strs []string
 					return PatternToMatchState(CaptureOneOrMore(0, &code0strs), Val(1)), func() {
 						if code0strs[0] != "hello" {
@@ -137,7 +147,7 @@ func TestCapture(t *testing.T) {
 	for _, tc := range testCases {
 		state, assert := tc.setup()
 		if matches, _ := Match(state, tc.parts); !matches {
-			t.Fatalf("failed to match %v with %s", tc.parts, state)
+			t.Fatalf("failed to match %v with %v", tc.parts, state)
 		}
 		assert()
 	}
@@ -161,7 +171,7 @@ func bytesToCodeAndValue(codes []byte) []codeAndValue {
 
 // FuzzMatchesRegexpBehavior fuzz tests the expression matcher by comparing it to the behavior of the regexp package.
 func FuzzMatchesRegexpBehavior(f *testing.F) {
-	bytesToRegexpAndPattern := func(exp []byte) ([]byte, []Pattern) {
+	bytesToRegexpAndPattern := func(exp []byte) (string, []Pattern) {
 		if len(exp) < 3 {
 			panic("regexp too short")
 		}
@@ -197,7 +207,7 @@ func FuzzMatchesRegexpBehavior(f *testing.F) {
 			}
 		}
 
-		return exp, pattern
+		return string(exp), pattern
 	}
 
 	simplifyB := func(buf []byte) []byte {
