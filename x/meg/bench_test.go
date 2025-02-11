@@ -242,6 +242,66 @@ func IsWebTransportMultiaddrLoop(m multiaddr.Multiaddr) (bool, int) {
 	return true, certHashCount
 }
 
+func IsWebTransportMultiaddrLoopNoCapture(m multiaddr.Multiaddr) (bool, int) {
+	// Expected pattern:
+	// 0: one of: P_IP4, P_IP6, P_DNS4, P_DNS6, P_DNS
+	// 1: P_UDP
+	// 2: P_QUIC_V1
+	// 3: optional P_SNI (if present)
+	// Next: P_WEBTRANSPORT
+	// Trailing: zero or more P_CERTHASH
+
+	// Check minimum length (at least without SNI: 4 components)
+	if len(m) < 4 {
+		return false, 0
+	}
+
+	idx := 0
+
+	// Component 0: Must be one of IP or DNS protocols.
+	switch m[idx].Code() {
+	case multiaddr.P_IP4:
+	case multiaddr.P_IP6:
+	case multiaddr.P_DNS4, multiaddr.P_DNS6, multiaddr.P_DNS:
+	default:
+		return false, 0
+	}
+	idx++
+
+	// Component 1: Must be UDP.
+	if idx >= len(m) || m[idx].Code() != multiaddr.P_UDP {
+		return false, 0
+	}
+	idx++
+
+	// Component 2: Must be QUIC_V1.
+	if idx >= len(m) || m[idx].Code() != multiaddr.P_QUIC_V1 {
+		return false, 0
+	}
+	idx++
+
+	// Optional component: SNI.
+	if idx < len(m) && m[idx].Code() == multiaddr.P_SNI {
+		idx++
+	}
+
+	// Next component: Must be WEBTRANSPORT.
+	if idx >= len(m) || m[idx].Code() != multiaddr.P_WEBTRANSPORT {
+		return false, 0
+	}
+	idx++
+
+	// All remaining components must be CERTHASH.
+	for ; idx < len(m); idx++ {
+		if m[idx].Code() != multiaddr.P_CERTHASH {
+			return false, 0
+		}
+		_ = m[idx].String()
+	}
+
+	return true, 0
+}
+
 func BenchmarkIsWebTransportMultiaddrPrealloc(b *testing.B) {
 	addr := multiaddr.StringCast("/ip4/1.2.3.4/udp/1234/quic-v1/sni/example.com/webtransport")
 
@@ -313,6 +373,18 @@ func BenchmarkIsWebTransportMultiaddrLoop(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		isWT, count := IsWebTransportMultiaddrLoop(addr)
+		if !isWT || count != 0 {
+			b.Fatal("unexpected result")
+		}
+	}
+}
+
+func BenchmarkIsWebTransportMultiaddrLoopNoCapture(b *testing.B) {
+	addr := multiaddr.StringCast("/ip4/1.2.3.4/udp/1234/quic-v1/sni/example.com/webtransport")
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		isWT, count := IsWebTransportMultiaddrLoopNoCapture(addr)
 		if !isWT || count != 0 {
 			b.Fatal("unexpected result")
 		}
