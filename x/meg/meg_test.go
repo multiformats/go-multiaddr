@@ -1,7 +1,6 @@
 package meg
 
 import (
-	"fmt"
 	"regexp"
 	"slices"
 	"testing"
@@ -132,9 +131,7 @@ func TestCapture(t *testing.T) {
 				setup: func() (Matcher, func()) {
 					var code0strs []string
 					return PatternToMatchState(CaptureOneOrMore(0, &code0strs), Val(1)), func() {
-						// TODO flip the order here.
 						if code0strs[0] != "hello" {
-							fmt.Printf("code0strs: %v\n", code0strs)
 							panic("unexpected value")
 						}
 						if code0strs[1] != "world" {
