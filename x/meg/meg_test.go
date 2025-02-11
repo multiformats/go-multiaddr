@@ -233,25 +233,12 @@ func FuzzMatchesRegexpBehavior(f *testing.F) {
 		}
 		p := PatternToMatchState(pattern...)
 		otherMatched, _ := Match(p, bytesToCodeAndValue(corpus))
-		{
-			t.Log("regexp", string(regexpPattern))
-			t.Log("corpus", string(corpus))
-			t.Log("pattern", bytesToCodeAndValue(corpus))
-
-			a, b := Match(p, bytesToCodeAndValue(corpus))
-			t.Logf("Rerun: %v, %v", a, b)
-		}
 		if otherMatched != matched {
 			t.Log("regexp", string(regexpPattern))
 			t.Log("corpus", string(corpus))
 			m2, err2 := regexp.Match(string(regexpPattern), corpus)
 			t.Logf("regexp matched %v. %v. %v, %v. \n%v - \n%v", matched, err, m2, err2, regexpPattern, corpus)
 			t.Logf("pattern %+v", pattern)
-			{
-
-				a, b := Match(p, bytesToCodeAndValue(corpus))
-				t.Logf("Rerun: %v, %v", a, b)
-			}
 			t.Fatalf("mismatched results: %v %v %v", otherMatched, matched, p)
 		}
 	})
