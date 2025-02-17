@@ -1,0 +1,126 @@
+// package meg implements Regular Expressions for multiaddr Components. It's short for "Megular Expressions"
+package meg
+
+// The developer is assumed to be familiar with the Thompson NFA approach to
+// regex before making changes to this file. Refer to
+// https://swtch.com/~rsc/regexp/regexp1.html for an introduction.
+
+import (
+	"fmt"
+	"slices"
+)
+
+type stateKind uint8
+
+const (
+	matchCode stateKind = iota
+	split
+	done
+)
+
+// MatchState is the Thompson NFA for a regular expression.
+type MatchState struct {
+	capture   captureFunc
+	next      *MatchState
+	nextSplit *MatchState
+
+	kind       stateKind
+	generation int
+	code       int
+}
+
+type captureFunc *func(string) error
+type captureMap map[captureFunc][]string
+
+func (cm captureMap) clone() captureMap {
+	out := make(captureMap, len(cm))
+	for k, v := range cm {
+		out[k] = slices.Clone(v)
+	}
+	return out
+}
+
+type statesAndCaptures struct {
+	states   []*MatchState
+	captures []captureMap
+}
+
+func (s *MatchState) String() string {
+	return fmt.Sprintf("state{kind: %d, generation: %d, code: %d}", s.kind, s.generation, s.code)
+}
+
+type Matchable interface {
+	Code() int
+	Value() string // Used when capturing the value
+}
+
+// Match returns whether the given Components match the Pattern defined in MatchState.
+// Errors are used to communicate capture errors.
+// If the error is non-nil the returned bool will be false.
+func Match[S ~[]T, T Matchable](s *MatchState, components S) (bool, error) {
+	listGeneration := s.generation + 1               // Start at the last generation + 1
+	defer func() { s.generation = listGeneration }() // In case we reuse this state, store our highest generation number
+
+	currentStates := statesAndCaptures{
+		states:   make([]*MatchState, 0, 16),
+		captures: make([]captureMap, 0, 16),
+	}
+	nextStates := statesAndCaptures{
+		states:   make([]*MatchState, 0, 16),
+		captures: make([]captureMap, 0, 16),
+	}
+
+	currentStates = appendState(currentStates, s, nil, listGeneration)
+
+	for _, c := range components {
+		if len(currentStates.states) == 0 {
+			return false, nil
+		}
+		for i, s := range currentStates.states {
+			if s.kind == matchCode && s.code == c.Code() {
+				cm := currentStates.captures[i]
+				if s.capture != nil {
+					cm[s.capture] = append(cm[s.capture], c.Value())
+				}
+				nextStates = appendState(nextStates, s.next, currentStates.captures[i], listGeneration)
+			}
+		}
+		currentStates, nextStates = nextStates, currentStates
+		nextStates.states = nextStates.states[:0]
+		nextStates.captures = nextStates.captures[:0]
+		listGeneration++
+	}
+
+	for i, s := range currentStates.states {
+		if s.kind == done {
+			// We found a complete path. Run the captures now
+			for f, v := range currentStates.captures[i] {
+				for _, s := range v {
+					if err := (*f)(s); err != nil {
+						return false, err
+					}
+				}
+			}
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+func appendState(arr statesAndCaptures, s *MatchState, c captureMap, listGeneration int) statesAndCaptures {
+	if s == nil || s.generation == listGeneration {
+		return arr
+	}
+	if c == nil {
+		c = make(captureMap)
+	}
+	s.generation = listGeneration
+	if s.kind == split {
+		arr = appendState(arr, s.next, c, listGeneration)
+		arr = appendState(arr, s.nextSplit, c.clone(), listGeneration)
+	} else {
+		arr.states = append(arr.states, s)
+		arr.captures = append(arr.captures, c)
+	}
+	return arr
+}

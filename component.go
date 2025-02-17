@@ -133,6 +133,10 @@ func (c Component) Protocol() Protocol {
 	return *c.protocol
 }
 
+func (c Component) Code() int {
+	return c.Protocol().Code
+}
+
 func (c Component) RawValue() []byte {
 	return []byte(c.bytes[c.valueStartIdx:])
 }
