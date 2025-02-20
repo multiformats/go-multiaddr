@@ -22,6 +22,11 @@ func (c codeAndValue) Value() string {
 	return c.val
 }
 
+// Bytes implements Matchable.
+func (c codeAndValue) Bytes() []byte {
+	return []byte(c.val)
+}
+
 var _ Matchable = codeAndValue{}
 
 func TestSimple(t *testing.T) {

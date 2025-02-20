@@ -54,6 +54,7 @@ func (s MatchState) String() string {
 type Matchable interface {
 	Code() int
 	Value() string // Used when capturing the value
+	Bytes() []byte
 }
 
 // Match returns whether the given Components match the Pattern defined in MatchState.
