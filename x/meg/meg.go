@@ -18,7 +18,7 @@ const (
 
 // MatchState is the Thompson NFA for a regular expression.
 type MatchState struct {
-	capture captureFunc
+	capture CaptureFunc
 	// next is is the index of the next state. in the MatchState array.
 	next int
 	// If codeOrKind is negative, it is a kind.
@@ -27,11 +27,11 @@ type MatchState struct {
 	codeOrKind int
 }
 
-type captureFunc func(Matchable) error
+type CaptureFunc func(Matchable) error
 
 // capture is a linked list of capture funcs with values.
 type capture struct {
-	f    captureFunc
+	f    CaptureFunc
 	v    Matchable
 	prev *capture
 }
@@ -123,7 +123,7 @@ func Match[S ~[]T, T Matchable](matcher Matcher, components S) (bool, error) {
 			// Flip the order of the captures because we see captures from right
 			// to left, but users expect them left to right.
 			type captureWithVal struct {
-				f captureFunc
+				f CaptureFunc
 				v Matchable
 			}
 			reversedCaptures := make([]captureWithVal, 0, 16)
