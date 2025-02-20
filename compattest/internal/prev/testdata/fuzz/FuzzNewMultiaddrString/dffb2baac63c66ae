@@ -1,0 +1,2 @@
+go test fuzz v1
+string("/onion/222222222222222=:1")
