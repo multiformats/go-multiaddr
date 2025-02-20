@@ -27,6 +27,11 @@ func (c codeAndValue) Bytes() []byte {
 	return []byte(c.val)
 }
 
+// RawValue implements Matchable.
+func (c codeAndValue) RawValue() []byte {
+	return []byte(c.val)
+}
+
 var _ Matchable = codeAndValue{}
 
 func TestSimple(t *testing.T) {
@@ -38,6 +43,22 @@ func TestSimple(t *testing.T) {
 	}
 	testCases :=
 		[]testCase{
+			{
+				pattern: PatternToMatcher(Val(Any), Val(1)),
+				shouldMatch: [][]int{
+					{0, 1},
+					{1, 1},
+					{2, 1},
+					{3, 1},
+					{4, 1},
+				},
+				shouldNotMatch: [][]int{
+					{0},
+					{0, 0},
+					{0, 1, 0},
+				},
+				skipQuickCheck: true,
+			},
 			{
 				pattern:     PatternToMatcher(Val(0), Val(1)),
 				shouldMatch: [][]int{{0, 1}},

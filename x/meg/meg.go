@@ -12,8 +12,11 @@ import (
 type stateKind = int
 
 const (
-	done stateKind = (iota * -1) - 1
-	// split anything else that is negative
+	matchAny stateKind = (iota * -1) - 1
+	// done MUST be the last stateKind in this list. We use it to determine if a
+	// state is a split index.
+	done
+	// Anything that is less than done is a split index
 )
 
 // MatchState is the Thompson NFA for a regular expression.
@@ -22,7 +25,7 @@ type MatchState struct {
 	// next is is the index of the next state. in the MatchState array.
 	next int
 	// If codeOrKind is negative, it is a kind.
-	// If it is negative, but not a `done`, then it is the index to the next split.
+	// If it is negative, and less than `done`, then it is the index to the next split.
 	// This is done to keep the `MatchState` struct small and cache friendly.
 	codeOrKind int
 }
@@ -53,7 +56,13 @@ func (s MatchState) String() string {
 
 type Matchable interface {
 	Code() int
-	Value() string // Used when capturing the value
+	// Value() returns the string representation of the matchable.
+	Value() string
+	// RawValue() returns the byte representation of the Value
+	RawValue() []byte
+	// Bytes() returns the underlying bytes of the matchable. For multiaddr
+	// Components, this includes the protocol code and possibly the varint
+	// encoded size.
 	Bytes() []byte
 }
 
@@ -90,7 +99,7 @@ func Match[S ~[]T, T Matchable](matcher Matcher, components S) (bool, error) {
 		}
 		for i, stateIndex := range currentStates.states {
 			s := states[stateIndex]
-			if s.codeOrKind >= 0 && s.codeOrKind == c.Code() {
+			if s.codeOrKind == matchAny || (s.codeOrKind >= 0 && s.codeOrKind == c.Code()) {
 				cm := currentStates.captures[i]
 				if s.capture != nil {
 					next := &capture{
@@ -191,10 +200,12 @@ func appendState(arr statesAndCaptures, states []MatchState, stateIndex int, c *
 	return arr
 }
 
+const splitIdxOffset = (-1 * (done - 1))
+
 func storeSplitIdx(codeOrKind int) int {
-	return (codeOrKind + 2) * -1
+	return (codeOrKind + splitIdxOffset) * -1
 }
 
 func restoreSplitIdx(splitIdx int) int {
-	return (splitIdx * -1) - 2
+	return (splitIdx * -1) - splitIdxOffset
 }

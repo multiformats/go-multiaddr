@@ -40,10 +40,26 @@ func PatternToMatcher(patterns ...Pattern) Matcher {
 	return Matcher{states: states, startIdx: nextIdx}
 }
 
-func Cat(left, right Pattern) Pattern {
-	return func(states *[]MatchState, nextIdx int) int {
-		// First run the right pattern, then feed the result into left.
-		return left(states, right(states, nextIdx))
+func Cat(patterns ...Pattern) Pattern {
+	switch len(patterns) {
+	case 0:
+		return func(states *[]MatchState, nextIdx int) int {
+			return nextIdx
+		}
+	case 1:
+		return patterns[0]
+	case 2:
+		return func(states *[]MatchState, nextIdx int) int {
+			left := patterns[0]
+			right := patterns[1]
+			// First run the right pattern, then feed the result into left.
+			return left(states, right(states, nextIdx))
+		}
+	default:
+		return Cat(
+			Cat(patterns[:len(patterns)-1]...),
+			patterns[len(patterns)-1],
+		)
 	}
 }
 
@@ -80,7 +96,7 @@ func captureOneBytesOrErr(val *[]byte) CaptureFunc {
 			*val = nil
 			return errAlreadyCapture
 		}
-		*val = s.Bytes()
+		*val = s.RawValue()
 		return nil
 	}
 	return f
@@ -107,7 +123,7 @@ func captureManyBytes(vals *[][]byte) CaptureFunc {
 		return nil
 	}
 	f := func(s Matchable) error {
-		*vals = append(*vals, s.Bytes())
+		*vals = append(*vals, s.RawValue())
 		return nil
 	}
 	return f
@@ -139,6 +155,9 @@ func CaptureWithF(code int, f CaptureFunc) Pattern {
 func Val(code int) Pattern {
 	return CaptureStringVal(code, nil)
 }
+
+// Any is a special code that matches any value.
+var Any int = matchAny
 
 func CaptureStringVal(code int, val *string) Pattern {
 	return CaptureWithF(code, captureOneStringValueOrErr(val))
