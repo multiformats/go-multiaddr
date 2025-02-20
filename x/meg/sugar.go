@@ -75,12 +75,12 @@ func captureOneValueOrErr(val *string) captureFunc {
 		return nil
 	}
 	var set bool
-	f := func(s string) error {
+	f := func(s Matchable) error {
 		if set {
 			*val = ""
 			return errAlreadyCapture
 		}
-		*val = s
+		*val = s.Value()
 		return nil
 	}
 	return f
@@ -90,8 +90,8 @@ func captureMany(vals *[]string) captureFunc {
 	if vals == nil {
 		return nil
 	}
-	f := func(s string) error {
-		*vals = append(*vals, s)
+	f := func(s Matchable) error {
+		*vals = append(*vals, s.Value())
 		return nil
 	}
 	return f

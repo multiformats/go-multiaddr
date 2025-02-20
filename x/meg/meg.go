@@ -27,12 +27,12 @@ type MatchState struct {
 	codeOrKind int
 }
 
-type captureFunc func(string) error
+type captureFunc func(Matchable) error
 
 // capture is a linked list of capture funcs with values.
 type capture struct {
 	f    captureFunc
-	v    string
+	v    Matchable
 	prev *capture
 }
 
@@ -94,7 +94,7 @@ func Match[S ~[]T, T Matchable](matcher Matcher, components S) (bool, error) {
 				if s.capture != nil {
 					next := &capture{
 						f: s.capture,
-						v: c.Value(),
+						v: c,
 					}
 					if cm == nil {
 						cm = next
@@ -123,7 +123,7 @@ func Match[S ~[]T, T Matchable](matcher Matcher, components S) (bool, error) {
 			// to left, but users expect them left to right.
 			type captureWithVal struct {
 				f captureFunc
-				v string
+				v Matchable
 			}
 			reversedCaptures := make([]captureWithVal, 0, 16)
 			for c != nil {
