@@ -14,7 +14,7 @@ type preallocatedCapture struct {
 
 func preallocateCapture() *preallocatedCapture {
 	p := &preallocatedCapture{}
-	p.matcher = meg.PatternToMatchState(
+	p.matcher = meg.PatternToMatcher(
 		meg.Or(
 			meg.Val(multiaddr.P_IP4),
 			meg.Val(multiaddr.P_IP6),
@@ -85,7 +85,7 @@ func isWebTransportMultiaddrPrealloc() *preallocatedCapture {
 	var ip6Addr string
 	var udpPort string
 	var sni string
-	p.matcher = meg.PatternToMatchState(
+	p.matcher = meg.PatternToMatcher(
 		meg.Or(
 			meg.CaptureVal(multiaddr.P_IP4, &ip4Addr),
 			meg.CaptureVal(multiaddr.P_IP6, &ip6Addr),
@@ -317,7 +317,7 @@ func BenchmarkIsWebTransportMultiaddrPrealloc(b *testing.B) {
 func BenchmarkIsWebTransportMultiaddrNoCapturePrealloc(b *testing.B) {
 	addr := multiaddr.StringCast("/ip4/1.2.3.4/udp/1234/quic-v1/sni/example.com/webtransport")
 
-	wtPreallocNoCapture := meg.PatternToMatchState(
+	wtPreallocNoCapture := meg.PatternToMatcher(
 		meg.Or(
 			meg.Val(multiaddr.P_IP4),
 			meg.Val(multiaddr.P_IP6),

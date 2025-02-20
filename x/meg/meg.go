@@ -19,14 +19,17 @@ const (
 // MatchState is the Thompson NFA for a regular expression.
 type MatchState struct {
 	capture captureFunc
-	next    int
+	// next is is the index of the next state. in the MatchState array.
+	next int
 	// If codeOrKind is negative, it is a kind.
-	// If it is negative, but not a `done`, then it is the nextSplitIdx
+	// If it is negative, but not a `done`, then it is the index to the next split.
+	// This is done to keep the `MatchState` struct small and cache friendly.
 	codeOrKind int
 }
 
 type captureFunc func(string) error
 
+// capture is a linked list of capture funcs with values.
 type capture struct {
 	f    captureFunc
 	v    string
@@ -138,6 +141,8 @@ func Match[S ~[]T, T Matchable](matcher Matcher, components S) (bool, error) {
 	return false, nil
 }
 
+// appendState is a non-recursive way of appending states to statesAndCaptures.
+// If a state is a split, both branches are appended to statesAndCaptures.
 func appendState(arr statesAndCaptures, states []MatchState, stateIndex int, c *capture, visitedBitSet []uint64) statesAndCaptures {
 	// Local struct to hold state index and the associated capture pointer.
 	type task struct {

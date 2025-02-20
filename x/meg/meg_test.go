@@ -34,7 +34,7 @@ func TestSimple(t *testing.T) {
 	testCases :=
 		[]testCase{
 			{
-				pattern:     PatternToMatchState(Val(0), Val(1)),
+				pattern:     PatternToMatcher(Val(0), Val(1)),
 				shouldMatch: [][]int{{0, 1}},
 				shouldNotMatch: [][]int{
 					{0},
@@ -43,7 +43,7 @@ func TestSimple(t *testing.T) {
 				},
 			},
 			{
-				pattern: PatternToMatchState(Optional(Val(1))),
+				pattern: PatternToMatcher(Optional(Val(1))),
 				shouldMatch: [][]int{
 					{1},
 					{},
@@ -51,7 +51,7 @@ func TestSimple(t *testing.T) {
 				shouldNotMatch: [][]int{{0}},
 			},
 			{
-				pattern: PatternToMatchState(Val(0), Val(1), Optional(Val(2))),
+				pattern: PatternToMatcher(Val(0), Val(1), Optional(Val(2))),
 				shouldMatch: [][]int{
 					{0, 1, 2},
 					{0, 1},
@@ -62,7 +62,7 @@ func TestSimple(t *testing.T) {
 					{0, 1, 0},
 					{0, 1, 2, 0},
 				}}, {
-				pattern:        PatternToMatchState(Val(0), Val(1), OneOrMore(2)),
+				pattern:        PatternToMatcher(Val(0), Val(1), OneOrMore(2)),
 				skipQuickCheck: true,
 				shouldMatch: [][]int{
 					{0, 1, 2, 2, 2, 2},
@@ -119,7 +119,7 @@ func TestCapture(t *testing.T) {
 			{
 				setup: func() (Matcher, func()) {
 					var code0str string
-					return PatternToMatchState(CaptureVal(0, &code0str), Val(1)), func() {
+					return PatternToMatcher(CaptureVal(0, &code0str), Val(1)), func() {
 						if code0str != "hello" {
 							panic("unexpected value")
 						}
@@ -130,7 +130,7 @@ func TestCapture(t *testing.T) {
 			{
 				setup: func() (Matcher, func()) {
 					var code0strs []string
-					return PatternToMatchState(CaptureOneOrMore(0, &code0strs), Val(1)), func() {
+					return PatternToMatcher(CaptureOneOrMore(0, &code0strs), Val(1)), func() {
 						if code0strs[0] != "hello" {
 							panic("unexpected value")
 						}
@@ -228,7 +228,7 @@ func FuzzMatchesRegexpBehavior(f *testing.F) {
 			// Malformed regex. Ignore
 			return
 		}
-		p := PatternToMatchState(pattern...)
+		p := PatternToMatcher(pattern...)
 		otherMatched, _ := Match(p, bytesToCodeAndValue(corpus))
 		if otherMatched != matched {
 			t.Log("regexp", string(regexpPattern))

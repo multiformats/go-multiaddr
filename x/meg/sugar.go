@@ -7,6 +7,9 @@ import (
 	"strings"
 )
 
+// Pattern is essentially a curried MatchState.
+// Given the slice of current MatchStates and a handle (int index) to the next
+// MatchState, it returns a handle to the inserted MatchState.
 type Pattern = func(states *[]MatchState, nextIdx int) int
 
 type Matcher struct {
@@ -22,9 +25,10 @@ func (s Matcher) String() string {
 	return fmt.Sprintf("RootMatchState{states: [%s], startIdx: %d}", strings.Join(states, ", "), s.startIdx)
 }
 
-func PatternToMatchState(patterns ...Pattern) Matcher {
+func PatternToMatcher(patterns ...Pattern) Matcher {
 	// Preallocate a slice to hold the MatchStates.
 	// Avoids small allocations for each pattern.
+	// The number is chosen experimentally. It is subject to change.
 	states := make([]MatchState, 0, len(patterns)*3)
 	// Append the done state.
 	states = append(states, MatchState{codeOrKind: done})
