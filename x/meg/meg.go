@@ -7,49 +7,48 @@ package meg
 
 import (
 	"fmt"
-	"slices"
 )
 
-type stateKind uint8
+type stateKind = int
 
 const (
-	matchCode stateKind = iota
-	split
-	done
+	done stateKind = (iota * -1) - 1
+	// split anything else that is negative
 )
 
 // MatchState is the Thompson NFA for a regular expression.
 type MatchState struct {
-	capture   captureFunc
-	next      *MatchState
-	nextSplit *MatchState
-
-	kind       stateKind
-	generation int
-	code       int
+	capture captureFunc
+	// next is is the index of the next state. in the MatchState array.
+	next int
+	// If codeOrKind is negative, it is a kind.
+	// If it is negative, but not a `done`, then it is the index to the next split.
+	// This is done to keep the `MatchState` struct small and cache friendly.
+	codeOrKind int
 }
 
-type captureFunc *func(string) error
-type captureMap map[captureFunc][]string
+type captureFunc func(string) error
 
-func (cm captureMap) clone() captureMap {
-	if cm == nil {
-		return nil
-	}
-	out := make(captureMap, len(cm))
-	for k, v := range cm {
-		out[k] = slices.Clone(v)
-	}
-	return out
+// capture is a linked list of capture funcs with values.
+type capture struct {
+	f    captureFunc
+	v    string
+	prev *capture
 }
 
 type statesAndCaptures struct {
-	states   []*MatchState
-	captures []captureMap
+	states   []int
+	captures []*capture
 }
 
-func (s *MatchState) String() string {
-	return fmt.Sprintf("state{kind: %d, generation: %d, code: %d}", s.kind, s.generation, s.code)
+func (s MatchState) String() string {
+	if s.codeOrKind == done {
+		return "done"
+	}
+	if s.codeOrKind < done {
+		return fmt.Sprintf("split{left: %d, right: %d}", s.next, restoreSplitIdx(s.codeOrKind))
+	}
+	return fmt.Sprintf("match{code: %d, next: %d}", s.codeOrKind, s.next)
 }
 
 type Matchable interface {
@@ -60,52 +59,80 @@ type Matchable interface {
 // Match returns whether the given Components match the Pattern defined in MatchState.
 // Errors are used to communicate capture errors.
 // If the error is non-nil the returned bool will be false.
-func Match[S ~[]T, T Matchable](s *MatchState, components S) (bool, error) {
-	listGeneration := s.generation + 1               // Start at the last generation + 1
-	defer func() { s.generation = listGeneration }() // In case we reuse this state, store our highest generation number
+func Match[S ~[]T, T Matchable](matcher Matcher, components S) (bool, error) {
+	states := matcher.states
+	startStateIdx := matcher.startIdx
+
+	// Fast case for a small number of states (<128)
+	// Avoids allocation of a slice for the visitedBitSet.
+	stackBitSet := [2]uint64{}
+	visitedBitSet := stackBitSet[:]
+	if len(states) > 128 {
+		visitedBitSet = make([]uint64, (len(states)+63)/64)
+	}
 
 	currentStates := statesAndCaptures{
-		states:   make([]*MatchState, 0, 16),
-		captures: make([]captureMap, 0, 16),
+		states:   make([]int, 0, 16),
+		captures: make([]*capture, 0, 16),
 	}
 	nextStates := statesAndCaptures{
-		states:   make([]*MatchState, 0, 16),
-		captures: make([]captureMap, 0, 16),
+		states:   make([]int, 0, 16),
+		captures: make([]*capture, 0, 16),
 	}
 
-	currentStates = appendState(currentStates, s, nil, listGeneration)
+	currentStates = appendState(currentStates, states, startStateIdx, nil, visitedBitSet)
 
 	for _, c := range components {
+		clear(visitedBitSet)
 		if len(currentStates.states) == 0 {
 			return false, nil
 		}
-		for i, s := range currentStates.states {
-			if s.kind == matchCode && s.code == c.Code() {
+		for i, stateIndex := range currentStates.states {
+			s := states[stateIndex]
+			if s.codeOrKind >= 0 && s.codeOrKind == c.Code() {
 				cm := currentStates.captures[i]
 				if s.capture != nil {
-					if cm == nil {
-						cm = make(captureMap)
-						currentStates.captures[i] = cm
+					next := &capture{
+						f: s.capture,
+						v: c.Value(),
 					}
-					cm[s.capture] = append(cm[s.capture], c.Value())
+					if cm == nil {
+						cm = next
+					} else {
+						next.prev = cm
+						cm = next
+					}
+					currentStates.captures[i] = cm
 				}
-				nextStates = appendState(nextStates, s.next, currentStates.captures[i], listGeneration)
+				nextStates = appendState(nextStates, states, s.next, cm, visitedBitSet)
 			}
 		}
 		currentStates, nextStates = nextStates, currentStates
 		nextStates.states = nextStates.states[:0]
 		nextStates.captures = nextStates.captures[:0]
-		listGeneration++
 	}
 
-	for i, s := range currentStates.states {
-		if s.kind == done {
+	for i, stateIndex := range currentStates.states {
+		s := states[stateIndex]
+		if s.codeOrKind == done {
+
 			// We found a complete path. Run the captures now
-			for f, v := range currentStates.captures[i] {
-				for _, s := range v {
-					if err := (*f)(s); err != nil {
-						return false, err
-					}
+			c := currentStates.captures[i]
+
+			// Flip the order of the captures because we see captures from right
+			// to left, but users expect them left to right.
+			type captureWithVal struct {
+				f captureFunc
+				v string
+			}
+			reversedCaptures := make([]captureWithVal, 0, 16)
+			for c != nil {
+				reversedCaptures = append(reversedCaptures, captureWithVal{c.f, c.v})
+				c = c.prev
+			}
+			for i := len(reversedCaptures) - 1; i >= 0; i-- {
+				if err := reversedCaptures[i].f(reversedCaptures[i].v); err != nil {
+					return false, err
 				}
 			}
 			return true, nil
@@ -114,17 +141,59 @@ func Match[S ~[]T, T Matchable](s *MatchState, components S) (bool, error) {
 	return false, nil
 }
 
-func appendState(arr statesAndCaptures, s *MatchState, c captureMap, listGeneration int) statesAndCaptures {
-	if s == nil || s.generation == listGeneration {
-		return arr
+// appendState is a non-recursive way of appending states to statesAndCaptures.
+// If a state is a split, both branches are appended to statesAndCaptures.
+func appendState(arr statesAndCaptures, states []MatchState, stateIndex int, c *capture, visitedBitSet []uint64) statesAndCaptures {
+	// Local struct to hold state index and the associated capture pointer.
+	type task struct {
+		idx int
+		cap *capture
 	}
-	s.generation = listGeneration
-	if s.kind == split {
-		arr = appendState(arr, s.next, c, listGeneration)
-		arr = appendState(arr, s.nextSplit, c.clone(), listGeneration)
-	} else {
-		arr.states = append(arr.states, s)
-		arr.captures = append(arr.captures, c)
+
+	// Initialize the stack with the starting task.
+	stack := make([]task, 0, 16)
+	stack = append(stack, task{stateIndex, c})
+
+	// Process the stack until empty.
+	for len(stack) > 0 {
+		// Pop the last element (LIFO order).
+		n := len(stack) - 1
+		t := stack[n]
+		stack = stack[:n]
+
+		// If the state index is out of bounds, skip.
+		if t.idx >= len(states) {
+			continue
+		}
+		s := states[t.idx]
+
+		// Check if this state has already been visited.
+		if visitedBitSet[t.idx/64]&(1<<(t.idx%64)) != 0 {
+			continue
+		}
+		// Mark the state as visited.
+		visitedBitSet[t.idx/64] |= 1 << (t.idx % 64)
+
+		// If it's a split state (the value is less than done) then push both branches.
+		if s.codeOrKind < done {
+			// Get the second branch from the split.
+			splitIdx := restoreSplitIdx(s.codeOrKind)
+			// To preserve order (s.next processed first), push the split branch first.
+			stack = append(stack, task{splitIdx, t.cap})
+			stack = append(stack, task{s.next, t.cap})
+		} else {
+			// Otherwise, it's a valid final state -- append it.
+			arr.states = append(arr.states, t.idx)
+			arr.captures = append(arr.captures, t.cap)
+		}
 	}
 	return arr
+}
+
+func storeSplitIdx(codeOrKind int) int {
+	return (codeOrKind + 2) * -1
+}
+
+func restoreSplitIdx(splitIdx int) int {
+	return (splitIdx * -1) - 2
 }
