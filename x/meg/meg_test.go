@@ -124,7 +124,7 @@ func TestCapture(t *testing.T) {
 			{
 				setup: func() (Matcher, func()) {
 					var code0str string
-					return PatternToMatcher(CaptureVal(0, &code0str), Val(1)), func() {
+					return PatternToMatcher(CaptureStringVal(0, &code0str), Val(1)), func() {
 						if code0str != "hello" {
 							panic("unexpected value")
 						}
@@ -135,7 +135,7 @@ func TestCapture(t *testing.T) {
 			{
 				setup: func() (Matcher, func()) {
 					var code0strs []string
-					return PatternToMatcher(CaptureOneOrMore(0, &code0strs), Val(1)), func() {
+					return PatternToMatcher(CaptureOneOrMoreStringVals(0, &code0strs), Val(1)), func() {
 						if code0strs[0] != "hello" {
 							panic("unexpected value")
 						}

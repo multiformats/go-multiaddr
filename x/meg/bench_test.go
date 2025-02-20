@@ -22,7 +22,7 @@ func preallocateCapture() *preallocatedCapture {
 		),
 		meg.Val(multiaddr.P_UDP),
 		meg.Val(multiaddr.P_WEBRTC_DIRECT),
-		meg.CaptureZeroOrMore(multiaddr.P_CERTHASH, &p.certHashes),
+		meg.CaptureZeroOrMoreStringVals(multiaddr.P_CERTHASH, &p.certHashes),
 	)
 	return p
 }
@@ -87,19 +87,19 @@ func isWebTransportMultiaddrPrealloc() *preallocatedCapture {
 	var sni string
 	p.matcher = meg.PatternToMatcher(
 		meg.Or(
-			meg.CaptureVal(multiaddr.P_IP4, &ip4Addr),
-			meg.CaptureVal(multiaddr.P_IP6, &ip6Addr),
-			meg.CaptureVal(multiaddr.P_DNS4, &dnsName),
-			meg.CaptureVal(multiaddr.P_DNS6, &dnsName),
-			meg.CaptureVal(multiaddr.P_DNS, &dnsName),
+			meg.CaptureStringVal(multiaddr.P_IP4, &ip4Addr),
+			meg.CaptureStringVal(multiaddr.P_IP6, &ip6Addr),
+			meg.CaptureStringVal(multiaddr.P_DNS4, &dnsName),
+			meg.CaptureStringVal(multiaddr.P_DNS6, &dnsName),
+			meg.CaptureStringVal(multiaddr.P_DNS, &dnsName),
 		),
-		meg.CaptureVal(multiaddr.P_UDP, &udpPort),
+		meg.CaptureStringVal(multiaddr.P_UDP, &udpPort),
 		meg.Val(multiaddr.P_QUIC_V1),
 		meg.Optional(
-			meg.CaptureVal(multiaddr.P_SNI, &sni),
+			meg.CaptureStringVal(multiaddr.P_SNI, &sni),
 		),
 		meg.Val(multiaddr.P_WEBTRANSPORT),
-		meg.CaptureZeroOrMore(multiaddr.P_CERTHASH, &p.certHashes),
+		meg.CaptureZeroOrMoreStringVals(multiaddr.P_CERTHASH, &p.certHashes),
 	)
 	wtPrealloc = p
 	return p
@@ -120,24 +120,53 @@ func IsWebTransportMultiaddr(m multiaddr.Multiaddr) (bool, int) {
 	var certHashesStr []string
 	matched, _ := m.Match(
 		meg.Or(
-			meg.CaptureVal(multiaddr.P_IP4, &ip4Addr),
-			meg.CaptureVal(multiaddr.P_IP6, &ip6Addr),
-			meg.CaptureVal(multiaddr.P_DNS4, &dnsName),
-			meg.CaptureVal(multiaddr.P_DNS6, &dnsName),
-			meg.CaptureVal(multiaddr.P_DNS, &dnsName),
+			meg.CaptureStringVal(multiaddr.P_IP4, &ip4Addr),
+			meg.CaptureStringVal(multiaddr.P_IP6, &ip6Addr),
+			meg.CaptureStringVal(multiaddr.P_DNS4, &dnsName),
+			meg.CaptureStringVal(multiaddr.P_DNS6, &dnsName),
+			meg.CaptureStringVal(multiaddr.P_DNS, &dnsName),
 		),
-		meg.CaptureVal(multiaddr.P_UDP, &udpPort),
+		meg.CaptureStringVal(multiaddr.P_UDP, &udpPort),
 		meg.Val(multiaddr.P_QUIC_V1),
 		meg.Optional(
-			meg.CaptureVal(multiaddr.P_SNI, &sni),
+			meg.CaptureStringVal(multiaddr.P_SNI, &sni),
 		),
 		meg.Val(multiaddr.P_WEBTRANSPORT),
-		meg.CaptureZeroOrMore(multiaddr.P_CERTHASH, &certHashesStr),
+		meg.CaptureZeroOrMoreStringVals(multiaddr.P_CERTHASH, &certHashesStr),
 	)
 	if !matched {
 		return false, 0
 	}
 	return true, len(certHashesStr)
+}
+
+func IsWebTransportMultiaddrCaptureBytes(m multiaddr.Multiaddr) (bool, int) {
+	var dnsName []byte
+	var ip4Addr []byte
+	var ip6Addr []byte
+	var udpPort []byte
+	var sni []byte
+	var certHashes [][]byte
+	matched, _ := m.Match(
+		meg.Or(
+			meg.CaptureBytes(multiaddr.P_IP4, &ip4Addr),
+			meg.CaptureBytes(multiaddr.P_IP6, &ip6Addr),
+			meg.CaptureBytes(multiaddr.P_DNS4, &dnsName),
+			meg.CaptureBytes(multiaddr.P_DNS6, &dnsName),
+			meg.CaptureBytes(multiaddr.P_DNS, &dnsName),
+		),
+		meg.CaptureBytes(multiaddr.P_UDP, &udpPort),
+		meg.Val(multiaddr.P_QUIC_V1),
+		meg.Optional(
+			meg.CaptureBytes(multiaddr.P_SNI, &sni),
+		),
+		meg.Val(multiaddr.P_WEBTRANSPORT),
+		meg.CaptureZeroOrMoreBytes(multiaddr.P_CERTHASH, &certHashes),
+	)
+	if !matched {
+		return false, 0
+	}
+	return true, len(certHashes)
 }
 
 func IsWebTransportMultiaddrNoCapture(m multiaddr.Multiaddr) (bool, int) {
@@ -349,6 +378,18 @@ func BenchmarkIsWebTransportMultiaddrNoCapture(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		isWT, count := IsWebTransportMultiaddrNoCapture(addr)
+		if !isWT || count != 0 {
+			b.Fatal("unexpected result")
+		}
+	}
+}
+
+func BenchmarkIsWebTransportMultiaddrCaptureBytes(b *testing.B) {
+	addr := multiaddr.StringCast("/ip4/1.2.3.4/udp/1234/quic-v1/sni/example.com/webtransport")
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		isWT, count := IsWebTransportMultiaddrCaptureBytes(addr)
 		if !isWT || count != 0 {
 			b.Fatal("unexpected result")
 		}
