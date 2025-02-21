@@ -19,30 +19,39 @@ type Component struct {
 	valueStartIdx int // Index of the first byte of the Component's value in the bytes array
 }
 
-func (c Component) AsMultiaddr() Multiaddr {
+func (c *Component) AsMultiaddr() Multiaddr {
 	if c.Empty() {
 		return nil
 	}
-	return []Component{c}
+	return []Component{*c}
 }
 
-func (c Component) Encapsulate(o Multiaddr) Multiaddr {
+func (c *Component) Encapsulate(o Multiaddr) Multiaddr {
 	return c.AsMultiaddr().Encapsulate(o)
 }
 
-func (c Component) Decapsulate(o Multiaddr) Multiaddr {
+func (c *Component) Decapsulate(o Multiaddr) Multiaddr {
 	return c.AsMultiaddr().Decapsulate(o)
 }
 
-func (c Component) Empty() bool {
+func (c *Component) Empty() bool {
+	if c == nil {
+		return true
+	}
 	return len(c.bytes) == 0
 }
 
-func (c Component) Bytes() []byte {
+func (c *Component) Bytes() []byte {
+	if c == nil {
+		return nil
+	}
 	return []byte(c.bytes)
 }
 
-func (c Component) MarshalBinary() ([]byte, error) {
+func (c *Component) MarshalBinary() ([]byte, error) {
+	if c == nil {
+		return nil, errNilPtr
+	}
 	return c.Bytes(), nil
 }
 
@@ -58,7 +67,10 @@ func (c *Component) UnmarshalBinary(data []byte) error {
 	return nil
 }
 
-func (c Component) MarshalText() ([]byte, error) {
+func (c *Component) MarshalText() ([]byte, error) {
+	if c == nil {
+		return nil, errNilPtr
+	}
 	return []byte(c.String()), nil
 }
 
@@ -79,7 +91,10 @@ func (c *Component) UnmarshalText(data []byte) error {
 	return nil
 }
 
-func (c Component) MarshalJSON() ([]byte, error) {
+func (c *Component) MarshalJSON() ([]byte, error) {
+	if c == nil {
+		return nil, errNilPtr
+	}
 	txt, err := c.MarshalText()
 	if err != nil {
 		return nil, err
@@ -101,22 +116,40 @@ func (c *Component) UnmarshalJSON(data []byte) error {
 	return c.UnmarshalText([]byte(v))
 }
 
-func (c Component) Equal(o Component) bool {
+func (c *Component) Equal(o *Component) bool {
+	if c == nil || o == nil {
+		return c == o
+	}
 	return c.bytes == o.bytes
 }
 
-func (c Component) Compare(o Component) int {
+func (c *Component) Compare(o *Component) int {
+	if c == nil && o == nil {
+		return 0
+	}
+	if c == nil {
+		return -1
+	}
+	if o == nil {
+		return 1
+	}
 	return strings.Compare(c.bytes, o.bytes)
 }
 
-func (c Component) Protocols() []Protocol {
+func (c *Component) Protocols() []Protocol {
+	if c == nil {
+		return nil
+	}
 	if c.protocol == nil {
 		return nil
 	}
 	return []Protocol{*c.protocol}
 }
 
-func (c Component) ValueForProtocol(code int) (string, error) {
+func (c *Component) ValueForProtocol(code int) (string, error) {
+	if c == nil {
+		return "", fmt.Errorf("component is nil")
+	}
 	if c.protocol == nil {
 		return "", fmt.Errorf("component has nil protocol")
 	}
@@ -126,18 +159,27 @@ func (c Component) ValueForProtocol(code int) (string, error) {
 	return c.Value(), nil
 }
 
-func (c Component) Protocol() Protocol {
+func (c *Component) Protocol() Protocol {
+	if c == nil {
+		return Protocol{}
+	}
 	if c.protocol == nil {
 		return Protocol{}
 	}
 	return *c.protocol
 }
 
-func (c Component) RawValue() []byte {
+func (c *Component) RawValue() []byte {
+	if c == nil {
+		return nil
+	}
 	return []byte(c.bytes[c.valueStartIdx:])
 }
 
-func (c Component) Value() string {
+func (c *Component) Value() string {
+	if c == nil {
+		return ""
+	}
 	if c.Empty() {
 		return ""
 	}
@@ -146,7 +188,10 @@ func (c Component) Value() string {
 	return value
 }
 
-func (c Component) valueAndErr() (string, error) {
+func (c *Component) valueAndErr() (string, error) {
+	if c == nil {
+		return "", errNilPtr
+	}
 	if c.protocol == nil {
 		return "", fmt.Errorf("component has nil protocol")
 	}
@@ -160,7 +205,10 @@ func (c Component) valueAndErr() (string, error) {
 	return value, nil
 }
 
-func (c Component) String() string {
+func (c *Component) String() string {
+	if c == nil {
+		return "<nil component>"
+	}
 	var b strings.Builder
 	c.writeTo(&b)
 	return b.String()
@@ -168,7 +216,10 @@ func (c Component) String() string {
 
 // writeTo is an efficient, private function for string-formatting a multiaddr.
 // Trust me, we tend to allocate a lot when doing this.
-func (c Component) writeTo(b *strings.Builder) {
+func (c *Component) writeTo(b *strings.Builder) {
+	if c == nil {
+		return
+	}
 	if c.protocol == nil {
 		return
 	}

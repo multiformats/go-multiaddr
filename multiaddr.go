@@ -71,7 +71,7 @@ func (m Multiaddr) Equal(m2 Multiaddr) bool {
 		return false
 	}
 	for i, c := range m {
-		if !c.Equal(m2[i]) {
+		if !c.Equal(&m2[i]) {
 			return false
 		}
 	}
@@ -80,7 +80,7 @@ func (m Multiaddr) Equal(m2 Multiaddr) bool {
 
 func (m Multiaddr) Compare(o Multiaddr) int {
 	for i := 0; i < len(m) && i < len(o); i++ {
-		if cmp := m[i].Compare(o[i]); cmp != 0 {
+		if cmp := m[i].Compare(&o[i]); cmp != 0 {
 			return cmp
 		}
 	}
@@ -177,13 +177,13 @@ func (m Multiaddr) Encapsulate(o Multiaddr) Multiaddr {
 	return Join(m, o)
 }
 
-func (m Multiaddr) EncapsulateC(c Component) Multiaddr {
+func (m Multiaddr) EncapsulateC(c *Component) Multiaddr {
 	if c.Empty() {
 		return m
 	}
 	out := make([]Component, 0, len(m)+1)
 	out = append(out, m...)
-	out = append(out, c)
+	out = append(out, *c)
 	return out
 }
 
@@ -200,7 +200,7 @@ func (m Multiaddr) Decapsulate(rightParts Multiaddr) Multiaddr {
 				break
 			}
 
-			foundMatch = rightC.Equal(leftParts[i+j])
+			foundMatch = rightC.Equal(&leftParts[i+j])
 			if !foundMatch {
 				break
 			}
