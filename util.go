@@ -71,7 +71,9 @@ func SplitFirst(m Multiaddr) (*Component, Multiaddr) {
 	if len(m) == 1 {
 		return &m[0], nil
 	}
-	return &m[0], m[1:]
+	// defensive copy. Users can avoid by doing the split themselves.
+	copyC := m[0]
+	return &copyC, m[1:].copy()
 }
 
 // SplitLast returns the rest of the multiaddr and the last component.
@@ -83,7 +85,9 @@ func SplitLast(m Multiaddr) (Multiaddr, *Component) {
 		// We want to explicitly return a nil slice if the prefix is now empty.
 		return nil, &m[0]
 	}
-	return m[:len(m)-1], &m[len(m)-1]
+	// defensive copy. Users can avoid by doing the split themselves.
+	copyC := m[len(m)-1]
+	return m[:len(m)-1].copy(), &copyC
 }
 
 // SplitFunc splits the multiaddr when the callback first returns true. The
@@ -108,7 +112,8 @@ func SplitFunc(m Multiaddr, cb func(Component) bool) (Multiaddr, Multiaddr) {
 	if post.Empty() {
 		post = nil
 	}
-	return pre, post
+	// defensive copy. Users can avoid by doing the split themselves.
+	return pre.copy(), post.copy()
 }
 
 // ForEach walks over the multiaddr, component by component.

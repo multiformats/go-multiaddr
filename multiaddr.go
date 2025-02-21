@@ -16,6 +16,15 @@ var errNilPtr = errors.New("nil ptr")
 // Multiaddr is the data structure representing a Multiaddr
 type Multiaddr []Component
 
+func (m Multiaddr) copy() Multiaddr {
+	if m == nil {
+		return nil
+	}
+	out := make(Multiaddr, len(m))
+	copy(out, m)
+	return out
+}
+
 func (m Multiaddr) Empty() bool {
 	if len(m) == 0 {
 		return true
