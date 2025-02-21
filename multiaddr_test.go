@@ -28,6 +28,12 @@ func TestReturnsNilOnEmpty(t *testing.T) {
 	a, _ = SplitLast(a)
 	require.Nil(t, a)
 
+	a, c := SplitLast(nil)
+	require.Zero(t, len(a.Protocols()))
+	require.Nil(t, a)
+	require.Nil(t, c)
+	require.True(t, c.Empty())
+
 	// Test that empty multiaddr from various operations returns nil
 	a = StringCast("/ip4/1.2.3.4/tcp/1234")
 	_, a = SplitFirst(a)
@@ -35,6 +41,11 @@ func TestReturnsNilOnEmpty(t *testing.T) {
 	require.Nil(t, a)
 	_, a = SplitFirst(a)
 	require.Nil(t, a)
+
+	c, a = SplitFirst(nil)
+	require.Nil(t, a)
+	require.Nil(t, c)
+	require.True(t, c.Empty())
 
 	a = StringCast("/ip4/1.2.3.4/tcp/1234")
 	a = a.Decapsulate(a)
@@ -400,7 +411,7 @@ func TestBytesSplitAndJoin(t *testing.T) {
 
 		for i, a := range split {
 			if a.String() != res[i] {
-				t.Errorf("split component failed: %s != %s", a, res[i])
+				t.Errorf("split component failed: %s != %s", &a, res[i])
 			}
 		}
 
@@ -411,7 +422,7 @@ func TestBytesSplitAndJoin(t *testing.T) {
 
 		for i, a := range split {
 			if a.String() != res[i] {
-				t.Errorf("split component failed: %s != %s", a, res[i])
+				t.Errorf("split component failed: %s != %s", &a, res[i])
 			}
 		}
 	}
@@ -863,7 +874,7 @@ func TestComponentBinaryMarshaler(t *testing.T) {
 	if err = comp2.UnmarshalBinary(b); err != nil {
 		t.Fatal(err)
 	}
-	if !comp.Equal(comp2) {
+	if !comp.Equal(&comp2) {
 		t.Error("expected equal components in circular marshaling test")
 	}
 }
@@ -882,7 +893,7 @@ func TestComponentTextMarshaler(t *testing.T) {
 	if err = comp2.UnmarshalText(b); err != nil {
 		t.Fatal(err)
 	}
-	if !comp.Equal(comp2) {
+	if !comp.Equal(&comp2) {
 		t.Error("expected equal components in circular marshaling test")
 	}
 }
@@ -901,7 +912,7 @@ func TestComponentJSONMarshaler(t *testing.T) {
 	if err = comp2.UnmarshalJSON(b); err != nil {
 		t.Fatal(err)
 	}
-	if !comp.Equal(comp2) {
+	if !comp.Equal(&comp2) {
 		t.Error("expected equal components in circular marshaling test")
 	}
 }
@@ -914,6 +925,9 @@ func TestUseNil(t *testing.T) {
 	_ = f()
 
 	var foo Multiaddr = nil
+	_, right := SplitFirst(foo)
+	right.Protocols()
+	foo.Protocols()
 	foo.Bytes()
 	foo.Compare(nil)
 	foo.Decapsulate(nil)
@@ -928,6 +942,32 @@ func TestUseNil(t *testing.T) {
 	_ = foo.UnmarshalJSON(nil)
 	_ = foo.UnmarshalText(nil)
 	_, _ = foo.ValueForProtocol(0)
+}
+
+func TestUseNilComponent(t *testing.T) {
+	var foo *Component
+	foo.AsMultiaddr()
+	foo.Encapsulate(nil)
+	foo.Decapsulate(nil)
+	foo.Empty()
+	foo.Bytes()
+	foo.MarshalBinary()
+	foo.MarshalJSON()
+	foo.MarshalText()
+	foo.UnmarshalBinary(nil)
+	foo.UnmarshalJSON(nil)
+	foo.UnmarshalText(nil)
+	foo.Equal(nil)
+	foo.Compare(nil)
+	foo.Protocols()
+	foo.ValueForProtocol(0)
+	foo.Protocol()
+	foo.RawValue()
+	foo.Value()
+	_ = foo.String()
+
+	var m Multiaddr = nil
+	m.EncapsulateC(foo)
 }
 
 func TestFilterAddrs(t *testing.T) {
