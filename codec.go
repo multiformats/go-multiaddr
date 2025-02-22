@@ -67,31 +67,36 @@ func stringToBytes(s string) ([]byte, error) {
 	return b.Bytes(), nil
 }
 
-func readComponent(b []byte) (int, Component, error) {
+func readComponent(b []byte) (int, *Component, error) {
 	var offset int
 	code, n, err := ReadVarintCode(b)
 	if err != nil {
-		return 0, Component{}, err
+		return 0, nil, err
 	}
 	offset += n
 
 	p := ProtocolWithCode(code)
 	if p.Code == 0 {
-		return 0, Component{}, fmt.Errorf("no protocol with code %d", code)
+		return 0, nil, fmt.Errorf("no protocol with code %d", code)
 	}
 	pPtr := protocolPtrByCode[code]
 	if pPtr == nil {
-		return 0, Component{}, fmt.Errorf("no protocol with code %d", code)
+		return 0, nil, fmt.Errorf("no protocol with code %d", code)
 	}
 
 	if p.Size == 0 {
-		c, err := validateComponent(Component{
+		c := &Component{
 			bytes:         string(b[:offset]),
 			valueStartIdx: offset,
 			protocol:      pPtr,
-		})
+		}
 
-		return offset, c, err
+		err := validateComponent(c)
+		if err != nil {
+			return 0, nil, err
+		}
+
+		return offset, c, nil
 	}
 
 	var size int
@@ -100,7 +105,7 @@ func readComponent(b []byte) (int, Component, error) {
 		var n int
 		size, n, err = ReadVarintCode(b[offset:])
 		if err != nil {
-			return 0, Component{}, err
+			return 0, nil, err
 		}
 		offset += n
 	} else {
@@ -109,14 +114,18 @@ func readComponent(b []byte) (int, Component, error) {
 	}
 
 	if len(b[offset:]) < size || size <= 0 {
-		return 0, Component{}, fmt.Errorf("invalid value for size %d", len(b[offset:]))
+		return 0, nil, fmt.Errorf("invalid value for size %d", len(b[offset:]))
 	}
 
-	c, err := validateComponent(Component{
+	c := &Component{
 		bytes:         string(b[:offset+size]),
 		protocol:      pPtr,
 		valueStartIdx: offset,
-	})
+	}
+	err = validateComponent(c)
+	if err != nil {
+		return 0, nil, err
+	}
 
 	return offset + size, c, err
 }
@@ -142,7 +151,7 @@ func readMultiaddr(b []byte) (int, Multiaddr, error) {
 			return bytesRead, nil, fmt.Errorf("unexpected component after path component")
 		}
 		sawPathComponent = c.protocol.Path
-		res = append(res, c)
+		res = append(res, *c)
 	}
 	return bytesRead, res, nil
 }

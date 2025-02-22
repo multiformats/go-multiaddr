@@ -181,9 +181,17 @@ func (m Multiaddr) Protocols() []Protocol {
 	return out
 }
 
+type asMultiaddr interface {
+	AsMultiaddr() Multiaddr
+}
+
+func (m Multiaddr) AsMultiaddr() Multiaddr {
+	return m
+}
+
 // Encapsulate wraps a given Multiaddr, returning the resulting joined Multiaddr
-func (m Multiaddr) Encapsulate(o Multiaddr) Multiaddr {
-	return Join(m, o)
+func (m Multiaddr) Encapsulate(other asMultiaddr) Multiaddr {
+	return Join(m, other)
 }
 
 func (m Multiaddr) EncapsulateC(c *Component) Multiaddr {
@@ -197,7 +205,11 @@ func (m Multiaddr) EncapsulateC(c *Component) Multiaddr {
 }
 
 // Decapsulate unwraps Multiaddr up until the given Multiaddr is found.
-func (m Multiaddr) Decapsulate(rightParts Multiaddr) Multiaddr {
+func (m Multiaddr) Decapsulate(rightPartsAny asMultiaddr) Multiaddr {
+	if rightPartsAny == nil {
+		return m
+	}
+	rightParts := rightPartsAny.AsMultiaddr()
 	leftParts := m
 
 	lastIndex := -1
