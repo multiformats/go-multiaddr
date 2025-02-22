@@ -194,16 +194,6 @@ func (m Multiaddr) Encapsulate(other asMultiaddr) Multiaddr {
 	return Join(m, other)
 }
 
-func (m Multiaddr) EncapsulateC(c *Component) Multiaddr {
-	if c.Empty() {
-		return m
-	}
-	out := make([]Component, 0, len(m)+1)
-	out = append(out, m...)
-	out = append(out, *c)
-	return out
-}
-
 // Decapsulate unwraps Multiaddr up until the given Multiaddr is found.
 func (m Multiaddr) Decapsulate(rightPartsAny asMultiaddr) Multiaddr {
 	if rightPartsAny == nil {

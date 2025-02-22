@@ -1000,7 +1000,7 @@ func TestUseNilComponent(t *testing.T) {
 	_ = foo.String()
 
 	var m Multiaddr = nil
-	m.EncapsulateC(foo)
+	m.Encapsulate(foo)
 }
 
 func TestFilterAddrs(t *testing.T) {
