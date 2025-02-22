@@ -189,6 +189,18 @@ func (m Multiaddr) AsMultiaddr() Multiaddr {
 	return m
 }
 
+// AppendComponent is the same as using `append(m, *c)`, but with a safety check
+// for a nil Component.
+func (m Multiaddr) AppendComponent(cs ...*Component) Multiaddr {
+	for _, c := range cs {
+		if c == nil {
+			continue
+		}
+		m = append(m, *c)
+	}
+	return m
+}
+
 // Encapsulate wraps a given Multiaddr, returning the resulting joined Multiaddr
 func (m Multiaddr) Encapsulate(other asMultiaddr) Multiaddr {
 	return Join(m, other)

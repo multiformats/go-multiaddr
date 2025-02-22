@@ -627,6 +627,17 @@ func assertValueForProto(t *testing.T, a Multiaddr, p int, exp string) {
 	}
 }
 
+func TestAppendComponent(t *testing.T) {
+	var m Multiaddr
+	res := m.AppendComponent(nil)
+	require.Equal(t, m, res)
+
+	c, err := NewComponent("ip4", "127.0.0.1")
+	require.NoError(t, err)
+	res = m.AppendComponent(c)
+	require.Equal(t, "/ip4/127.0.0.1", res.String())
+}
+
 func TestGetValue(t *testing.T) {
 	a := newMultiaddr(t, "/ip4/127.0.0.1/utp/tcp/5555/udp/1234/tls/utp/ipfs/QmbHVEEepCi7rn7VL7Exxpd2Ci9NNB6ifvqwhsrbRMgQFP")
 	assertValueForProto(t, a, P_IP4, "127.0.0.1")
