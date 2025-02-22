@@ -21,8 +21,8 @@ func TestSplitFirstLast(t *testing.T) {
 		head, tail := SplitFirst(addr)
 		rest, last := SplitLast(addr)
 		if len(x) == 0 {
-			if !head.Empty() {
-				t.Error("expected head to be empty")
+			if head != nil {
+				t.Error("expected head to be nil")
 			}
 			if tail != nil {
 				t.Error("expected tail to be nil")
@@ -30,8 +30,8 @@ func TestSplitFirstLast(t *testing.T) {
 			if rest != nil {
 				t.Error("expected rest to be nil")
 			}
-			if !last.Empty() {
-				t.Error("expected last to be empty")
+			if last != nil {
+				t.Error("expected last to be nil")
 			}
 			continue
 		}
@@ -122,7 +122,7 @@ func TestSplitFunc(t *testing.T) {
 				return c.AsMultiaddr().Equal(target)
 			})
 			if i == 0 {
-				if !a.Empty() {
+				if a != nil {
 					t.Error("expected nil addr")
 				}
 			} else {
@@ -135,7 +135,7 @@ func TestSplitFunc(t *testing.T) {
 			}
 		}
 		a, b := SplitFunc(addr, func(_ Component) bool { return false })
-		if !a.Equal(addr) || !b.Empty() {
+		if !a.Equal(addr) || b != nil {
 			t.Error("should not have split")
 		}
 	}

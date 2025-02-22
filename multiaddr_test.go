@@ -32,7 +32,6 @@ func TestReturnsNilOnEmpty(t *testing.T) {
 	require.Zero(t, len(a.Protocols()))
 	require.Nil(t, a)
 	require.Nil(t, c)
-	require.True(t, c.Empty())
 
 	// Test that empty multiaddr from various operations returns nil
 	a = StringCast("/ip4/1.2.3.4/tcp/1234")
@@ -45,7 +44,6 @@ func TestReturnsNilOnEmpty(t *testing.T) {
 	c, a = SplitFirst(nil)
 	require.Nil(t, a)
 	require.Nil(t, c)
-	require.True(t, c.Empty())
 
 	a = StringCast("/ip4/1.2.3.4/tcp/1234")
 	a = a.Decapsulate(a)
@@ -72,7 +70,8 @@ func TestReturnsNilOnEmpty(t *testing.T) {
 	_, err := NewMultiaddr("")
 	require.Error(t, err)
 
-	a = JoinComponents()
+	var nilMultiaddr Multiaddr
+	a = nilMultiaddr.AppendComponent()
 	require.Nil(t, a)
 
 	a = Join()
@@ -425,7 +424,7 @@ func TestBytesSplitAndJoin(t *testing.T) {
 			}
 		}
 
-		joined := JoinComponents(split...)
+		joined := append(Multiaddr{}, split...)
 		if !m.Equal(joined) {
 			t.Errorf("joined components failed: %s != %s", m, joined)
 		}
@@ -914,7 +913,7 @@ func TestComponentBinaryMarshaler(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	comp2 := Component{}
+	var comp2 Component
 	if err = comp2.UnmarshalBinary(b); err != nil {
 		t.Fatal(err)
 	}
@@ -933,7 +932,7 @@ func TestComponentTextMarshaler(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	comp2 := Component{}
+	var comp2 Component
 	if err = comp2.UnmarshalText(b); err != nil {
 		t.Fatal(err)
 	}
@@ -952,7 +951,7 @@ func TestComponentJSONMarshaler(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	comp2 := Component{}
+	var comp2 Component
 	if err = comp2.UnmarshalJSON(b); err != nil {
 		t.Fatal(err)
 	}
@@ -993,7 +992,7 @@ func TestUseNilComponent(t *testing.T) {
 	foo.AsMultiaddr()
 	foo.Encapsulate(nil)
 	foo.Decapsulate(nil)
-	require.True(t, foo.Empty())
+	require.True(t, foo == nil)
 	foo.Bytes()
 	foo.MarshalBinary()
 	foo.MarshalJSON()
