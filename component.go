@@ -19,26 +19,19 @@ type Component struct {
 	valueStartIdx int // Index of the first byte of the Component's value in the bytes array
 }
 
-func (c *Component) AsMultiaddr() Multiaddr {
-	if c.Empty() {
+func (c *Component) Multiaddr() Multiaddr {
+	if c == nil {
 		return nil
 	}
 	return []Component{*c}
 }
 
-func (c *Component) Encapsulate(o Multiaddr) Multiaddr {
-	return c.AsMultiaddr().Encapsulate(o)
+func (c *Component) Encapsulate(o Multiaddrer) Multiaddr {
+	return c.Multiaddr().Encapsulate(o)
 }
 
-func (c *Component) Decapsulate(o Multiaddr) Multiaddr {
-	return c.AsMultiaddr().Decapsulate(o)
-}
-
-func (c *Component) Empty() bool {
-	if c == nil {
-		return true
-	}
-	return len(c.bytes) == 0
+func (c *Component) Decapsulate(o Multiaddrer) Multiaddr {
+	return c.Multiaddr().Decapsulate(o)
 }
 
 func (c *Component) Bytes() []byte {
@@ -63,7 +56,7 @@ func (c *Component) UnmarshalBinary(data []byte) error {
 	if err != nil {
 		return err
 	}
-	*c = comp
+	*c = *comp
 	return nil
 }
 
@@ -87,7 +80,7 @@ func (c *Component) UnmarshalText(data []byte) error {
 	if err != nil {
 		return err
 	}
-	*c = comp
+	*c = *comp
 	return nil
 }
 
@@ -180,9 +173,6 @@ func (c *Component) Value() string {
 	if c == nil {
 		return ""
 	}
-	if c.Empty() {
-		return ""
-	}
 	// This Component MUST have been checked by validateComponent when created
 	value, _ := c.valueAndErr()
 	return value
@@ -236,24 +226,24 @@ func (c *Component) writeTo(b *strings.Builder) {
 }
 
 // NewComponent constructs a new multiaddr component
-func NewComponent(protocol, value string) (Component, error) {
+func NewComponent(protocol, value string) (*Component, error) {
 	p := ProtocolWithName(protocol)
 	if p.Code == 0 {
-		return Component{}, fmt.Errorf("unsupported protocol: %s", protocol)
+		return nil, fmt.Errorf("unsupported protocol: %s", protocol)
 	}
 	if p.Transcoder != nil {
 		bts, err := p.Transcoder.StringToBytes(value)
 		if err != nil {
-			return Component{}, err
+			return nil, err
 		}
 		return newComponent(p, bts)
 	} else if value != "" {
-		return Component{}, fmt.Errorf("protocol %s doesn't take a value", p.Name)
+		return nil, fmt.Errorf("protocol %s doesn't take a value", p.Name)
 	}
 	return newComponent(p, nil)
 }
 
-func newComponent(protocol Protocol, bvalue []byte) (Component, error) {
+func newComponent(protocol Protocol, bvalue []byte) (*Component, error) {
 	protocolPtr := protocolPtrByCode[protocol.Code]
 	if protocolPtr == nil {
 		protocolPtr = &protocol
@@ -274,71 +264,79 @@ func newComponent(protocol Protocol, bvalue []byte) (Component, error) {
 
 	// Shouldn't happen
 	if len(maddr) != offset+len(bvalue) {
-		return Component{}, fmt.Errorf("component size mismatch: %d != %d", len(maddr), offset+len(bvalue))
+		return nil, fmt.Errorf("component size mismatch: %d != %d", len(maddr), offset+len(bvalue))
 	}
 
-	return validateComponent(
-		Component{
-			bytes:         string(maddr),
-			protocol:      protocolPtr,
-			valueStartIdx: offset,
-		})
+	c := &Component{
+		bytes:         string(maddr),
+		protocol:      protocolPtr,
+		valueStartIdx: offset,
+	}
+
+	err := validateComponent(c)
+	if err != nil {
+		return nil, err
+	}
+	return c, nil
 }
 
 // validateComponent MUST be called after creating a non-zero Component.
 // It ensures that we will be able to call all methods on Component without
 // error.
-func validateComponent(c Component) (Component, error) {
+func validateComponent(c *Component) error {
+	if c == nil {
+		return errNilPtr
+	}
 	if c.protocol == nil {
-		return Component{}, fmt.Errorf("component is missing its protocol")
+		return fmt.Errorf("component is missing its protocol")
 	}
 	if c.valueStartIdx > len(c.bytes) {
-		return Component{}, fmt.Errorf("component valueStartIdx is greater than the length of the component's bytes")
+		return fmt.Errorf("component valueStartIdx is greater than the length of the component's bytes")
 	}
 
 	if len(c.protocol.VCode) == 0 {
-		return Component{}, fmt.Errorf("Component is missing its protocol's VCode field")
+		return fmt.Errorf("Component is missing its protocol's VCode field")
 	}
 	if len(c.bytes) < len(c.protocol.VCode) {
-		return Component{}, fmt.Errorf("component size mismatch: %d != %d", len(c.bytes), len(c.protocol.VCode))
+		return fmt.Errorf("component size mismatch: %d != %d", len(c.bytes), len(c.protocol.VCode))
 	}
 	if !bytes.Equal([]byte(c.bytes[:len(c.protocol.VCode)]), c.protocol.VCode) {
-		return Component{}, fmt.Errorf("component's VCode field is invalid: %v != %v", []byte(c.bytes[:len(c.protocol.VCode)]), c.protocol.VCode)
+		return fmt.Errorf("component's VCode field is invalid: %v != %v", []byte(c.bytes[:len(c.protocol.VCode)]), c.protocol.VCode)
 	}
 	if c.protocol.Size < 0 {
 		size, n, err := ReadVarintCode([]byte(c.bytes[len(c.protocol.VCode):]))
 		if err != nil {
-			return Component{}, err
+			return err
 		}
 		if size != len(c.bytes[c.valueStartIdx:]) {
-			return Component{}, fmt.Errorf("component value size mismatch: %d != %d", size, len(c.bytes[c.valueStartIdx:]))
+			return fmt.Errorf("component value size mismatch: %d != %d", size, len(c.bytes[c.valueStartIdx:]))
 		}
 
 		if len(c.protocol.VCode)+n+size != len(c.bytes) {
-			return Component{}, fmt.Errorf("component size mismatch: %d != %d", len(c.protocol.VCode)+n+size, len(c.bytes))
+			return fmt.Errorf("component size mismatch: %d != %d", len(c.protocol.VCode)+n+size, len(c.bytes))
 		}
 	} else {
 		// Fixed size value
 		size := c.protocol.Size / 8
 		if size != len(c.bytes[c.valueStartIdx:]) {
-			return Component{}, fmt.Errorf("component value size mismatch: %d != %d", size, len(c.bytes[c.valueStartIdx:]))
+			return fmt.Errorf("component value size mismatch: %d != %d", size, len(c.bytes[c.valueStartIdx:]))
 		}
 
 		if len(c.protocol.VCode)+size != len(c.bytes) {
-			return Component{}, fmt.Errorf("component size mismatch: %d != %d", len(c.protocol.VCode)+size, len(c.bytes))
+			return fmt.Errorf("component size mismatch: %d != %d", len(c.protocol.VCode)+size, len(c.bytes))
 		}
 	}
 
 	_, err := c.valueAndErr()
 	if err != nil {
-		return Component{}, err
+		return err
 
 	}
 	if c.protocol.Transcoder != nil {
 		err = c.protocol.Transcoder.ValidateBytes([]byte(c.bytes[c.valueStartIdx:]))
 		if err != nil {
-			return Component{}, err
+			return err
 		}
 	}
-	return c, nil
+	return nil
 }

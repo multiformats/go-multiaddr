@@ -25,18 +25,6 @@ func (m Multiaddr) copy() Multiaddr {
 	return out
 }
 
-func (m Multiaddr) Empty() bool {
-	if len(m) == 0 {
-		return true
-	}
-	for _, c := range m {
-		if !c.Empty() {
-			return false
-		}
-	}
-	return true
-}
-
 // NewMultiaddr parses and validates an input string, returning a *Multiaddr
 func NewMultiaddr(s string) (a Multiaddr, err error) {
 	defer func() {
@@ -181,23 +169,38 @@ func (m Multiaddr) Protocols() []Protocol {
 	return out
 }
 
-// Encapsulate wraps a given Multiaddr, returning the resulting joined Multiaddr
-func (m Multiaddr) Encapsulate(o Multiaddr) Multiaddr {
-	return Join(m, o)
+type Multiaddrer interface {
+	// Multiaddr returns the Multiaddr representation
+	Multiaddr() Multiaddr
 }
 
-func (m Multiaddr) EncapsulateC(c *Component) Multiaddr {
-	if c.Empty() {
-		return m
+func (m Multiaddr) Multiaddr() Multiaddr {
+	return m
+}
+
+// AppendComponent is the same as using `append(m, *c)`, but with a safety check
+// for a nil Component.
+func (m Multiaddr) AppendComponent(cs ...*Component) Multiaddr {
+	for _, c := range cs {
+		if c == nil {
+			continue
+		}
+		m = append(m, *c)
 	}
-	out := make([]Component, 0, len(m)+1)
-	out = append(out, m...)
-	out = append(out, *c)
-	return out
+	return m
+}
+
+// Encapsulate wraps a given Multiaddr, returning the resulting joined Multiaddr
+func (m Multiaddr) Encapsulate(other Multiaddrer) Multiaddr {
+	return Join(m, other)
 }
 
 // Decapsulate unwraps Multiaddr up until the given Multiaddr is found.
-func (m Multiaddr) Decapsulate(rightParts Multiaddr) Multiaddr {
+func (m Multiaddr) Decapsulate(rightPartsAny Multiaddrer) Multiaddr {
+	if rightPartsAny == nil {
+		return m
+	}
+	rightParts := rightPartsAny.Multiaddr()
 	leftParts := m
 
 	lastIndex := -1

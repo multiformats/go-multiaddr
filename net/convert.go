@@ -108,13 +108,13 @@ func FromIPAndZone(ip net.IP, zone string) (ma.Multiaddr, error) {
 		if err != nil {
 			return nil, err
 		}
-		return c.AsMultiaddr(), nil
+		return c.Multiaddr(), nil
 	case ip.To16() != nil:
 		ip6C, err := ma.NewComponent("ip6", ip.String())
 		if err != nil {
 			return nil, err
 		}
-		ip6 := ip6C.AsMultiaddr()
+		ip6 := ip6C.Multiaddr()
 		if zone == "" {
 			return ip6, nil
 		} else {
@@ -362,5 +362,5 @@ func parseUnixNetAddr(a net.Addr) (ma.Multiaddr, error) {
 	if err != nil {
 		return nil, err
 	}
-	return c.AsMultiaddr(), nil
+	return c.Multiaddr(), nil
 }
