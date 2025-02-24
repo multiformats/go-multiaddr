@@ -26,11 +26,11 @@ func (c *Component) AsMultiaddr() Multiaddr {
 	return []Component{*c}
 }
 
-func (c *Component) Encapsulate(o asMultiaddr) Multiaddr {
+func (c *Component) Encapsulate(o AsMultiaddrer) Multiaddr {
 	return c.AsMultiaddr().Encapsulate(o)
 }
 
-func (c *Component) Decapsulate(o asMultiaddr) Multiaddr {
+func (c *Component) Decapsulate(o AsMultiaddrer) Multiaddr {
 	return c.AsMultiaddr().Decapsulate(o)
 }
 

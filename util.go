@@ -12,7 +12,7 @@ func Split(m Multiaddr) []Component {
 // Join returns a combination of addresses.
 // Note: This copies all the components from the input Multiaddrs. Depending on
 // your use case, you may prefer to use `append(leftMA, rightMA...)` instead.
-func Join(msInterfaces ...asMultiaddr) Multiaddr {
+func Join(msInterfaces ...AsMultiaddrer) Multiaddr {
 	ms := make([]Multiaddr, len(msInterfaces))
 	for i, m := range msInterfaces {
 		if m == nil {

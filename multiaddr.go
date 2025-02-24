@@ -169,7 +169,7 @@ func (m Multiaddr) Protocols() []Protocol {
 	return out
 }
 
-type asMultiaddr interface {
+type AsMultiaddrer interface {
 	AsMultiaddr() Multiaddr
 }
 
@@ -190,12 +190,12 @@ func (m Multiaddr) AppendComponent(cs ...*Component) Multiaddr {
 }
 
 // Encapsulate wraps a given Multiaddr, returning the resulting joined Multiaddr
-func (m Multiaddr) Encapsulate(other asMultiaddr) Multiaddr {
+func (m Multiaddr) Encapsulate(other AsMultiaddrer) Multiaddr {
 	return Join(m, other)
 }
 
 // Decapsulate unwraps Multiaddr up until the given Multiaddr is found.
-func (m Multiaddr) Decapsulate(rightPartsAny asMultiaddr) Multiaddr {
+func (m Multiaddr) Decapsulate(rightPartsAny AsMultiaddrer) Multiaddr {
 	if rightPartsAny == nil {
 		return m
 	}
