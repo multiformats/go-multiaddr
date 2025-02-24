@@ -322,7 +322,7 @@ func TestNilInterface(t *testing.T) {
 
 	// Test components
 	c, _ := SplitFirst(m1)
-	c.AsMultiaddr().Equal(m2)
+	c.Multiaddr().Equal(m2)
 	c.Encapsulate(m2)
 	c.Decapsulate(m2)
 
@@ -989,7 +989,7 @@ func TestUseNil(t *testing.T) {
 
 func TestUseNilComponent(t *testing.T) {
 	var foo *Component
-	foo.AsMultiaddr()
+	foo.Multiaddr()
 	foo.Encapsulate(nil)
 	foo.Decapsulate(nil)
 	require.True(t, foo == nil)

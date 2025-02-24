@@ -19,19 +19,19 @@ type Component struct {
 	valueStartIdx int // Index of the first byte of the Component's value in the bytes array
 }
 
-func (c *Component) AsMultiaddr() Multiaddr {
+func (c *Component) Multiaddr() Multiaddr {
 	if c == nil {
 		return nil
 	}
 	return []Component{*c}
 }
 
-func (c *Component) Encapsulate(o AsMultiaddrer) Multiaddr {
-	return c.AsMultiaddr().Encapsulate(o)
+func (c *Component) Encapsulate(o Multiaddrer) Multiaddr {
+	return c.Multiaddr().Encapsulate(o)
 }
 
-func (c *Component) Decapsulate(o AsMultiaddrer) Multiaddr {
-	return c.AsMultiaddr().Decapsulate(o)
+func (c *Component) Decapsulate(o Multiaddrer) Multiaddr {
+	return c.Multiaddr().Decapsulate(o)
 }
 
 func (c *Component) Bytes() []byte {

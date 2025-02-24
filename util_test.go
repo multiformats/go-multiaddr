@@ -35,10 +35,10 @@ func TestSplitFirstLast(t *testing.T) {
 			}
 			continue
 		}
-		if !head.AsMultiaddr().Equal(StringCast(x[0])) {
+		if !head.Multiaddr().Equal(StringCast(x[0])) {
 			t.Errorf("expected %s to be %s", head, x[0])
 		}
-		if !last.AsMultiaddr().Equal(StringCast(x[len(x)-1])) {
+		if !last.Multiaddr().Equal(StringCast(x[len(x)-1])) {
 			t.Errorf("expected %s to be %s", head, x[len(x)-1])
 		}
 		if len(x) == 1 {
@@ -65,33 +65,33 @@ func TestSplitFirstLast(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	ci, m := SplitFirst(c.AsMultiaddr())
+	ci, m := SplitFirst(c.Multiaddr())
 	if !ci.Equal(c) || m != nil {
 		t.Error("split first on component failed")
 	}
-	m, ci = SplitLast(c.AsMultiaddr())
+	m, ci = SplitLast(c.Multiaddr())
 	if !ci.Equal(c) || m != nil {
 		t.Error("split last on component failed")
 	}
-	cis := Split(c.AsMultiaddr())
+	cis := Split(c.Multiaddr())
 	if len(cis) != 1 || !cis[0].Equal(c) {
 		t.Error("split on component failed")
 	}
-	m1, m2 := SplitFunc(c.AsMultiaddr(), func(c Component) bool {
+	m1, m2 := SplitFunc(c.Multiaddr(), func(c Component) bool {
 		return true
 	})
-	if m1 != nil || !m2.Equal(c.AsMultiaddr()) {
+	if m1 != nil || !m2.Equal(c.Multiaddr()) {
 		t.Error("split func(true) on component failed")
 	}
-	m1, m2 = SplitFunc(c.AsMultiaddr(), func(c Component) bool {
+	m1, m2 = SplitFunc(c.Multiaddr(), func(c Component) bool {
 		return false
 	})
-	if !m1.Equal(c.AsMultiaddr()) || m2 != nil {
+	if !m1.Equal(c.Multiaddr()) || m2 != nil {
 		t.Error("split func(false) on component failed")
 	}
 
 	i := 0
-	ForEach(c.AsMultiaddr(), func(ci Component) bool {
+	ForEach(c.Multiaddr(), func(ci Component) bool {
 		if i != 0 {
 			t.Error("expected exactly one component")
 		}
@@ -119,7 +119,7 @@ func TestSplitFunc(t *testing.T) {
 		for i, cs := range x {
 			target := StringCast(cs)
 			a, b := SplitFunc(addr, func(c Component) bool {
-				return c.AsMultiaddr().Equal(target)
+				return c.Multiaddr().Equal(target)
 			})
 			if i == 0 {
 				if a != nil {
