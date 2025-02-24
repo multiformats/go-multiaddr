@@ -12,6 +12,15 @@
 
 ## Migration tips for v0.15
 
-- If your use case supports it, prefer `append` to append a Component to a
-  Multiaddr rather than using `Encapsulate`. It's much faster as it does not do
-  a defensive copy.
+- If appending a `*Component` to a `Multiaddr`, prefer the
+  `Multiaddr.AppendComponent` method as it will perform a nil pointer check on
+  the `*Component` before appending. If you know a `*Component` is not nil, you
+  may use `append` normally.
+- the `Multiaddr` type is simply a `[]Component`.
+  - You can use `append` when you have a `Component`.
+  - You can use `for range` loops.
+- If your use case supports it, prefer `append` or `AppendComponent` to append a
+  Component to a Multiaddr rather than using `Encapsulate` or `Join`. It's much
+  faster as it does not do a defensive copy.
+  - Likewise, to join two Multiaddrs, `append` will perform better than
+    `Encapsulate` or `Join`.
