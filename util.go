@@ -9,19 +9,6 @@ func Split(m Multiaddr) []Component {
 	return m
 }
 
-func JoinComponents(cs ...Component) Multiaddr {
-	if len(cs) == 0 {
-		return nil
-	}
-	out := make([]Component, 0, len(cs))
-	for _, c := range cs {
-		if !c.Empty() {
-			out = append(out, c)
-		}
-	}
-	return out
-}
-
 // Join returns a combination of addresses.
 // Note: This copies all the components from the input Multiaddrs. Depending on
 // your use case, you may prefer to use `append(leftMA, rightMA...)` instead.
@@ -43,11 +30,7 @@ func Join(msInterfaces ...asMultiaddr) Multiaddr {
 
 	out := make([]Component, 0, size)
 	for _, m := range ms {
-		for _, c := range m {
-			if !c.Empty() {
-				out = append(out, c)
-			}
-		}
+		out = append(out, m...)
 	}
 	return out
 }
@@ -72,7 +55,7 @@ func StringCast(s string) Multiaddr {
 
 // SplitFirst returns the first component and the rest of the multiaddr.
 func SplitFirst(m Multiaddr) (*Component, Multiaddr) {
-	if m.Empty() {
+	if len(m) == 0 {
 		return nil, nil
 	}
 	if len(m) == 1 {
@@ -85,7 +68,7 @@ func SplitFirst(m Multiaddr) (*Component, Multiaddr) {
 
 // SplitLast returns the rest of the multiaddr and the last component.
 func SplitLast(m Multiaddr) (Multiaddr, *Component) {
-	if m.Empty() {
+	if len(m) == 0 {
 		return nil, nil
 	}
 	if len(m) == 1 {
@@ -101,7 +84,7 @@ func SplitLast(m Multiaddr) (Multiaddr, *Component) {
 // component on which the callback first returns will be included in the
 // *second* multiaddr.
 func SplitFunc(m Multiaddr, cb func(Component) bool) (Multiaddr, Multiaddr) {
-	if m.Empty() {
+	if len(m) == 0 {
 		return nil, nil
 	}
 
@@ -113,10 +96,10 @@ func SplitFunc(m Multiaddr, cb func(Component) bool) (Multiaddr, Multiaddr) {
 		}
 	}
 	pre, post := m[:idx], m[idx:]
-	if pre.Empty() {
+	if len(pre) == 0 {
 		pre = nil
 	}
-	if post.Empty() {
+	if len(post) == 0 {
 		post = nil
 	}
 	// defensive copy. Users can avoid by doing the split themselves.
@@ -128,7 +111,7 @@ func SplitFunc(m Multiaddr, cb func(Component) bool) (Multiaddr, Multiaddr) {
 // This function iterates over components.
 // Return true to continue iteration, false to stop.
 //
-// Prefer to use a standard for range loop instead
+// Prefer a standard for range loop instead
 // e.g. `for _, c := range m { ... }`
 func ForEach(m Multiaddr, cb func(c Component) bool) {
 	for _, c := range m {

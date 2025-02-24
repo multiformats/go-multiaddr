@@ -20,7 +20,7 @@ type Component struct {
 }
 
 func (c *Component) AsMultiaddr() Multiaddr {
-	if c.Empty() {
+	if c == nil {
 		return nil
 	}
 	return []Component{*c}
@@ -32,13 +32,6 @@ func (c *Component) Encapsulate(o asMultiaddr) Multiaddr {
 
 func (c *Component) Decapsulate(o asMultiaddr) Multiaddr {
 	return c.AsMultiaddr().Decapsulate(o)
-}
-
-func (c *Component) Empty() bool {
-	if c == nil {
-		return true
-	}
-	return len(c.bytes) == 0
 }
 
 func (c *Component) Bytes() []byte {
@@ -178,9 +171,6 @@ func (c *Component) RawValue() []byte {
 
 func (c *Component) Value() string {
 	if c == nil {
-		return ""
-	}
-	if c.Empty() {
 		return ""
 	}
 	// This Component MUST have been checked by validateComponent when created
