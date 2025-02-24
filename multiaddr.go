@@ -25,18 +25,6 @@ func (m Multiaddr) copy() Multiaddr {
 	return out
 }
 
-func (m Multiaddr) Empty() bool {
-	if len(m) == 0 {
-		return true
-	}
-	for _, c := range m {
-		if !c.Empty() {
-			return false
-		}
-	}
-	return true
-}
-
 // NewMultiaddr parses and validates an input string, returning a *Multiaddr
 func NewMultiaddr(s string) (a Multiaddr, err error) {
 	defer func() {
