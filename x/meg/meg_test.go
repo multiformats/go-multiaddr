@@ -22,6 +22,16 @@ func (c codeAndValue) Value() string {
 	return c.val
 }
 
+// Bytes implements Matchable.
+func (c codeAndValue) Bytes() []byte {
+	return []byte(c.val)
+}
+
+// RawValue implements Matchable.
+func (c codeAndValue) RawValue() []byte {
+	return []byte(c.val)
+}
+
 var _ Matchable = codeAndValue{}
 
 func TestSimple(t *testing.T) {
@@ -33,6 +43,22 @@ func TestSimple(t *testing.T) {
 	}
 	testCases :=
 		[]testCase{
+			{
+				pattern: PatternToMatcher(Val(Any), Val(1)),
+				shouldMatch: [][]int{
+					{0, 1},
+					{1, 1},
+					{2, 1},
+					{3, 1},
+					{4, 1},
+				},
+				shouldNotMatch: [][]int{
+					{0},
+					{0, 0},
+					{0, 1, 0},
+				},
+				skipQuickCheck: true,
+			},
 			{
 				pattern:     PatternToMatcher(Val(0), Val(1)),
 				shouldMatch: [][]int{{0, 1}},
@@ -119,7 +145,7 @@ func TestCapture(t *testing.T) {
 			{
 				setup: func() (Matcher, func()) {
 					var code0str string
-					return PatternToMatcher(CaptureVal(0, &code0str), Val(1)), func() {
+					return PatternToMatcher(CaptureStringVal(0, &code0str), Val(1)), func() {
 						if code0str != "hello" {
 							panic("unexpected value")
 						}
@@ -130,7 +156,7 @@ func TestCapture(t *testing.T) {
 			{
 				setup: func() (Matcher, func()) {
 					var code0strs []string
-					return PatternToMatcher(CaptureOneOrMore(0, &code0strs), Val(1)), func() {
+					return PatternToMatcher(CaptureOneOrMoreStringVals(0, &code0strs), Val(1)), func() {
 						if code0strs[0] != "hello" {
 							panic("unexpected value")
 						}

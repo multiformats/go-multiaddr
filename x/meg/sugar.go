@@ -40,10 +40,26 @@ func PatternToMatcher(patterns ...Pattern) Matcher {
 	return Matcher{states: states, startIdx: nextIdx}
 }
 
-func Cat(left, right Pattern) Pattern {
-	return func(states *[]MatchState, nextIdx int) int {
-		// First run the right pattern, then feed the result into left.
-		return left(states, right(states, nextIdx))
+func Cat(patterns ...Pattern) Pattern {
+	switch len(patterns) {
+	case 0:
+		return func(states *[]MatchState, nextIdx int) int {
+			return nextIdx
+		}
+	case 1:
+		return patterns[0]
+	case 2:
+		return func(states *[]MatchState, nextIdx int) int {
+			left := patterns[0]
+			right := patterns[1]
+			// First run the right pattern, then feed the result into left.
+			return left(states, right(states, nextIdx))
+		}
+	default:
+		return Cat(
+			Cat(patterns[:len(patterns)-1]...),
+			patterns[len(patterns)-1],
+		)
 	}
 }
 
@@ -70,34 +86,61 @@ func Or(p ...Pattern) Pattern {
 
 var errAlreadyCapture = errors.New("already captured")
 
-func captureOneValueOrErr(val *string) captureFunc {
+func captureOneBytesOrErr(val *[]byte) CaptureFunc {
 	if val == nil {
 		return nil
 	}
 	var set bool
-	f := func(s string) error {
+	f := func(s Matchable) error {
+		if set {
+			*val = nil
+			return errAlreadyCapture
+		}
+		*val = s.RawValue()
+		return nil
+	}
+	return f
+}
+
+func captureOneStringValueOrErr(val *string) CaptureFunc {
+	if val == nil {
+		return nil
+	}
+	var set bool
+	f := func(s Matchable) error {
 		if set {
 			*val = ""
 			return errAlreadyCapture
 		}
-		*val = s
+		*val = s.Value()
 		return nil
 	}
 	return f
 }
 
-func captureMany(vals *[]string) captureFunc {
+func captureManyBytes(vals *[][]byte) CaptureFunc {
 	if vals == nil {
 		return nil
 	}
-	f := func(s string) error {
-		*vals = append(*vals, s)
+	f := func(s Matchable) error {
+		*vals = append(*vals, s.RawValue())
 		return nil
 	}
 	return f
 }
 
-func captureValWithF(code int, f captureFunc) Pattern {
+func captureManyStrings(vals *[]string) CaptureFunc {
+	if vals == nil {
+		return nil
+	}
+	f := func(s Matchable) error {
+		*vals = append(*vals, s.Value())
+		return nil
+	}
+	return f
+}
+
+func CaptureWithF(code int, f CaptureFunc) Pattern {
 	return func(states *[]MatchState, nextIdx int) int {
 		newState := MatchState{
 			capture:    f,
@@ -110,18 +153,25 @@ func captureValWithF(code int, f captureFunc) Pattern {
 }
 
 func Val(code int) Pattern {
-	return CaptureVal(code, nil)
+	return CaptureStringVal(code, nil)
 }
 
-func CaptureVal(code int, val *string) Pattern {
-	return captureValWithF(code, captureOneValueOrErr(val))
+// Any is a special code that matches any value.
+var Any int = matchAny
+
+func CaptureStringVal(code int, val *string) Pattern {
+	return CaptureWithF(code, captureOneStringValueOrErr(val))
+}
+
+func CaptureBytes(code int, val *[]byte) Pattern {
+	return CaptureWithF(code, captureOneBytesOrErr(val))
 }
 
 func ZeroOrMore(code int) Pattern {
-	return CaptureZeroOrMore(code, nil)
+	return CaptureZeroOrMoreStringVals(code, nil)
 }
 
-func captureZeroOrMoreWithF(code int, f captureFunc) Pattern {
+func CaptureZeroOrMoreWithF(code int, f CaptureFunc) Pattern {
 	return func(states *[]MatchState, nextIdx int) int {
 		// Create the match state.
 		matchState := MatchState{
@@ -146,21 +196,35 @@ func captureZeroOrMoreWithF(code int, f captureFunc) Pattern {
 	}
 }
 
-func CaptureZeroOrMore(code int, vals *[]string) Pattern {
-	return captureZeroOrMoreWithF(code, captureMany(vals))
+func CaptureZeroOrMoreBytes(code int, vals *[][]byte) Pattern {
+	return CaptureZeroOrMoreWithF(code, captureManyBytes(vals))
+}
+
+func CaptureZeroOrMoreStringVals(code int, vals *[]string) Pattern {
+	return CaptureZeroOrMoreWithF(code, captureManyStrings(vals))
 }
 
 func OneOrMore(code int) Pattern {
-	return CaptureOneOrMore(code, nil)
+	return CaptureOneOrMoreStringVals(code, nil)
 }
 
-func CaptureOneOrMore(code int, vals *[]string) Pattern {
-	f := captureMany(vals)
+func CaptureOneOrMoreStringVals(code int, vals *[]string) Pattern {
+	f := captureManyStrings(vals)
 	return func(states *[]MatchState, nextIdx int) int {
 		// First attach the zero-or-more loop.
-		zeroOrMoreIdx := captureZeroOrMoreWithF(code, f)(states, nextIdx)
+		zeroOrMoreIdx := CaptureZeroOrMoreWithF(code, f)(states, nextIdx)
 		// Then put the capture state before the loop.
-		return captureValWithF(code, f)(states, zeroOrMoreIdx)
+		return CaptureWithF(code, f)(states, zeroOrMoreIdx)
+	}
+}
+
+func CaptureOneOrMoreBytes(code int, vals *[][]byte) Pattern {
+	f := captureManyBytes(vals)
+	return func(states *[]MatchState, nextIdx int) int {
+		// First attach the zero-or-more loop.
+		zeroOrMoreIdx := CaptureZeroOrMoreWithF(code, f)(states, nextIdx)
+		// Then put the capture state before the loop.
+		return CaptureWithF(code, f)(states, zeroOrMoreIdx)
 	}
 }
 
