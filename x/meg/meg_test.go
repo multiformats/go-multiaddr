@@ -13,26 +13,30 @@ type codeAndValue struct {
 }
 
 // Code implements Matchable.
-func (c codeAndValue) Code() int {
+func (c *codeAndValue) Code() int {
 	return c.code
 }
 
 // Value implements Matchable.
-func (c codeAndValue) Value() string {
+func (c *codeAndValue) Value() string {
 	return c.val
 }
 
 // Bytes implements Matchable.
-func (c codeAndValue) Bytes() []byte {
+func (c *codeAndValue) Bytes() []byte {
 	return []byte(c.val)
 }
 
 // RawValue implements Matchable.
-func (c codeAndValue) RawValue() []byte {
+func (c *codeAndValue) RawValue() []byte {
 	return []byte(c.val)
 }
 
-var _ Matchable = codeAndValue{}
+var _ Matchable = &codeAndValue{}
+
+func codeAndValuePtrToMatchable(c *codeAndValue) *codeAndValue {
+	return c
+}
 
 func TestSimple(t *testing.T) {
 	type testCase struct {
@@ -106,12 +110,12 @@ func TestSimple(t *testing.T) {
 
 	for i, tc := range testCases {
 		for _, m := range tc.shouldMatch {
-			if matches, err := Match(tc.pattern, codesToCodeAndValue(m)); !matches {
+			if matches, err := Match(tc.pattern, codesToCodeAndValue(m), codeAndValuePtrToMatchable); !matches {
 				t.Fatalf("failed to match %v with %v. idx=%d. err=%v", m, tc.pattern, i, err)
 			}
 		}
 		for _, m := range tc.shouldNotMatch {
-			if matches, _ := Match(tc.pattern, codesToCodeAndValue(m)); matches {
+			if matches, _ := Match(tc.pattern, codesToCodeAndValue(m), codeAndValuePtrToMatchable); matches {
 				t.Fatalf("failed to not match %v with %v. idx=%d", m, tc.pattern, i)
 			}
 		}
@@ -125,7 +129,7 @@ func TestSimple(t *testing.T) {
 					return true
 				}
 			}
-			matches, _ := Match(tc.pattern, codesToCodeAndValue(notMatch))
+			matches, _ := Match(tc.pattern, codesToCodeAndValue(notMatch), codeAndValuePtrToMatchable)
 			return !matches
 		}, &quick.Config{}); err != nil {
 			t.Fatal(err)
@@ -172,7 +176,7 @@ func TestCapture(t *testing.T) {
 	_ = testCases
 	for _, tc := range testCases {
 		state, assert := tc.setup()
-		if matches, _ := Match(state, tc.parts); !matches {
+		if matches, _ := Match(state, tc.parts, codeAndValuePtrToMatchable); !matches {
 			t.Fatalf("failed to match %v with %v", tc.parts, state)
 		}
 		assert()
@@ -255,7 +259,7 @@ func FuzzMatchesRegexpBehavior(f *testing.F) {
 			return
 		}
 		p := PatternToMatcher(pattern...)
-		otherMatched, _ := Match(p, bytesToCodeAndValue(corpus))
+		otherMatched, _ := Match(p, bytesToCodeAndValue(corpus), codeAndValuePtrToMatchable)
 		if otherMatched != matched {
 			t.Log("regexp", string(regexpPattern))
 			t.Log("corpus", string(corpus))

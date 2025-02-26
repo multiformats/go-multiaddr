@@ -69,7 +69,10 @@ type Matchable interface {
 // Match returns whether the given Components match the Pattern defined in MatchState.
 // Errors are used to communicate capture errors.
 // If the error is non-nil the returned bool will be false.
-func Match[S ~[]T, T Matchable](matcher Matcher, components S) (bool, error) {
+// The ptrToMatchable function is used to convert type *T to a Matchable..
+// This is due to a limitation of Go generics, where we cannot say *T implements Matchable.
+// When meg moves out of the x/ directory, we can reference the `*Component` type directly and avoid this limitation.
+func Match[S ~[]T, T any, G Matchable](matcher Matcher, components S, ptrToMatchable func(*T) G) (bool, error) {
 	states := matcher.states
 	startStateIdx := matcher.startIdx
 
@@ -92,19 +95,20 @@ func Match[S ~[]T, T Matchable](matcher Matcher, components S) (bool, error) {
 
 	currentStates = appendState(currentStates, states, startStateIdx, nil, visitedBitSet)
 
-	for _, c := range components {
+	for ic := range components {
 		clear(visitedBitSet)
 		if len(currentStates.states) == 0 {
 			return false, nil
 		}
 		for i, stateIndex := range currentStates.states {
 			s := states[stateIndex]
-			if s.codeOrKind == matchAny || (s.codeOrKind >= 0 && s.codeOrKind == c.Code()) {
+			cPtr := ptrToMatchable(&components[ic])
+			if s.codeOrKind == matchAny || (s.codeOrKind >= 0 && s.codeOrKind == cPtr.Code()) {
 				cm := currentStates.captures[i]
 				if s.capture != nil {
 					next := &capture{
 						f: s.capture,
-						v: c,
+						v: cPtr,
 					}
 					if cm == nil {
 						cm = next

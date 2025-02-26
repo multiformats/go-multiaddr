@@ -125,5 +125,5 @@ func ForEach(m Multiaddr, cb func(c Component) bool) {
 
 func (m Multiaddr) Match(p ...meg.Pattern) (bool, error) {
 	matcher := meg.PatternToMatcher(p...)
-	return meg.Match(matcher, m)
+	return meg.Match(matcher, m, func(c *Component) meg.Matchable { return c })
 }
