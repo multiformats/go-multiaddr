@@ -2,6 +2,8 @@ package multiaddr
 
 import (
 	"fmt"
+
+	"github.com/multiformats/go-multiaddr/x/meg"
 )
 
 // Split returns the sub-address portions of a multiaddr.
@@ -119,4 +121,9 @@ func ForEach(m Multiaddr, cb func(c Component) bool) {
 			return
 		}
 	}
+}
+
+func (m Multiaddr) Match(p ...meg.Pattern) (bool, error) {
+	matcher := meg.PatternToMatcher(p...)
+	return meg.Match(matcher, m, func(c *Component) meg.Matchable { return c })
 }
