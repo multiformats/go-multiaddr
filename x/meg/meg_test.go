@@ -34,10 +34,6 @@ func (c *codeAndValue) RawValue() []byte {
 
 var _ Matchable = &codeAndValue{}
 
-func codeAndValuePtrToMatchable(c *codeAndValue) *codeAndValue {
-	return c
-}
-
 func TestSimple(t *testing.T) {
 	type testCase struct {
 		pattern        Matcher
@@ -110,12 +106,12 @@ func TestSimple(t *testing.T) {
 
 	for i, tc := range testCases {
 		for _, m := range tc.shouldMatch {
-			if matches, err := Match(tc.pattern, codesToCodeAndValue(m), codeAndValuePtrToMatchable); !matches {
+			if matches, err := Match(tc.pattern, codesToCodeAndValue(m)); !matches {
 				t.Fatalf("failed to match %v with %v. idx=%d. err=%v", m, tc.pattern, i, err)
 			}
 		}
 		for _, m := range tc.shouldNotMatch {
-			if matches, _ := Match(tc.pattern, codesToCodeAndValue(m), codeAndValuePtrToMatchable); matches {
+			if matches, _ := Match(tc.pattern, codesToCodeAndValue(m)); matches {
 				t.Fatalf("failed to not match %v with %v. idx=%d", m, tc.pattern, i)
 			}
 		}
@@ -129,7 +125,7 @@ func TestSimple(t *testing.T) {
 					return true
 				}
 			}
-			matches, _ := Match(tc.pattern, codesToCodeAndValue(notMatch), codeAndValuePtrToMatchable)
+			matches, _ := Match(tc.pattern, codesToCodeAndValue(notMatch))
 			return !matches
 		}, &quick.Config{}); err != nil {
 			t.Fatal(err)
@@ -176,14 +172,24 @@ func TestCapture(t *testing.T) {
 	_ = testCases
 	for _, tc := range testCases {
 		state, assert := tc.setup()
-		if matches, _ := Match(state, tc.parts, codeAndValuePtrToMatchable); !matches {
+		if matches, _ := Match(state, codeAndValueList(tc.parts)); !matches {
 			t.Fatalf("failed to match %v with %v", tc.parts, state)
 		}
 		assert()
 	}
 }
 
-func codesToCodeAndValue(codes []int) []codeAndValue {
+type codeAndValueList []codeAndValue
+
+func (c codeAndValueList) Get(i int) Matchable {
+	return &c[i]
+}
+
+func (c codeAndValueList) Len() int {
+	return len(c)
+}
+
+func codesToCodeAndValue(codes []int) codeAndValueList {
 	out := make([]codeAndValue, len(codes))
 	for i, c := range codes {
 		out[i] = codeAndValue{code: c}
@@ -191,7 +197,7 @@ func codesToCodeAndValue(codes []int) []codeAndValue {
 	return out
 }
 
-func bytesToCodeAndValue(codes []byte) []codeAndValue {
+func bytesToCodeAndValue(codes []byte) codeAndValueList {
 	out := make([]codeAndValue, len(codes))
 	for i, c := range codes {
 		out[i] = codeAndValue{code: int(c)}
@@ -259,7 +265,7 @@ func FuzzMatchesRegexpBehavior(f *testing.F) {
 			return
 		}
 		p := PatternToMatcher(pattern...)
-		otherMatched, _ := Match(p, bytesToCodeAndValue(corpus), codeAndValuePtrToMatchable)
+		otherMatched, _ := Match(p, bytesToCodeAndValue(corpus))
 		if otherMatched != matched {
 			t.Log("regexp", string(regexpPattern))
 			t.Log("corpus", string(corpus))

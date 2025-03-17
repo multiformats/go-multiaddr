@@ -66,13 +66,20 @@ type Matchable interface {
 	Bytes() []byte
 }
 
+// ListOfMatchable is anything list-like that contains Matchable items.
+// This allows us to convert a slice of []T as a []Matchable when *T implements Matchable.
+// In the future, this may not be required if Go generics allows us to say S ~[]T, and *T implements Matchable.
+type ListOfMatchable interface {
+	Get(i int) Matchable
+	Len() int
+}
+
 // Match returns whether the given Components match the Pattern defined in MatchState.
 // Errors are used to communicate capture errors.
 // If the error is non-nil the returned bool will be false.
-// The ptrToMatchable function is used to convert type *T to a Matchable..
-// This is due to a limitation of Go generics, where we cannot say *T implements Matchable.
-// When meg moves out of the x/ directory, we can reference the `*Component` type directly and avoid this limitation.
-func Match[S ~[]T, T any, G Matchable](matcher Matcher, components S, ptrToMatchable func(*T) G) (bool, error) {
+
+// Components must be a ListOfMatchable to allow us to use a slice of []T as a []Matchable when *T implements Matchable.
+func Match[L ListOfMatchable](matcher Matcher, components L) (bool, error) {
 	states := matcher.states
 	startStateIdx := matcher.startIdx
 
@@ -95,14 +102,14 @@ func Match[S ~[]T, T any, G Matchable](matcher Matcher, components S, ptrToMatch
 
 	currentStates = appendState(currentStates, states, startStateIdx, nil, visitedBitSet)
 
-	for ic := range components {
+	for ic := range components.Len() {
 		clear(visitedBitSet)
 		if len(currentStates.states) == 0 {
 			return false, nil
 		}
 		for i, stateIndex := range currentStates.states {
 			s := states[stateIndex]
-			cPtr := ptrToMatchable(&components[ic])
+			cPtr := components.Get(ic)
 			if s.codeOrKind == matchAny || (s.codeOrKind >= 0 && s.codeOrKind == cPtr.Code()) {
 				cm := currentStates.captures[i]
 				if s.capture != nil {
