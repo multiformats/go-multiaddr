@@ -179,6 +179,107 @@ func TestCapture(t *testing.T) {
 	}
 }
 
+func TestPreferExactOverAny(t *testing.T) {
+	t.Run("Optional", func(t *testing.T) {
+		m := codeAndValueList{
+			{0, "hello"},
+			{1, "foo"},
+			{42, "A"},
+			{42, "B"},
+		}
+
+		var lastParts []string
+		found, _ := Match(
+			PatternToMatcher(
+				Optional(Val(Any)),
+				Optional(Val(Any)),
+				Optional(Val(Any)),
+				CaptureOneOrMoreStringVals(42, &lastParts),
+			), m,
+		)
+		if !found {
+			t.Fatal("failed to match")
+		}
+		if len(lastParts) != 2 {
+			t.Fatal("Didn't capture all last parts")
+		}
+	})
+
+	t.Run("Or", func(t *testing.T) {
+		m := codeAndValueList{
+			{1, "foo"},
+			{42, "A"},
+			{42, "B"},
+		}
+
+		var lastParts []string
+		found, _ := Match(
+			PatternToMatcher(
+				Or(Val(Any), Val(42)),
+				Or(Val(Any), Val(42)),
+				CaptureOneOrMoreStringVals(42, &lastParts),
+			), m,
+		)
+		if !found {
+			t.Fatal("failed to match")
+		}
+		if len(lastParts) != 1 {
+			t.Fatal("Didn't capture all last parts")
+		}
+	})
+	t.Run("OneOrMore", func(t *testing.T) {
+		m := codeAndValueList{
+			{1, "foo"},
+			{42, "A"},
+			{42, "B"},
+		}
+
+		var lastParts []string
+		found, _ := Match(
+			PatternToMatcher(
+				OneOrMore(Any),
+				CaptureOneOrMoreStringVals(42, &lastParts),
+			), m,
+		)
+		if !found {
+			t.Fatal("failed to match")
+		}
+		if len(lastParts) != 2 {
+			t.Fatal("Didn't capture all last parts")
+		}
+	})
+}
+
+func TestCaptureWithAny(t *testing.T) {
+	m := codeAndValueList{
+		{0, "hello"},
+		{1, "foo"},
+		{42, "A"},
+		{42, "B"},
+	}
+
+	var lastParts []string
+	found, _ := Match(
+		PatternToMatcher(
+			ZeroOrMore(Any),
+			CaptureOneOrMoreStringVals(42, &lastParts),
+		), m,
+	)
+	if !found {
+		t.Fatal("failed to match")
+	}
+	if len(lastParts) != 2 {
+		t.Fatal("Didn't capture all last parts")
+	}
+
+	if lastParts[0] != "A" {
+		t.Fatal("unexpected value. Expected", "A", "but got", lastParts[0])
+	}
+	if lastParts[1] != "B" {
+		t.Fatal("unexpected value. Expected", "B", "but got", lastParts[1])
+	}
+}
+
 type codeAndValueList []codeAndValue
 
 func (c codeAndValueList) Get(i int) Matchable {

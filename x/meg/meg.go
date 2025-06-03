@@ -199,9 +199,18 @@ func appendState(arr statesAndCaptures, states []MatchState, stateIndex int, c *
 		if s.codeOrKind < done {
 			// Get the second branch from the split.
 			splitIdx := restoreSplitIdx(s.codeOrKind)
-			// To preserve order (s.next processed first), push the split branch first.
-			stack = append(stack, task{splitIdx, t.cap})
-			stack = append(stack, task{s.next, t.cap})
+
+			// Check if the next branch is a `matchAny`. If it is, we want to
+			// deprioritize it to allow for less greedy Any behavior.
+			if states[s.next].codeOrKind == matchAny {
+				// We want to process the non-matchAny first, so we push the s.next branch first
+				stack = append(stack, task{s.next, t.cap})
+				stack = append(stack, task{splitIdx, t.cap})
+			} else {
+				// To process s.next first, push the split branch first.
+				stack = append(stack, task{splitIdx, t.cap})
+				stack = append(stack, task{s.next, t.cap})
+			}
 		} else {
 			// Otherwise, it's a valid final state -- append it.
 			arr.states = append(arr.states, t.idx)
