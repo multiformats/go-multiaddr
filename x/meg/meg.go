@@ -108,7 +108,7 @@ func Match[L ListOfMatchable](matcher Matcher, components L) (bool, error) {
 			return false, nil
 		}
 		for i, stateIndex := range currentStates.states {
-			s := states[stateIndex]
+			s := &states[stateIndex]
 			cPtr := components.Get(ic)
 			if s.codeOrKind == matchAny || (s.codeOrKind >= 0 && s.codeOrKind == cPtr.Code()) {
 				cm := currentStates.captures[i]
@@ -134,7 +134,7 @@ func Match[L ListOfMatchable](matcher Matcher, components L) (bool, error) {
 	}
 
 	for i, stateIndex := range currentStates.states {
-		s := states[stateIndex]
+		s := &states[stateIndex]
 		if s.codeOrKind == done {
 
 			// We found a complete path. Run the captures now
@@ -186,7 +186,7 @@ func appendState(arr statesAndCaptures, states []MatchState, stateIndex int, c *
 		if t.idx >= len(states) {
 			continue
 		}
-		s := states[t.idx]
+		s := &states[t.idx]
 
 		// Check if this state has already been visited.
 		if visitedBitSet[t.idx/64]&(1<<(t.idx%64)) != 0 {
