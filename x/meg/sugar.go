@@ -7,11 +7,12 @@ import (
 	"strings"
 )
 
-// Pattern is essentially a curried MatchState.
+// Pattern is a curried MatchState.
 // Given the slice of current MatchStates and a handle (int index) to the next
 // MatchState, it returns a handle to the inserted MatchState.
 type Pattern = func(states *[]MatchState, nextIdx int) int
 
+// Matcher holds a graph of match state nodes. Use PatternToMatcher to create.
 type Matcher struct {
 	states   []MatchState
 	startIdx int
@@ -75,7 +76,7 @@ func Or(p ...Pattern) Pattern {
 			leftIdx := p[i](states, nextIdx)
 			newState := MatchState{
 				next:       leftIdx,
-				codeOrKind: storeSplitIdx(accum),
+				codeOrKind: encodeSplitIdx(accum),
 			}
 			*states = append(*states, newState)
 			accum = len(*states) - 1
@@ -168,7 +169,7 @@ func CaptureBytes(code int, val *[]byte) Pattern {
 }
 
 func ZeroOrMore(code int) Pattern {
-	return CaptureZeroOrMoreStringVals(code, nil)
+	return CaptureZeroOrMoreStrings(code, nil)
 }
 
 func CaptureZeroOrMoreWithF(code int, f CaptureFunc) Pattern {
@@ -184,7 +185,7 @@ func CaptureZeroOrMoreWithF(code int, f CaptureFunc) Pattern {
 		// Create the split state that branches to the match state and to the next state.
 		s := MatchState{
 			next:       matchIdx,
-			codeOrKind: storeSplitIdx(nextIdx),
+			codeOrKind: encodeSplitIdx(nextIdx),
 		}
 		*states = append(*states, s)
 		splitIdx := len(*states) - 1
@@ -200,15 +201,15 @@ func CaptureZeroOrMoreBytes(code int, vals *[][]byte) Pattern {
 	return CaptureZeroOrMoreWithF(code, captureManyBytes(vals))
 }
 
-func CaptureZeroOrMoreStringVals(code int, vals *[]string) Pattern {
+func CaptureZeroOrMoreStrings(code int, vals *[]string) Pattern {
 	return CaptureZeroOrMoreWithF(code, captureManyStrings(vals))
 }
 
 func OneOrMore(code int) Pattern {
-	return CaptureOneOrMoreStringVals(code, nil)
+	return CaptureOneOrMoreStrings(code, nil)
 }
 
-func CaptureOneOrMoreStringVals(code int, vals *[]string) Pattern {
+func CaptureOneOrMoreStrings(code int, vals *[]string) Pattern {
 	f := captureManyStrings(vals)
 	return func(states *[]MatchState, nextIdx int) int {
 		// First attach the zero-or-more loop.
@@ -232,7 +233,7 @@ func Optional(s Pattern) Pattern {
 	return func(states *[]MatchState, nextIdx int) int {
 		newState := MatchState{
 			next:       s(states, nextIdx),
-			codeOrKind: storeSplitIdx(nextIdx),
+			codeOrKind: encodeSplitIdx(nextIdx),
 		}
 		*states = append(*states, newState)
 		return len(*states) - 1

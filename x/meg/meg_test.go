@@ -101,6 +101,60 @@ func TestSimple(t *testing.T) {
 					{0, 1, 0},
 					{0, 1, 1, 0},
 					{0, 1, 2, 0},
+				}}, {
+				pattern:        PatternToMatcher(Cat(Val(0), Val(1)), OneOrMore(2)),
+				skipQuickCheck: true,
+				shouldMatch: [][]int{
+					{0, 1, 2, 2, 2, 2},
+					{0, 1, 2},
+				},
+				shouldNotMatch: [][]int{
+					{0},
+					{0, 0},
+					{0, 1},
+					{0, 1, 0},
+					{0, 1, 1, 0},
+					{0, 1, 2, 0},
+				}}, {
+				pattern:        PatternToMatcher(Or(Val(0), Val(1)), OneOrMore(2)),
+				skipQuickCheck: true,
+				shouldMatch: [][]int{
+					{0, 2, 2, 2, 2},
+					{1, 2, 2, 2, 2},
+					{0, 2},
+					{1, 2},
+				},
+				shouldNotMatch: [][]int{
+					{0},
+					{1},
+					{0, 0},
+					{1, 0},
+					{0, 1},
+					{1, 1},
+					{0, 1, 0},
+					{1, 1, 0},
+					{0, 1, 1, 0},
+					{1, 1, 1, 0},
+					{0, 1, 2, 0},
+					{1, 1, 2, 0},
+				}},
+			{
+				pattern:        PatternToMatcher(Val(0), Val(1), OneOrMore(Any)),
+				skipQuickCheck: true,
+				shouldMatch: [][]int{
+					{0, 1, 2, 2, 2, 2},
+					{0, 1, 2},
+					{0, 1, 3, 4},
+					{0, 1, 0},
+					{0, 1, 1, 0},
+					{0, 1, 2, 0},
+				},
+				shouldNotMatch: [][]int{
+					{0},
+					{0, 0},
+					{0, 1},
+					{1, 0},
+					{1, 1},
 				}},
 		}
 
@@ -156,7 +210,7 @@ func TestCapture(t *testing.T) {
 			{
 				setup: func() (Matcher, func()) {
 					var code0strs []string
-					return PatternToMatcher(CaptureOneOrMoreStringVals(0, &code0strs), Val(1)), func() {
+					return PatternToMatcher(CaptureOneOrMoreStrings(0, &code0strs), Val(1)), func() {
 						if code0strs[0] != "hello" {
 							panic("unexpected value")
 						}
@@ -194,7 +248,7 @@ func TestPreferExactOverAny(t *testing.T) {
 				Optional(Val(Any)),
 				Optional(Val(Any)),
 				Optional(Val(Any)),
-				CaptureOneOrMoreStringVals(42, &lastParts),
+				CaptureOneOrMoreStrings(42, &lastParts),
 			), m,
 		)
 		if !found {
@@ -217,7 +271,7 @@ func TestPreferExactOverAny(t *testing.T) {
 			PatternToMatcher(
 				Or(Val(Any), Val(42)),
 				Or(Val(Any), Val(42)),
-				CaptureOneOrMoreStringVals(42, &lastParts),
+				CaptureOneOrMoreStrings(42, &lastParts),
 			), m,
 		)
 		if !found {
@@ -238,7 +292,7 @@ func TestPreferExactOverAny(t *testing.T) {
 		found, _ := Match(
 			PatternToMatcher(
 				OneOrMore(Any),
-				CaptureOneOrMoreStringVals(42, &lastParts),
+				CaptureOneOrMoreStrings(42, &lastParts),
 			), m,
 		)
 		if !found {
@@ -262,7 +316,7 @@ func TestCaptureWithAny(t *testing.T) {
 	found, _ := Match(
 		PatternToMatcher(
 			ZeroOrMore(Any),
-			CaptureOneOrMoreStringVals(42, &lastParts),
+			CaptureOneOrMoreStrings(42, &lastParts),
 		), m,
 	)
 	if !found {

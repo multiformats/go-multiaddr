@@ -20,7 +20,7 @@ func TestMatchAndCaptureMultiaddr(t *testing.T) {
 		meg.CaptureStringVal(P_UDP, &udpPort),
 		meg.Val(P_QUIC_V1),
 		meg.Val(P_WEBTRANSPORT),
-		meg.CaptureZeroOrMoreStringVals(P_CERTHASH, &certhashes),
+		meg.CaptureZeroOrMoreStrings(P_CERTHASH, &certhashes),
 	)
 	if !found {
 		t.Fatal("failed to match")

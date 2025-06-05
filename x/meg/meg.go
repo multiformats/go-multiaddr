@@ -13,10 +13,9 @@ type stateKind = int
 
 const (
 	matchAny stateKind = (iota * -1) - 1
-	// done MUST be the last stateKind in this list. We use it to determine if a
-	// state is a split index.
-	done
+	// done MUST be the last stateKind in this list.
 	// Anything that is less than done is a split index
+	done
 )
 
 // MatchState is the Thompson NFA for a regular expression.
@@ -49,11 +48,13 @@ func (s MatchState) String() string {
 		return "done"
 	}
 	if s.codeOrKind < done {
-		return fmt.Sprintf("split{left: %d, right: %d}", s.next, restoreSplitIdx(s.codeOrKind))
+		return fmt.Sprintf("split{left: %d, right: %d}", s.next, decodeSplitIdx(s.codeOrKind))
 	}
 	return fmt.Sprintf("match{code: %d, next: %d}", s.codeOrKind, s.next)
 }
 
+// Matchable is an interface for any thing that can be matched against by this
+// package. In the future, we may use multiaddr.Component types directly.
 type Matchable interface {
 	Code() int
 	// Value() returns the string representation of the matchable.
@@ -67,18 +68,23 @@ type Matchable interface {
 }
 
 // ListOfMatchable is anything list-like that contains Matchable items.
-// This allows us to convert a slice of []T as a []Matchable when *T implements Matchable.
-// In the future, this may not be required if Go generics allows us to say S ~[]T, and *T implements Matchable.
+// This allows us to convert a slice of []T as a []Matchable when *T implements
+// Matchable. In the future, this may not be required if Go generics allows us
+// to say S ~[]T, and *T implements Matchable. This may also not be required if
+// we move this out of its own package and depend on Multiaddr and Components
+// directly.
 type ListOfMatchable interface {
 	Get(i int) Matchable
 	Len() int
 }
 
-// Match returns whether the given Components match the Pattern defined in MatchState.
+// Match returns whether the given Components match the Matcher
+//
 // Errors are used to communicate capture errors.
 // If the error is non-nil the returned bool will be false.
-
-// Components must be a ListOfMatchable to allow us to use a slice of []T as a []Matchable when *T implements Matchable.
+//
+// Components must be a ListOfMatchable to allow us to use a slice of []T as a
+// []Matchable when *T implements Matchable.
 func Match[L ListOfMatchable](matcher Matcher, components L) (bool, error) {
 	states := matcher.states
 	startStateIdx := matcher.startIdx
@@ -198,7 +204,7 @@ func appendState(arr statesAndCaptures, states []MatchState, stateIndex int, c *
 		// If it's a split state (the value is less than done) then push both branches.
 		if s.codeOrKind < done {
 			// Get the second branch from the split.
-			splitIdx := restoreSplitIdx(s.codeOrKind)
+			splitIdx := decodeSplitIdx(s.codeOrKind)
 
 			// Check if the next branch is a `matchAny`. If it is, we want to
 			// deprioritize it to allow for less greedy Any behavior.
@@ -220,12 +226,12 @@ func appendState(arr statesAndCaptures, states []MatchState, stateIndex int, c *
 	return arr
 }
 
-const splitIdxOffset = (-1 * (done - 1))
+const splitIdxOffset = -(done - 1)
 
-func storeSplitIdx(codeOrKind int) int {
+func encodeSplitIdx(codeOrKind int) int {
 	return (codeOrKind + splitIdxOffset) * -1
 }
 
-func restoreSplitIdx(splitIdx int) int {
+func decodeSplitIdx(splitIdx int) int {
 	return (splitIdx * -1) - splitIdxOffset
 }

@@ -22,7 +22,7 @@ func preallocateCapture() *preallocatedCapture {
 		),
 		meg.Val(multiaddr.P_UDP),
 		meg.Val(multiaddr.P_WEBRTC_DIRECT),
-		meg.CaptureZeroOrMoreStringVals(multiaddr.P_CERTHASH, &p.certHashes),
+		meg.CaptureZeroOrMoreStrings(multiaddr.P_CERTHASH, &p.certHashes),
 	)
 	return p
 }
@@ -109,7 +109,7 @@ func isWebTransportMultiaddrPrealloc() *preallocatedCapture {
 			meg.CaptureStringVal(multiaddr.P_SNI, &sni),
 		),
 		meg.Val(multiaddr.P_WEBTRANSPORT),
-		meg.CaptureZeroOrMoreStringVals(multiaddr.P_CERTHASH, &p.certHashes),
+		meg.CaptureZeroOrMoreStrings(multiaddr.P_CERTHASH, &p.certHashes),
 	)
 	wtPrealloc = p
 	return p
@@ -142,7 +142,7 @@ func IsWebTransportMultiaddr(m multiaddr.Multiaddr) (bool, int) {
 			meg.CaptureStringVal(multiaddr.P_SNI, &sni),
 		),
 		meg.Val(multiaddr.P_WEBTRANSPORT),
-		meg.CaptureZeroOrMoreStringVals(multiaddr.P_CERTHASH, &certHashesStr),
+		meg.CaptureZeroOrMoreStrings(multiaddr.P_CERTHASH, &certHashesStr),
 	)
 	if !matched {
 		return false, 0
