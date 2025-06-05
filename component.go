@@ -162,6 +162,13 @@ func (c *Component) Protocol() Protocol {
 	return *c.protocol
 }
 
+func (c *Component) Code() int {
+	if c == nil {
+		return 0
+	}
+	return c.Protocol().Code
+}
+
 func (c *Component) RawValue() []byte {
 	if c == nil {
 		return nil
