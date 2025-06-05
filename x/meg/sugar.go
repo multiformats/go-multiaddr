@@ -7,10 +7,10 @@ import (
 	"strings"
 )
 
-// Pattern is a curried MatchState.
-// Given the slice of current MatchStates and a handle (int index) to the next
-// MatchState, it returns a handle to the inserted MatchState.
-type Pattern = func(states *[]MatchState, nextIdx int) int
+// Pattern is a curried MatchState. Given the slice of current MatchStates and a
+// handle (int index) to the next MatchState, it returns a (possibly modified)
+// slice of next MatchStates and handle to the inserted MatchState.
+type Pattern = func(states []MatchState, nextIdx int) ([]MatchState, int)
 
 // Matcher holds a graph of match state nodes. Use PatternToMatcher to create.
 type Matcher struct {
@@ -36,7 +36,7 @@ func PatternToMatcher(patterns ...Pattern) Matcher {
 	nextIdx := len(states) - 1
 	// Build the chain by composing patterns from right to left.
 	for i := len(patterns) - 1; i >= 0; i-- {
-		nextIdx = patterns[i](&states, nextIdx)
+		states, nextIdx = patterns[i](states, nextIdx)
 	}
 	return Matcher{states: states, startIdx: nextIdx}
 }
@@ -44,17 +44,18 @@ func PatternToMatcher(patterns ...Pattern) Matcher {
 func Cat(patterns ...Pattern) Pattern {
 	switch len(patterns) {
 	case 0:
-		return func(states *[]MatchState, nextIdx int) int {
-			return nextIdx
+		return func(states []MatchState, nextIdx int) ([]MatchState, int) {
+			return states, nextIdx
 		}
 	case 1:
 		return patterns[0]
 	case 2:
-		return func(states *[]MatchState, nextIdx int) int {
+		return func(states []MatchState, nextIdx int) ([]MatchState, int) {
 			left := patterns[0]
 			right := patterns[1]
 			// First run the right pattern, then feed the result into left.
-			return left(states, right(states, nextIdx))
+			states, nextIdx = right(states, nextIdx)
+			return left(states, nextIdx)
 		}
 	default:
 		return Cat(
@@ -65,23 +66,24 @@ func Cat(patterns ...Pattern) Pattern {
 }
 
 func Or(p ...Pattern) Pattern {
-	return func(states *[]MatchState, nextIdx int) int {
+	return func(states []MatchState, nextIdx int) ([]MatchState, int) {
 		if len(p) == 0 {
-			return nextIdx
+			return states, nextIdx
 		}
 		// Evaluate the last pattern and use its result as the initial accumulator.
-		accum := p[len(p)-1](states, nextIdx)
+		states, accum := p[len(p)-1](states, nextIdx)
 		// Iterate backwards from the second-to-last pattern to the first.
 		for i := len(p) - 2; i >= 0; i-- {
-			leftIdx := p[i](states, nextIdx)
+			var leftIdx int
+			states, leftIdx = p[i](states, nextIdx)
 			newState := MatchState{
 				next:       leftIdx,
 				codeOrKind: encodeSplitIdx(accum),
 			}
-			*states = append(*states, newState)
-			accum = len(*states) - 1
+			states = append(states, newState)
+			accum = len(states) - 1
 		}
-		return accum
+		return states, accum
 	}
 }
 
@@ -142,14 +144,14 @@ func captureManyStrings(vals *[]string) CaptureFunc {
 }
 
 func CaptureWithF(code int, f CaptureFunc) Pattern {
-	return func(states *[]MatchState, nextIdx int) int {
+	return func(states []MatchState, nextIdx int) ([]MatchState, int) {
 		newState := MatchState{
 			capture:    f,
 			codeOrKind: code,
 			next:       nextIdx,
 		}
-		*states = append(*states, newState)
-		return len(*states) - 1
+		states = append(states, newState)
+		return states, len(states) - 1
 	}
 }
 
@@ -173,27 +175,27 @@ func ZeroOrMore(code int) Pattern {
 }
 
 func CaptureZeroOrMoreWithF(code int, f CaptureFunc) Pattern {
-	return func(states *[]MatchState, nextIdx int) int {
+	return func(states []MatchState, nextIdx int) ([]MatchState, int) {
 		// Create the match state.
 		matchState := MatchState{
 			codeOrKind: code,
 			capture:    f,
 		}
-		*states = append(*states, matchState)
-		matchIdx := len(*states) - 1
+		states = append(states, matchState)
+		matchIdx := len(states) - 1
 
 		// Create the split state that branches to the match state and to the next state.
 		s := MatchState{
 			next:       matchIdx,
 			codeOrKind: encodeSplitIdx(nextIdx),
 		}
-		*states = append(*states, s)
-		splitIdx := len(*states) - 1
+		states = append(states, s)
+		splitIdx := len(states) - 1
 
 		// Close the loop: update the match state's next field.
-		(*states)[matchIdx].next = splitIdx
+		states[matchIdx].next = splitIdx
 
-		return splitIdx
+		return states, splitIdx
 	}
 }
 
@@ -211,9 +213,9 @@ func OneOrMore(code int) Pattern {
 
 func CaptureOneOrMoreStrings(code int, vals *[]string) Pattern {
 	f := captureManyStrings(vals)
-	return func(states *[]MatchState, nextIdx int) int {
+	return func(states []MatchState, nextIdx int) ([]MatchState, int) {
 		// First attach the zero-or-more loop.
-		zeroOrMoreIdx := CaptureZeroOrMoreWithF(code, f)(states, nextIdx)
+		states, zeroOrMoreIdx := CaptureZeroOrMoreWithF(code, f)(states, nextIdx)
 		// Then put the capture state before the loop.
 		return CaptureWithF(code, f)(states, zeroOrMoreIdx)
 	}
@@ -221,21 +223,22 @@ func CaptureOneOrMoreStrings(code int, vals *[]string) Pattern {
 
 func CaptureOneOrMoreBytes(code int, vals *[][]byte) Pattern {
 	f := captureManyBytes(vals)
-	return func(states *[]MatchState, nextIdx int) int {
+	return func(states []MatchState, nextIdx int) ([]MatchState, int) {
 		// First attach the zero-or-more loop.
-		zeroOrMoreIdx := CaptureZeroOrMoreWithF(code, f)(states, nextIdx)
+		states, zeroOrMoreIdx := CaptureZeroOrMoreWithF(code, f)(states, nextIdx)
 		// Then put the capture state before the loop.
 		return CaptureWithF(code, f)(states, zeroOrMoreIdx)
 	}
 }
 
 func Optional(s Pattern) Pattern {
-	return func(states *[]MatchState, nextIdx int) int {
+	return func(states []MatchState, nextIdx int) ([]MatchState, int) {
+		states, patternIdx := s(states, nextIdx)
 		newState := MatchState{
-			next:       s(states, nextIdx),
+			next:       patternIdx,
 			codeOrKind: encodeSplitIdx(nextIdx),
 		}
-		*states = append(*states, newState)
-		return len(*states) - 1
+		states = append(states, newState)
+		return states, len(states) - 1
 	}
 }
