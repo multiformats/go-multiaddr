@@ -156,13 +156,13 @@ func CaptureWithF(code int, f CaptureFunc) Pattern {
 }
 
 func Val(code int) Pattern {
-	return CaptureStringVal(code, nil)
+	return CaptureString(code, nil)
 }
 
 // Any is a special code that matches any value.
 var Any int = matchAny
 
-func CaptureStringVal(code int, val *string) Pattern {
+func CaptureString(code int, val *string) Pattern {
 	return CaptureWithF(code, captureOneStringValueOrErr(val))
 }
 

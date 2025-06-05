@@ -17,7 +17,7 @@ func TestMatchAndCaptureMultiaddr(t *testing.T) {
 			meg.Val(P_IP4),
 			meg.Val(P_IP6),
 		),
-		meg.CaptureStringVal(P_UDP, &udpPort),
+		meg.CaptureString(P_UDP, &udpPort),
 		meg.Val(P_QUIC_V1),
 		meg.Val(P_WEBTRANSPORT),
 		meg.CaptureZeroOrMoreStrings(P_CERTHASH, &certhashes),
