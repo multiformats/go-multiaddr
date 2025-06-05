@@ -97,16 +97,16 @@ func isWebTransportMultiaddrPrealloc() *preallocatedCapture {
 	var sni string
 	p.matcher = meg.PatternToMatcher(
 		meg.Or(
-			meg.CaptureStringVal(multiaddr.P_IP4, &ip4Addr),
-			meg.CaptureStringVal(multiaddr.P_IP6, &ip6Addr),
-			meg.CaptureStringVal(multiaddr.P_DNS4, &dnsName),
-			meg.CaptureStringVal(multiaddr.P_DNS6, &dnsName),
-			meg.CaptureStringVal(multiaddr.P_DNS, &dnsName),
+			meg.CaptureString(multiaddr.P_IP4, &ip4Addr),
+			meg.CaptureString(multiaddr.P_IP6, &ip6Addr),
+			meg.CaptureString(multiaddr.P_DNS4, &dnsName),
+			meg.CaptureString(multiaddr.P_DNS6, &dnsName),
+			meg.CaptureString(multiaddr.P_DNS, &dnsName),
 		),
-		meg.CaptureStringVal(multiaddr.P_UDP, &udpPort),
+		meg.CaptureString(multiaddr.P_UDP, &udpPort),
 		meg.Val(multiaddr.P_QUIC_V1),
 		meg.Optional(
-			meg.CaptureStringVal(multiaddr.P_SNI, &sni),
+			meg.CaptureString(multiaddr.P_SNI, &sni),
 		),
 		meg.Val(multiaddr.P_WEBTRANSPORT),
 		meg.CaptureZeroOrMoreStrings(multiaddr.P_CERTHASH, &p.certHashes),
@@ -130,16 +130,16 @@ func IsWebTransportMultiaddr(m multiaddr.Multiaddr) (bool, int) {
 	var certHashesStr []string
 	matched, _ := m.Match(
 		meg.Or(
-			meg.CaptureStringVal(multiaddr.P_IP4, &ip4Addr),
-			meg.CaptureStringVal(multiaddr.P_IP6, &ip6Addr),
-			meg.CaptureStringVal(multiaddr.P_DNS4, &dnsName),
-			meg.CaptureStringVal(multiaddr.P_DNS6, &dnsName),
-			meg.CaptureStringVal(multiaddr.P_DNS, &dnsName),
+			meg.CaptureString(multiaddr.P_IP4, &ip4Addr),
+			meg.CaptureString(multiaddr.P_IP6, &ip6Addr),
+			meg.CaptureString(multiaddr.P_DNS4, &dnsName),
+			meg.CaptureString(multiaddr.P_DNS6, &dnsName),
+			meg.CaptureString(multiaddr.P_DNS, &dnsName),
 		),
-		meg.CaptureStringVal(multiaddr.P_UDP, &udpPort),
+		meg.CaptureString(multiaddr.P_UDP, &udpPort),
 		meg.Val(multiaddr.P_QUIC_V1),
 		meg.Optional(
-			meg.CaptureStringVal(multiaddr.P_SNI, &sni),
+			meg.CaptureString(multiaddr.P_SNI, &sni),
 		),
 		meg.Val(multiaddr.P_WEBTRANSPORT),
 		meg.CaptureZeroOrMoreStrings(multiaddr.P_CERTHASH, &certHashesStr),
