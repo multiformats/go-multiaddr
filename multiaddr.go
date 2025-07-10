@@ -91,11 +91,18 @@ func (m Multiaddr) Bytes() []byte {
 		size += len(c.bytes)
 	}
 
-	out := make([]byte, 0, size)
+	// This method is inlined in the caller. Using a fixed sized array
+	// avoids an allocation.
+	var out []byte
+	if size < 128 {
+		var o [128]byte
+		out = o[:0]
+	} else {
+		out = make([]byte, 0, size)
+	}
 	for _, c := range m {
 		out = append(out, c.bytes...)
 	}
-
 	return out
 }
 

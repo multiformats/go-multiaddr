@@ -684,9 +684,13 @@ func TestNetListener(t *testing.T) {
 }
 
 func BenchmarkResolveUnspecifiedAddress(b *testing.B) {
-	b.ReportAllocs()
 	a := ma.StringCast("/ip4/0.0.0.0/udp/42/quic-v1")
-	iaddrs, _ := interfaceAddresses()
+	iaddrs := []ma.Multiaddr{
+		ma.StringCast("/ip4/127.0.0.1/udp/42/quic-v1"),
+		ma.StringCast("/ip4/192.168.1.1/udp/42/quic-v1"),
+	}
+	b.ReportAllocs()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		ResolveUnspecifiedAddress(a, iaddrs)
 	}

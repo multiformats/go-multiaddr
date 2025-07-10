@@ -1255,3 +1255,16 @@ func FuzzComponents(f *testing.F) {
 		}
 	})
 }
+
+func BenchmarkBytes(b *testing.B) {
+	addr := StringCast("/ip4/127.0.0.1/tcp/1234")
+	b.ReportAllocs()
+	b.ResetTimer()
+	m := make(map[string]Multiaddr)
+	for i := 0; i < b.N; i++ {
+		_ = addr.Bytes()
+		if _, ok := m[string(addr.Bytes())]; !ok {
+			m["a"] = addr
+		}
+	}
+}
