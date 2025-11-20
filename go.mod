@@ -1,6 +1,6 @@
 module github.com/multiformats/go-multiaddr
 
-go 1.24
+go 1.24.0
 
 require (
 	github.com/ipfs/go-cid v0.0.7
@@ -20,8 +20,8 @@ require (
 	github.com/multiformats/go-base36 v0.2.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
-	golang.org/x/crypto v0.31.0 // indirect
-	golang.org/x/sys v0.28.0 // indirect
+	golang.org/x/crypto v0.45.0 // indirect
+	golang.org/x/sys v0.38.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0 // indirect
 	lukechampine.com/blake3 v1.2.1 // indirect
 )
