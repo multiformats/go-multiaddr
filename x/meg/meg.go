@@ -67,25 +67,16 @@ type Matchable interface {
 	Bytes() []byte
 }
 
-// ListOfMatchable is anything list-like that contains Matchable items.
-// This allows us to convert a slice of []T as a []Matchable when *T implements
-// Matchable. In the future, this may not be required if Go generics allows us
-// to say S ~[]T, and *T implements Matchable. This may also not be required if
-// we move this out of its own package and depend on Multiaddr and Components
-// directly.
-type ListOfMatchable interface {
-	Get(i int) Matchable
-	Len() int
-}
-
 // Match returns whether the given Components match the Matcher
 //
 // Errors are used to communicate capture errors.
 // If the error is non-nil the returned bool will be false.
 //
-// Components must be a ListOfMatchable to allow us to use a slice of []T as a
-// []Matchable when *T implements Matchable.
-func Match[L ListOfMatchable](matcher Matcher, components L) (bool, error) {
+// The PT pattern is from: https://go.dev/blog/generic-interfaces
+func Match[T any, PT interface {
+	*T
+	Matchable
+}](matcher Matcher, components []T) (bool, error) {
 	states := matcher.states
 	startStateIdx := matcher.startIdx
 
@@ -108,14 +99,14 @@ func Match[L ListOfMatchable](matcher Matcher, components L) (bool, error) {
 
 	currentStates = appendState(currentStates, states, startStateIdx, nil, visitedBitSet)
 
-	for ic := range components.Len() {
+	for ic := range len(components) {
 		clear(visitedBitSet)
 		if len(currentStates.states) == 0 {
 			return false, nil
 		}
 		for i, stateIndex := range currentStates.states {
 			s := &states[stateIndex]
-			cPtr := components.Get(ic)
+			cPtr := PT(&components[ic])
 			if s.codeOrKind == matchAny || (s.codeOrKind >= 0 && s.codeOrKind == cPtr.Code()) {
 				cm := currentStates.captures[i]
 				if s.capture != nil {

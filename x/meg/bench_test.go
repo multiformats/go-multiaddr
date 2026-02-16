@@ -29,18 +29,8 @@ func preallocateCapture() *preallocatedCapture {
 
 var webrtcMatchPrealloc *preallocatedCapture
 
-type componentList []multiaddr.Component
-
-func (m componentList) Get(i int) meg.Matchable {
-	return &m[i]
-}
-
-func (m componentList) Len() int {
-	return len(m)
-}
-
 func (p *preallocatedCapture) IsWebRTCDirectMultiaddr(addr multiaddr.Multiaddr) (bool, int) {
-	found, _ := meg.Match(p.matcher, componentList(addr))
+	found, _ := meg.Match(p.matcher, addr)
 	return found, len(p.certHashes)
 }
 
@@ -117,7 +107,7 @@ func isWebTransportMultiaddrPrealloc() *preallocatedCapture {
 
 func IsWebTransportMultiaddrPrealloc(m multiaddr.Multiaddr) (bool, int) {
 	p := isWebTransportMultiaddrPrealloc()
-	found, _ := meg.Match(p.matcher, componentList(m))
+	found, _ := meg.Match(p.matcher, m)
 	return found, len(p.certHashes)
 }
 
@@ -375,7 +365,7 @@ func BenchmarkIsWebTransportMultiaddrNoCapturePrealloc(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		isWT, _ := meg.Match(wtPreallocNoCapture, componentList(addr))
+		isWT, _ := meg.Match(wtPreallocNoCapture, addr)
 		if !isWT {
 			b.Fatal("unexpected result")
 		}
