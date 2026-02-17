@@ -226,7 +226,7 @@ func TestCapture(t *testing.T) {
 	_ = testCases
 	for _, tc := range testCases {
 		state, assert := tc.setup()
-		if matches, _ := Match(state, codeAndValueList(tc.parts)); !matches {
+		if matches, _ := Match(state, tc.parts); !matches {
 			t.Fatalf("failed to match %v with %v", tc.parts, state)
 		}
 		assert()
@@ -235,7 +235,7 @@ func TestCapture(t *testing.T) {
 
 func TestPreferExactOverAny(t *testing.T) {
 	t.Run("Optional", func(t *testing.T) {
-		m := codeAndValueList{
+		m := []codeAndValue{
 			{0, "hello"},
 			{1, "foo"},
 			{42, "A"},
@@ -260,7 +260,7 @@ func TestPreferExactOverAny(t *testing.T) {
 	})
 
 	t.Run("Or", func(t *testing.T) {
-		m := codeAndValueList{
+		m := []codeAndValue{
 			{1, "foo"},
 			{42, "A"},
 			{42, "B"},
@@ -282,7 +282,7 @@ func TestPreferExactOverAny(t *testing.T) {
 		}
 	})
 	t.Run("OneOrMore", func(t *testing.T) {
-		m := codeAndValueList{
+		m := []codeAndValue{
 			{1, "foo"},
 			{42, "A"},
 			{42, "B"},
@@ -305,7 +305,7 @@ func TestPreferExactOverAny(t *testing.T) {
 }
 
 func TestCaptureWithAny(t *testing.T) {
-	m := codeAndValueList{
+	m := []codeAndValue{
 		{0, "hello"},
 		{1, "foo"},
 		{42, "A"},
@@ -334,17 +334,7 @@ func TestCaptureWithAny(t *testing.T) {
 	}
 }
 
-type codeAndValueList []codeAndValue
-
-func (c codeAndValueList) Get(i int) Matchable {
-	return &c[i]
-}
-
-func (c codeAndValueList) Len() int {
-	return len(c)
-}
-
-func codesToCodeAndValue(codes []int) codeAndValueList {
+func codesToCodeAndValue(codes []int) []codeAndValue {
 	out := make([]codeAndValue, len(codes))
 	for i, c := range codes {
 		out[i] = codeAndValue{code: c}
@@ -352,7 +342,7 @@ func codesToCodeAndValue(codes []int) codeAndValueList {
 	return out
 }
 
-func bytesToCodeAndValue(codes []byte) codeAndValueList {
+func bytesToCodeAndValue(codes []byte) []codeAndValue {
 	out := make([]codeAndValue, len(codes))
 	for i, c := range codes {
 		out[i] = codeAndValue{code: int(c)}
