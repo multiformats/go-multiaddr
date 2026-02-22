@@ -1,6 +1,6 @@
 module github.com/multiformats/go-multiaddr
 
-go 1.24
+go 1.25
 
 require (
 	github.com/ipfs/go-cid v0.0.7
