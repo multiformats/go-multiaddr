@@ -392,7 +392,13 @@ func InterfaceMultiaddrs() ([]ma.Multiaddr, error) {
 		return nil, err
 	}
 
+	return InterfaceMultiaddrsFor(addrs)
+}
+
+// InterfaceMultiaddrsFor will return the addresses matching the given addrs
+func InterfaceMultiaddrsFor(addrs []net.Addr) ([]ma.Multiaddr, error) {
 	maddrs := make([]ma.Multiaddr, len(addrs))
+	var err error
 	for i, a := range addrs {
 		maddrs[i], err = FromNetAddr(a)
 		if err != nil {
