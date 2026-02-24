@@ -518,3 +518,32 @@ func memoryValidate(b []byte) error {
 
 	return nil
 }
+var TranscoderSCION = NewTranscoderFromFunctions(scionStB, scionBtS, scionVal)
+
+func scionVal(b []byte) error {
+	// SCION IA is 16 bit ISD and 48 bit AS numbers separated by "-"
+	// ISD numbers formatted as decimal, AS numbering similar to IPv6
+	// E.g.: "0-0" or "1234-ff00:0:110"
+	if len(b) < 3 {
+		return fmt.Errorf("byte slice too short: %d", len(b))
+	}
+	if minus := bytes.IndexByte(b, '-'); minus < 0 {
+		return errors.New("scion addresses must contain '-'")
+	}
+	return nil
+}
+
+func scionStB(s string) ([]byte, error) {
+	b := []byte(s)
+	if err := scionVal(b); err != nil {
+		return nil, err
+	}
+	return b, nil
+}
+
+func scionBtS(b []byte) (string, error) {
+	if err := scionVal(b); err != nil {
+		return "", err
+	}
+	return string(b), nil
+}
