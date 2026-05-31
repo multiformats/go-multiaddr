@@ -191,6 +191,9 @@ func onionStB(s string) ([]byte, error) {
 }
 
 func onionBtS(b []byte) (string, error) {
+	if len(b) != 12 {
+		return "", fmt.Errorf("invalid len for onion addr: got %d expected 12", len(b))
+	}
 	addr := strings.ToLower(base32.StdEncoding.EncodeToString(b[0:10]))
 	port := binary.BigEndian.Uint16(b[10:12])
 	if port == 0 {
@@ -245,6 +248,9 @@ func onion3StB(s string) ([]byte, error) {
 }
 
 func onion3BtS(b []byte) (string, error) {
+	if len(b) != 37 {
+		return "", fmt.Errorf("invalid len for onion addr: got %d expected 37", len(b))
+	}
 	addr := strings.ToLower(base32.StdEncoding.EncodeToString(b[0:35]))
 	port := binary.BigEndian.Uint16(b[35:37])
 	if port < 1 {
