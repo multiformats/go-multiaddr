@@ -25,3 +25,31 @@ func TestOnionTranscodersRejectShortInput(t *testing.T) {
 		})
 	}
 }
+
+// portBtS used to call binary.BigEndian.Uint16 without checking len(b) >= 2.
+// Direct callers of TranscoderPort (outside the codec.go length checks) could
+// panic with `index out of range`. The internal guard and the new validator
+// must turn both into normal errors.
+func TestTranscoderPortRejectsShortInput(t *testing.T) {
+	t.Run("BytesToString-short", func(t *testing.T) {
+		if _, err := TranscoderPort.BytesToString(nil); err == nil {
+			t.Fatalf("expected error on nil input")
+		}
+		if _, err := TranscoderPort.BytesToString([]byte{0x00}); err == nil {
+			t.Fatalf("expected error on 1-byte input")
+		}
+	})
+	t.Run("Validate-rejects-wrong-length", func(t *testing.T) {
+		if err := TranscoderPort.ValidateBytes(nil); err == nil {
+			t.Fatalf("expected validate error on nil input")
+		}
+		if err := TranscoderPort.ValidateBytes([]byte{0x00, 0x01, 0x02}); err == nil {
+			t.Fatalf("expected validate error on 3-byte input")
+		}
+	})
+	t.Run("Validate-accepts-2-byte", func(t *testing.T) {
+		if err := TranscoderPort.ValidateBytes([]byte{0x00, 0x50}); err != nil {
+			t.Fatalf("expected no error on 2-byte input, got %v", err)
+		}
+	})
+}

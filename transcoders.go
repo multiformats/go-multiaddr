@@ -138,7 +138,7 @@ func ip4BtS(b []byte) (string, error) {
 	return net.IP(b).String(), nil
 }
 
-var TranscoderPort = NewTranscoderFromFunctions(portStB, portBtS, nil)
+var TranscoderPort = NewTranscoderFromFunctions(portStB, portBtS, portValidate)
 
 func portStB(s string) ([]byte, error) {
 	i, err := strconv.ParseUint(s, 10, 16)
@@ -151,8 +151,18 @@ func portStB(s string) ([]byte, error) {
 }
 
 func portBtS(b []byte) (string, error) {
+	if len(b) < 2 {
+		return "", fmt.Errorf("port: byte slice too short: %d bytes, want 2", len(b))
+	}
 	i := binary.BigEndian.Uint16(b)
 	return strconv.FormatUint(uint64(i), 10), nil
+}
+
+func portValidate(b []byte) error {
+	if len(b) != 2 {
+		return fmt.Errorf("port: invalid length: %d bytes, want 2", len(b))
+	}
+	return nil
 }
 
 var TranscoderOnion = NewTranscoderFromFunctions(onionStB, onionBtS, onionValidate)
