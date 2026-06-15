@@ -8,7 +8,7 @@ import (
 )
 
 type TestingT interface {
-	Errorf(format string, args ...interface{})
+	Errorf(format string, args ...any)
 }
 
 type tHelper interface {
@@ -75,7 +75,7 @@ type MultiaddrMatcher struct {
 // Implements the Matcher interface for gomock.Matcher
 // Let's us use this struct in gomock tests. Example:
 // Expect(mock.Method(gomock.Any(), multiaddrMatcher).Return(nil)
-func (m MultiaddrMatcher) Matches(x interface{}) bool {
+func (m MultiaddrMatcher) Matches(x any) bool {
 	if m2, ok := x.(multiaddr.Multiaddr); ok {
 		return m.Equal(m2)
 	}
