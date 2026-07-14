@@ -34,6 +34,7 @@ const (
 	P_GARLIC32          = 447
 	P_P2P_WEBRTC_DIRECT = 276 // Deprecated. use webrtc-direct instead
 	P_TLS               = 448
+	P_ECH               = 9849
 	P_SNI               = 449
 	P_NOISE             = 454
 	P_WS                = 477
@@ -245,6 +246,13 @@ var (
 		Code:  P_TLS,
 		VCode: CodeToVarint(P_TLS),
 	}
+	protoECH = Protocol{
+		Name:       "ech",
+		Code:       P_ECH,
+		VCode:      CodeToVarint(P_ECH),
+		Size:       LengthPrefixedVarSize,
+		Transcoder: TranscoderECH,
+	}
 	protoSNI = Protocol{
 		Name:       "sni",
 		Size:       LengthPrefixedVarSize,
@@ -324,6 +332,7 @@ func init() {
 		protoUNIX,
 		protoP2P_WEBRTC_DIRECT,
 		protoTLS,
+		protoECH,
 		protoSNI,
 		protoNOISE,
 		protoWS,
