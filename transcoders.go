@@ -463,6 +463,33 @@ func validateCertHash(b []byte) error {
 	return err
 }
 
+var TranscoderECH = NewTranscoderFromFunctions(echStB, echBtS, validateECH)
+
+func echStB(s string) ([]byte, error) {
+	_, data, err := multibase.Decode(s)
+	if err != nil {
+		return nil, err
+	}
+	if err := validateECH(data); err != nil {
+		return nil, err
+	}
+	return data, nil
+}
+
+func echBtS(b []byte) (string, error) {
+	if err := validateECH(b); err != nil {
+		return "", err
+	}
+	return multibase.Encode(multibase.Base64url, b)
+}
+
+func validateECH(b []byte) error {
+	if len(b) == 0 {
+		return errors.New("empty ECHConfigList")
+	}
+	return nil
+}
+
 var TranscoderHTTPPath = NewTranscoderFromFunctions(httpPathStB, httpPathBtS, validateHTTPPath)
 
 func httpPathStB(s string) ([]byte, error) {
