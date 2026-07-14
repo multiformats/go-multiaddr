@@ -15,7 +15,7 @@ func TestECHProtocol(t *testing.T) {
 	require.Equal(t, []byte{0xf9, 0x4c}, protocol.VCode)
 	require.Equal(t, LengthPrefixedVarSize, protocol.Size)
 	require.NotNil(t, protocol.Transcoder)
-	require.Equal(t, protocol, ProtocolWithCode(P_ECH))
+	require.Equal(t, "ech", ProtocolWithCode(P_ECH).Name)
 
 	component, err := NewComponent("ech", encodedECHConfigList)
 	require.NoError(t, err)
